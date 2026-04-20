@@ -7,7 +7,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.futbol_tnt.presentation.ui.theme.FutbolTNTTheme
 
 /**
  * Pantalla de ejemplo que demuestra la estructura recomendada para Composables.
@@ -84,6 +83,7 @@ private fun ExampleScreenContent(
 ) {
     Scaffold(
         topBar = {
+            @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
                 title = { Text(uiState.title) },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -185,7 +185,7 @@ private fun CounterControls(
 @Preview(showBackground = true)
 @Composable
 private fun ExampleScreenPreview() {
-    FutbolTNTTheme {
+    MaterialTheme {
         ExampleScreenContent(
             uiState = ExampleUiState(counter = 5),
             onAction = {}
@@ -199,7 +199,7 @@ private fun ExampleScreenPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun ExampleScreenLoadingPreview() {
-    FutbolTNTTheme {
+    MaterialTheme {
         ExampleScreenContent(
             uiState = ExampleUiState(isLoading = true),
             onAction = {}
@@ -213,7 +213,7 @@ private fun ExampleScreenLoadingPreview() {
 @Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ExampleScreenDarkPreview() {
-    FutbolTNTTheme {
+    MaterialTheme {
         ExampleScreenContent(
             uiState = ExampleUiState(counter = 10),
             onAction = {}
