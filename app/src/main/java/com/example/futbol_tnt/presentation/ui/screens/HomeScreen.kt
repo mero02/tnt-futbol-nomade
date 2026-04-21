@@ -52,8 +52,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.futbol_tnt.data.model.Cancha
+import com.example.futbol_tnt.data.model.EstadoPartido
 import com.example.futbol_tnt.data.model.EstadoReserva
 import com.example.futbol_tnt.data.model.MockData
+import com.example.futbol_tnt.data.model.Partido
 import com.example.futbol_tnt.data.model.Reserva
 import com.google.firebase.auth.FirebaseAuth
 import java.time.format.DateTimeFormatter
@@ -318,43 +320,198 @@ private fun PartidosTab() {
             Spacer(modifier = Modifier.height(8.dp))
             HeaderSection(
                 titulo = "Partidos",
-                subtitulo = "Encontrá equipos para jugar"
+                subtitulo = "${MockData.partidos.size} partidos disponibles"
             )
         }
 
+        items(MockData.partidos) { partido ->
+            PartidoCard(partido = partido)
+        }
+
         item {
-            ElevatedCard(
+            Spacer(modifier = Modifier.height(8.dp))
+            CrearPartidoCard()
+        }
+    }
+}
+
+@Composable
+private fun PartidoCard(partido: Partido) {
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SportsSoccer,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = partido.cancha.nombre,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                EstadoPartidoBadge(estado = partido.estado)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Aún no hay partidos",
+                        text = partido.nombreLocal,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Creá uno o unite a partidos cercanos",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "LOCAL",
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(onClick = { }) {
-                        Text("Crear Partido")
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "VS",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = partido.nombreVisitante,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = "VISITANTE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = partido.fecha.format(formatter),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Text(
+                    text = "${partido.jugadoresActuales}/${partido.jugadoresMaximos} jugadores",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$${partido.precioPorPersona.toInt()}/persona",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                if (partido.estado == EstadoPartido.ABIERTO) {
+                    FilledTonalButton(onClick = { }) {
+                        Text("Unirse")
+                    }
+                } else if (partido.estado == EstadoPartido.LLENO) {
+                    OutlinedButton(onClick = { }, enabled = false) {
+                        Text("Lleno")
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EstadoPartidoBadge(estado: EstadoPartido) {
+    val (color, texto) = when (estado) {
+        EstadoPartido.ABIERTO -> MaterialTheme.colorScheme.primary to "Abierto"
+        EstadoPartido.LLENO -> MaterialTheme.colorScheme.tertiary to "Lleno"
+        EstadoPartido.EN_JUEGO -> MaterialTheme.colorScheme.secondary to "En juego"
+        EstadoPartido.FINALIZADO -> MaterialTheme.colorScheme.onSurfaceVariant to "Finalizado"
+    }
+
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.2f)
+    ) {
+        Text(
+            text = texto,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun CrearPartidoCard() {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.SportsSoccer,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Organizá tu partido",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Creá un partido y buscá rivales",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(onClick = { }) {
+                Text("Crear Partido")
             }
         }
     }
