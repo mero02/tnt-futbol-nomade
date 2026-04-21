@@ -1,153 +1,51 @@
-# FutbolTNT ⚽
+# Fútbol Nómade
 
-Aplicación Android para gestión de fútbol desarrollada con Jetpack Compose y Kotlin.
+## Descripción del Proyecto
 
-## 🏗️ Arquitectura
+Fútbol Nómade es una aplicación móvil diseñada para conectar equipos de fútbol amateur incompletos con jugadores disponibles en tiempo real, facilitando la organización de partidos y promoviendo la integración de jugadores en distintas ciudades.
 
-Este proyecto sigue **Clean Architecture** con las siguientes capas:
+## Problema
 
-```
-com.example.futbol_tnt/
-├── data/              # Capa de datos
-│   ├── local/         # Base de datos local (Room)
-│   ├── remote/        # APIs y servicios remotos
-│   └── repository/    # Implementaciones de repositorios
-├── domain/            # Capa de dominio (lógica de negocio)
-│   ├── model/         # Modelos de dominio
-│   └── usecase/       # Casos de uso
-├── presentation/      # Capa de presentación
-│   ├── ui/
-│   │   ├── screens/   # Pantallas de la app
-│   │   ├── components/# Componentes reutilizables
-│   │   └── theme/     # Tema y estilos
-│   └── viewmodel/     # ViewModels
-├── di/                # Inyección de dependencias (Hilt)
-└── core/              # Utilidades y extensiones
-    ├── util/
-    └── extension/
-```
+En muchas ciudades argentinas, los grupos organizados de fútbol amateur encuentran dificultades para completar sus partidos semanales debido a la ausencia de algunos jugadores. Paralelamente, existe una gran cantidad de personas (especialmente aquellas que viajan por trabajo o estudio) que desean jugar al fútbol pero no cuentan con un grupo fijo en cada ciudad que visitan.
 
-## 🛠️ Stack Tecnológico
+## Solución Propuesta
 
-- **Lenguaje:** Kotlin 2.0.21
-- **UI Framework:** Jetpack Compose
-- **Arquitectura:** Clean Architecture + MVVM
-- **Compilación:** Gradle 8.13.2 con Kotlin DSL
-- **Min SDK:** 24 (Android 7.0)
-- **Target SDK:** 36
+Se propone una aplicación móvil que permita:
+- A los organizadores de partidos publicar encuentros indicando ubicación, fecha, horario y cantidad de jugadores faltantes.
+- A los usuarios visualizar partidos cercanos mediante geolocalización y postularse para participar según su disponibilidad.
 
-## 📋 Características de Gradle
+Además, la aplicación incorpora el concepto de "fútbol nómade", donde los jugadores pueden integrarse temporalmente a distintos grupos en función de su ubicación actual.
 
-- ✅ **Configuration Cache** habilitado para builds más rápidos
-- ✅ **Build Cache** activado para reutilizar outputs
-- ✅ **Parallel Execution** para construcción paralela de módulos
-- ✅ **Version Catalog** (`libs.versions.toml`) para gestión centralizada de dependencias
+## Características Principales
 
-## 🚀 Comenzar
+- Publicación y búsqueda de partidos por geolocalización.
+- Perfil de usuario con posición en la cancha, nivel de juego y sistema de reputación.
+- Notificaciones push para cubrir vacantes urgentes.
+- Interfaz mobile-first para acceso inmediato en situaciones contextuales.
+- Posible backend para gestión de usuarios, partidos y ubicaciones.
+- Panel web administrativo para gestión de datos y monitoreo (opcional).
 
-### Prerequisitos
+## Tecnologías Utilizadas
 
-- Android Studio Ladybug o superior
-- JDK 11 o superior
-- Android SDK con API Level 36
+- **Frontend móvil**: Android (basado en .gitignore y estructura de proyecto)
+- **Backend**: Por definir (por ejemplo, Node.js, Python, o Firebase)
+- **Base de datos**: Por definir (por ejemplo, PostgreSQL, MongoDB, o Firebase Firestore)
+- **Geolocalización**: GPS del dispositivo y servicios de mapas (por ejemplo, Google Maps API)
+- **Notificaciones**: Firebase Cloud Messaging (FCM) o similar
 
-### Compilar el proyecto
+## Instalación
 
-```bash
-./gradlew build
-```
+1. Clonar el repositorio:
+    ```bash
+    git clone https://github.com/tu-usuario/tnt-futbol-nomade.git
+    ```
+2. Abrir el proyecto en Android Studio.
+3. Configurar las variables de entorno para el backend (API keys, etc.).
+4. Compilar y ejecutar en un dispositivo Android o emulador.
 
-### Ejecutar la aplicación
+## Uso
 
-```bash
-./gradlew installDebug
-```
-
-## 📝 Convenciones de Código
-
-Este proyecto sigue las convenciones oficiales de Kotlin:
-
-- **Estilo de código:** Kotlin Official Code Style
-- **Indentación:** 4 espacios
-- **Longitud máxima de línea:** 120 caracteres
-- **Imports:** Organizados automáticamente
-
-### Naming Conventions
-
-- **Packages:** `lowercase` (ej: `data`, `domain`, `presentation`)
-- **Classes:** `PascalCase` (ej: `MainActivity`, `UserRepository`)
-- **Functions:** `camelCase` (ej: `getUserData`, `validateInput`)
-- **Constants:** `UPPER_SNAKE_CASE` (ej: `MAX_RETRY_COUNT`)
-- **Variables:** `camelCase` (ej: `userName`, `itemCount`)
-
-## 🎨 Jetpack Compose
-
-### Principios
-
-- **Unidirectional Data Flow (UDF):** Estado fluye hacia abajo, eventos hacia arriba
-- **State Hoisting:** Estado en el nivel más alto que lo necesita
-- **Composables sin estado:** Preferir composables sin estado y reutilizables
-- **ViewModels:** Para lógica de negocio y manejo de estado
-
-### Estructura de Composables
-
-```kotlin
-@Composable
-fun MiPantalla(
-    modifier: Modifier = Modifier,
-    viewModel: MiViewModel = viewModel()
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    MiPantallaContent(
-        uiState = uiState,
-        onAction = viewModel::onAction,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun MiPantallaContent(
-    uiState: MiUiState,
-    onAction: (MiAction) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // UI implementation
-}
-```
-
-## 🔄 Git Workflow
-
-### Commits
-
-Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-tipo(scope): descripción
-
-feat: nueva funcionalidad
-fix: corrección de bug
-docs: documentación
-style: formato, punto y coma faltante, etc
-refactor: refactorización de código
-test: agregar tests
-chore: tareas de mantenimiento
-```
-
-### Branches
-
-- `main`: rama principal con código estable
-- `develop`: rama de desarrollo
-- `feature/nombre`: nuevas funcionalidades
-- `fix/nombre`: correcciones de bugs
-
-## 📚 Recursos
-
-- [Kotlin Documentation](https://kotlinlang.org/docs/home.html)
-- [Jetpack Compose](https://developer.android.com/compose)
-- [Android Developers](https://developer.android.com/)
-- [Gradle Best Practices](https://docs.gradle.org/current/userguide/best_practices_general.html)
-
-## 📄 Licencia
-
-Este proyecto es de código abierto y está disponible bajo la licencia MIT.
+- Al iniciar la aplicación, los usuarios pueden registrarse o iniciar sesión.
+- Los organizadores pueden crear un nuevo partido rellenando el formulario con los detalles.
+- Los jugadores pueden explorar el mapa para ver partidos cercanos y apuntarse a aquellos que les interesen.
+- Los usuarios recibirán notificaciones cuando se publiquen partidos que coincidan con sus preferencias o cuando se necesiten jugadores para un partido al que se han apuntado.
