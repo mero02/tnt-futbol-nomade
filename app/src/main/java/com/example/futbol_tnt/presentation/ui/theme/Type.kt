@@ -1,4 +1,4 @@
-package com.example.futbol_tnt.ui.theme
+package com.example.futbol_tnt.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

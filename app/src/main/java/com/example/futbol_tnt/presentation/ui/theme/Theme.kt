@@ -1,4 +1,4 @@
-package com.example.futbol_tnt.ui.theme
+package com.example.futbol_tnt.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build

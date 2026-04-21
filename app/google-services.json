@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1066898158938",
+    "project_id": "futbol-nomade",
+    "storage_bucket": "futbol-nomade.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1066898158938:android:9aa5144c430a35ed59ef63",
+        "android_client_info": {
+          "package_name": "com.example.futbol_tnt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1066898158938-g4il9aejbss9qi1btks8jks9g9v1t1o9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.futbol_tnt",
+            "certificate_hash": "61a4717b462918a24dfb1b7d958ca4f9933339e6"
+          }
+        },
+        {
+          "client_id": "1066898158938-nrml7g85fmqqg9orgmb13qbg72q01r59.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMwTXdDV7RoEL0VuJP6jE9Fu49dyBhwIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1066898158938-nrml7g85fmqqg9orgmb13qbg72q01r59.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
