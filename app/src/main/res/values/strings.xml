@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Futbol-TNT</string>
+    <string name="acerca_de_title">Acerca de Fútbol TNT</string>
+    <string name="acerca_de_descripcion">Fútbol TNT es la plataforma definitiva para organizar y unirte a partidos de fútbol en cualquier momento y lugar. Conecta a apasionados del fútbol y facilita la reserva de canchas para vivir la experiencia completa.</string>
+    <string name="acerca_de_mision">Nuestra misión es revolucionar la forma en que la gente juega al fútbol, haciendo que sea fácil y accesible reservar canchas y formar equipos en tiempo real.</string>
+    <string name="acerca_de_vision">Nuestra visión es ser la comunidad líder de fútbol en América Latina, promoviendo el deporte y la conexión social a través de la tecnología.</string>
+    <string name="acerca_de_valores">Valores: Pasión por el fútbol, innovación tecnológica, comunidad inclusiva y sostenibilidad en el deporte.</string>
+    <string name="acerca_de_equipo">Equipo Desarrollador</string>
+    <string name="acerca_de_equipo_detalle">Mauro San Pedro - Analista Programador | Desarrollador\nFrancisco Terrón - Analista Programador | Desarrollador</string>
+    <string name="acerca_de_version">Versión de la App: 1.0.0</string>
+    <string name="acerca_de_contacto">Para más información, contactanos en info@futboltnt.com</string>
 </resources>

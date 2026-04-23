@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.futbol_tnt.data.auth.GoogleAuthClient
+import com.example.futbol_tnt.presentation.ui.screens.AcercaDe
 import com.example.futbol_tnt.presentation.ui.screens.HomeScreen
 import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
@@ -14,6 +15,7 @@ import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
+    data object AcercaDe : Screen("acerca_de")
 }
 
 @Composable
@@ -50,7 +52,15 @@ fun AppNavigation() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onNavigateToAcercaDe = {
+                    navController.navigate(Screen.AcercaDe.route)
                 }
+            )
+        }
+        composable(Screen.AcercaDe.route) {
+            AcercaDe(
+                onBack = { navController.popBackStack() }
             )
         }
     }
