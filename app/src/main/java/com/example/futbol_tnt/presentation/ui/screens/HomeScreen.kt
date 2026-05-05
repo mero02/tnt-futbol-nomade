@@ -63,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,6 +78,8 @@ import com.example.futbol_tnt.data.model.TipoCancha
 import com.google.firebase.auth.FirebaseAuth
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
 data class FiltroPartidos(
     val fecha: FiltroFecha = FiltroFecha.TODOS,
@@ -169,7 +172,7 @@ private fun CanchasDisponiblesTab() {
                 subtitulo = "5 canchas disponibles cerca de vos"
             )
         }
-        items(MockData.canchas) { cancha ->
+        items(MockData.canchas, key = { it.id }) { cancha ->
             CanchaCard3(cancha = cancha)
         }
     }
@@ -217,6 +220,7 @@ private fun CanchaCard3(cancha: Cancha) {
                     tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
                 )
             }
+
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
@@ -283,76 +287,6 @@ private fun CanchaCard3(cancha: Cancha) {
 }
 
 @Composable
-private fun CanchaCard(cancha: Cancha) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = cancha.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = cancha.tipo.name.replace("_", " "),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = cancha.direccion,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "$${cancha.precioPorHora.toInt()}/hora",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Button(onClick = { }) {
-                    Text("Reservar")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun PartidosTab() {
     var filtros by remember { mutableStateOf(FiltroPartidos()) }
     var showUnirseDialog by remember { mutableStateOf<Partido?>(null) }
@@ -409,7 +343,7 @@ private fun PartidosTab() {
                 onFiltrosChange = { filtros = it }
             )
         }
-        items(partidosFiltrados) { partido ->
+        items(partidosFiltrados, key = { it.id }) { partido ->
             PartidoCard(
                 partido = partido,
                 onUnirse = { showUnirseDialog = partido }
@@ -497,7 +431,6 @@ private fun PartidoCard(
     partido: Partido,
     onUnirse: () -> Unit
 ) {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -615,13 +548,7 @@ private fun PartidoCard(
 }
 
 @Composable
-private fun EstadoPartidoBadge(estado: EstadoPartido) {
-    val (color, texto) = when (estado) {
-        EstadoPartido.ABIERTO -> MaterialTheme.colorScheme.primary to "Abierto"
-        EstadoPartido.LLENO -> MaterialTheme.colorScheme.tertiary to "Lleno"
-        EstadoPartido.EN_JUEGO -> MaterialTheme.colorScheme.secondary to "En juego"
-        EstadoPartido.FINALIZADO -> MaterialTheme.colorScheme.onSurfaceVariant to "Finalizado"
-    }
+private fun StatusBadge(color: Color, texto: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = color.copy(alpha = 0.2f)
@@ -636,6 +563,17 @@ private fun EstadoPartidoBadge(estado: EstadoPartido) {
 }
 
 @Composable
+private fun EstadoPartidoBadge(estado: EstadoPartido) {
+    val (color, texto) = when (estado) {
+        EstadoPartido.ABIERTO -> MaterialTheme.colorScheme.primary to "Abierto"
+        EstadoPartido.LLENO -> MaterialTheme.colorScheme.tertiary to "Lleno"
+        EstadoPartido.EN_JUEGO -> MaterialTheme.colorScheme.secondary to "En juego"
+        EstadoPartido.FINALIZADO -> MaterialTheme.colorScheme.onSurfaceVariant to "Finalizado"
+    }
+    StatusBadge(color, texto)
+}
+
+@Composable
 private fun UnirsePartidoDialog(
     partido: Partido,
     onDismiss: () -> Unit,
@@ -645,7 +583,6 @@ private fun UnirsePartidoDialog(
     var posicionSeleccionada by remember { mutableStateOf("Delantero") }
     val posiciones = listOf("Delantero", "Mediocampista", "Defensor", "Arquero")
     var showPosiciones by remember { mutableStateOf(false) }
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -819,7 +756,7 @@ private fun MisReservasTab() {
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-        items(MockData.reservas) { reserva ->
+        items(MockData.reservas, key = { it.id }) { reserva ->
             ReservaCard(reserva = reserva)
         }
     }
@@ -827,7 +764,6 @@ private fun MisReservasTab() {
 
 @Composable
 private fun ReservaCard(reserva: Reserva) {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -904,17 +840,7 @@ private fun EstadoBadge(estado: EstadoReserva) {
         EstadoReserva.CANCELADA -> MaterialTheme.colorScheme.error to "Cancelada"
         EstadoReserva.COMPLETADA -> MaterialTheme.colorScheme.secondary to "Completada"
     }
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = color.copy(alpha = 0.2f)
-    ) {
-        Text(
-            text = texto,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
-    }
+    StatusBadge(color, texto)
 }
 
 @Composable
@@ -922,7 +848,7 @@ private fun PerfilContent(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val user = FirebaseAuth.getInstance().currentUser
+    val user = remember { FirebaseAuth.getInstance().currentUser }
 
     LazyColumn(
         modifier = modifier

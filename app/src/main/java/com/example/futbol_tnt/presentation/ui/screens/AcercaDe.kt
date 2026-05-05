@@ -2,6 +2,8 @@ package com.example.futbol_tnt.presentation.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,14 +15,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.futbol_tnt.R
 
-/**
- * Pantalla "Acerca De" que muestra información sobre la app y el equipo.
- * Usa LazyColumn para contenido scrollable y estilos consistentes con el resto de la app.
- */
 @Composable
 fun AcercaDe(
     modifier: Modifier = Modifier,
-    onBack: () -> Unit = {} // Para navegación de vuelta
+    onBack: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -29,7 +27,10 @@ fun AcercaDe(
                 title = { Text(stringResource(R.string.acerca_de_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.acerca_de_back)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -48,11 +49,8 @@ fun AcercaDe(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            // Descripción de la app
             item {
                 Text(
                     text = stringResource(R.string.acerca_de_descripcion),
@@ -61,31 +59,27 @@ fun AcercaDe(
                 )
             }
 
-            // Misión
             item {
                 SectionCard(
-                    title = "Misión",
+                    title = stringResource(R.string.acerca_de_mision_title),
                     content = stringResource(R.string.acerca_de_mision)
                 )
             }
 
-            // Visión
             item {
                 SectionCard(
-                    title = "Visión",
+                    title = stringResource(R.string.acerca_de_vision_title),
                     content = stringResource(R.string.acerca_de_vision)
                 )
             }
 
-            // Valores
             item {
                 SectionCard(
-                    title = "Valores",
+                    title = stringResource(R.string.acerca_de_valores_title),
                     content = stringResource(R.string.acerca_de_valores)
                 )
             }
 
-            // Equipo
             item {
                 SectionCard(
                     title = stringResource(R.string.acerca_de_equipo),
@@ -93,7 +87,6 @@ fun AcercaDe(
                 )
             }
 
-            // Versión
             item {
                 Text(
                     text = stringResource(R.string.acerca_de_version),
@@ -102,7 +95,6 @@ fun AcercaDe(
                 )
             }
 
-            // Contacto
             item {
                 Text(
                     text = stringResource(R.string.acerca_de_contacto),
@@ -113,16 +105,11 @@ fun AcercaDe(
                 )
             }
 
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
 
-/**
- * Componente reutilizable para secciones en cards, siguiendo el estilo de HomeScreen.kt.
- */
 @Composable
 private fun SectionCard(
     title: String,
@@ -153,19 +140,14 @@ private fun SectionCard(
     }
 }
 
-// === Previews ===
 @Preview(showBackground = true)
 @Composable
 private fun AcercaDePreview() {
-    MaterialTheme {
-        AcercaDe()
-    }
+    MaterialTheme { AcercaDe() }
 }
 
 @Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun AcercaDeDarkPreview() {
-    MaterialTheme {
-        AcercaDe()
-    }
+    MaterialTheme { AcercaDe() }
 }

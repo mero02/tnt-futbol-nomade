@@ -9,4 +9,8 @@
     <string name="acerca_de_equipo_detalle">Mauro San Pedro - Analista Programador | Desarrollador\nFrancisco Terrón - Analista Programador | Desarrollador</string>
     <string name="acerca_de_version">Versión de la App: 1.0.0</string>
     <string name="acerca_de_contacto">Para más información, contactanos en info@futboltnt.com</string>
+    <string name="acerca_de_mision_title">Misión</string>
+    <string name="acerca_de_vision_title">Visión</string>
+    <string name="acerca_de_valores_title">Valores</string>
+    <string name="acerca_de_back">Volver</string>
 </resources>
