@@ -62,13 +62,18 @@ El diagrama completo de navegación y transiciones está en [`docs/views-flow.xm
     cd tnt-futbol-nomade
     ```
 
-2. Obtener `google-services.json` desde [Firebase Console](https://console.firebase.google.com) (proyecto `futbol-nomade`) y colocarlo en `app/`:
+2. Pedirle `google-services.json` a Franc y colocarlo en `app/`:
     ```
-    app/google-services.json   ← este archivo está gitignoreado por seguridad
+    app/google-services.json   ← gitignoreado por seguridad, no se sube al repo
     ```
-    Sin este archivo el proyecto no compila.
 
-3. Verificar que `local.properties` apunta al SDK:
+3. Verificar que el setup está ok:
+    ```bash
+    ./setup.sh
+    ```
+    Si aparece ✓ estás listo. Si aparece ⚠️ seguí las instrucciones que imprime.
+
+4. Verificar que `local.properties` apunta al SDK:
     ```properties
     sdk.dir=/Users/<tu-usuario>/Library/Android/sdk
     ```
