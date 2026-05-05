@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Diagrama de navegación de Fútbol TNT
+  Este archivo documenta las pantallas (Composables) y sus transiciones.
+  NO es un Android Navigation Graph — es documentación de arquitectura.
+-->
+<app name="Futbol TNT" package="com.example.futbol_tnt">
+
+  <screens>
+
+    <!-- =========================================================
+         LOGIN
+         Composable : LoginScreen
+         ViewModel  : AuthViewModel
+         Auth       : Google Sign-In via Firebase Auth
+    ========================================================= -->
+    <screen id="login" route="login"
+            composable="LoginScreen"
+            file="presentation/ui/screens/LoginScreen.kt">
+      <description>
+        Pantalla de inicio de sesión con Google. Punto de entrada si el
+        usuario no tiene sesión activa (googleAuthClient.isLoggedIn() == false).
+      </description>
+      <transitions>
+        <to ref="home"
+            event="onLoginSuccess"
+            navOptions="popUpTo(login, inclusive=true)" />
+      </transitions>
+    </screen>
+
+    <!-- =========================================================
+         HOME
+         Composable : HomeScreen
+         Tabs       : 4 (bottom navigation)
+    ========================================================= -->
+    <screen id="home" route="home"
+            composable="HomeScreen"
+            file="presentation/ui/screens/HomeScreen.kt">
+      <description>
+        Pantalla principal con TopAppBar y BottomNavigationBar de 4 tabs.
+        Tab activo manejado con mutableIntStateOf(0) local.
+      </description>
+
+      <tabs>
+        <tab index="0" id="canchas"
+             composable="CanchasDisponiblesTab"
+             icon="SportsSoccer"
+             label="Canchas">
+          <description>
+            Lista de canchas disponibles (MockData.canchas).
+            Cada ítem en CanchaCard3 con precio/hora y botón Reservar (sin acción aún).
+          </description>
+        </tab>
+
+        <tab index="1" id="reservas"
+             composable="MisReservasTab"
+             icon="DateRange"
+             label="Reservas">
+          <description>
+            Lista de reservas del usuario (MockData.reservas).
+            Badge de estado: PENDIENTE | CONFIRMADA | CANCELADA | COMPLETADA.
+          </description>
+        </tab>
+
+        <tab index="2" id="partidos"
+             composable="PartidosTab"
+             icon="Home"
+             label="Partidos">
+          <description>
+            Lista filtrable de partidos (MockData.partidos).
+            Filtros: fecha (Hoy / Esta semana), estado (Abiertos).
+            PartidoCard muestra VS, jugadores y precio.
+            Botón "Unirse" abre UnirsePartidoDialog modal.
+          </description>
+          <nested-components>
+            <component composable="FiltrosPartidos"
+                       description="Row de FilterChips con scroll horizontal" />
+            <component composable="PartidoCard"
+                       description="Card con equipos, fecha, jugadores y precio" />
+            <component composable="UnirsePartidoDialog"
+                       description="AlertDialog: nombre de equipo + dropdown posición + confirmar" />
+            <component composable="CrearPartidoCard"
+                       description="Card CTA para crear partido (botón sin acción aún)" />
+          </nested-components>
+        </tab>
+
+        <tab index="3" id="perfil"
+             composable="PerfilContent"
+             icon="Person"
+             label="Perfil">
+          <description>
+            Avatar placeholder, nombre y email del usuario Firebase.
+            Estadísticas mock (Partidos, Victorias, Goles).
+            Botón Cerrar Sesión dispara onSignOut.
+          </description>
+        </tab>
+      </tabs>
+
+      <actions>
+        <action id="info_button"
+                composable="TopAppBar → IconButton"
+                icon="Info"
+                event="onNavigateToAcercaDe" />
+      </actions>
+
+      <transitions>
+        <to ref="login"
+            event="onSignOut"
+            navOptions="popUpTo(home, inclusive=true)" />
+        <to ref="acerca_de"
+            event="onNavigateToAcercaDe" />
+      </transitions>
+    </screen>
+
+    <!-- =========================================================
+         ACERCA DE
+         Composable : AcercaDe
+         file       : presentation/ui/screens/AcercaDe.kt
+    ========================================================= -->
+    <screen id="acerca_de" route="acerca_de"
+            composable="AcercaDe"
+            file="presentation/ui/screens/AcercaDe.kt">
+      <description>
+        Pantalla informativa sobre la app y el equipo.
+        Contenido en LazyColumn con cards por sección (Misión, Visión, Valores, Equipo).
+        Todos los strings en res/values/strings.xml.
+      </description>
+      <nested-components>
+        <component composable="SectionCard"
+                   description="ElevatedCard reutilizable con título + contenido" />
+      </nested-components>
+      <transitions>
+        <to ref="home"
+            event="onBack"
+            type="popBackStack" />
+      </transitions>
+    </screen>
+
+  </screens>
+
+  <!-- =========================================================
+       FLUJO GLOBAL
+       login ──onLoginSuccess──▶ home
+       home  ──onSignOut───────▶ login
+       home  ──info button─────▶ acerca_de
+       acerca_de ──back────────▶ home
+  ========================================================= -->
+
+  <navigation-graph
+      implementation="AppNavigation.kt"
+      file="presentation/navigation/AppNavigation.kt"
+      start-destination="login_or_home_based_on_session">
+    <note>
+      El startDestination se resuelve en runtime:
+      if (googleAuthClient.isLoggedIn()) home else login
+    </note>
+  </navigation-graph>
+
+</app>

@@ -1,6 +1,7 @@
 package com.example.futbol_tnt.presentation.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,37 +16,48 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SportsSoccer
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,8 +73,20 @@ import com.example.futbol_tnt.data.model.EstadoReserva
 import com.example.futbol_tnt.data.model.MockData
 import com.example.futbol_tnt.data.model.Partido
 import com.example.futbol_tnt.data.model.Reserva
+import com.example.futbol_tnt.data.model.TipoCancha
 import com.google.firebase.auth.FirebaseAuth
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+data class FiltroPartidos(
+    val fecha: FiltroFecha = FiltroFecha.TODOS,
+    val tipoCancha: FiltroTipoCancha = FiltroTipoCancha.TODOS,
+    val estado: FiltroEstado = FiltroEstado.TODOS
+)
+
+enum class FiltroFecha { HOY, ESTA_SEMANA, TODOS }
+enum class FiltroTipoCancha { FUTBOL_5, FUTBOL_7, FUTBOL_11, TODOS }
+enum class FiltroEstado { ABIERTOS, LLENOS, TODOS }
 
 data class BottomNavItem(
     val title: String,
@@ -145,9 +169,8 @@ private fun CanchasDisponiblesTab() {
                 subtitulo = "5 canchas disponibles cerca de vos"
             )
         }
-
-        items(MockData.canchas) { canchas ->
-            CanchaCard3(cancha = canchas)
+        items(MockData.canchas) { cancha ->
+            CanchaCard3(cancha = cancha)
         }
     }
 }
@@ -180,7 +203,6 @@ private fun CanchaCard3(cancha: Cancha) {
         )
     ) {
         Column {
-            // Imagen placeholder (luego agregamos imagen real)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -203,7 +225,7 @@ private fun CanchaCard3(cancha: Cancha) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text =cancha.nombre,
+                        text = cancha.nombre,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -212,7 +234,7 @@ private fun CanchaCard3(cancha: Cancha) {
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text =cancha.tipo.name.replace("_", " "),
+                            text = cancha.tipo.name.replace("_", " "),
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
@@ -230,7 +252,7 @@ private fun CanchaCard3(cancha: Cancha) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text =cancha.direccion,
+                        text = cancha.direccion,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -267,16 +289,14 @@ private fun CanchaCard(cancha: Cancha) {
         onClick = { },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text =cancha.nombre,
+                    text = cancha.nombre,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -285,7 +305,7 @@ private fun CanchaCard(cancha: Cancha) {
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text =cancha.tipo.name.replace("_", " "),
+                        text = cancha.tipo.name.replace("_", " "),
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -303,7 +323,7 @@ private fun CanchaCard(cancha: Cancha) {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text =cancha.direccion,
+                    text = cancha.direccion,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -334,6 +354,43 @@ private fun CanchaCard(cancha: Cancha) {
 
 @Composable
 private fun PartidosTab() {
+    var filtros by remember { mutableStateOf(FiltroPartidos()) }
+    var showUnirseDialog by remember { mutableStateOf<Partido?>(null) }
+
+    val partidosFiltrados = remember(filtros) {
+        MockData.partidos.filter { partido ->
+            val filtroFechaOk = when (filtros.fecha) {
+                FiltroFecha.HOY -> partido.fecha.toLocalDate() == LocalDate.now()
+                FiltroFecha.ESTA_SEMANA -> {
+                    val hoy = LocalDate.now()
+                    val finSemana = hoy.plusDays(7)
+                    partido.fecha.toLocalDate() in hoy..finSemana
+                }
+                FiltroFecha.TODOS -> true
+            }
+            val filtroTipoOk = when (filtros.tipoCancha) {
+                FiltroTipoCancha.FUTBOL_5 -> partido.cancha.tipo == TipoCancha.FUTBOL_5
+                FiltroTipoCancha.FUTBOL_7 -> partido.cancha.tipo == TipoCancha.FUTBOL_7
+                FiltroTipoCancha.FUTBOL_11 -> partido.cancha.tipo == TipoCancha.FUTBOL_11
+                FiltroTipoCancha.TODOS -> true
+            }
+            val filtroEstadoOk = when (filtros.estado) {
+                FiltroEstado.ABIERTOS -> partido.estado == EstadoPartido.ABIERTO
+                FiltroEstado.LLENOS -> partido.estado == EstadoPartido.LLENO
+                FiltroEstado.TODOS -> true
+            }
+            filtroFechaOk && filtroTipoOk && filtroEstadoOk
+        }
+    }
+
+    showUnirseDialog?.let { partido ->
+        UnirsePartidoDialog(
+            partido = partido,
+            onDismiss = { showUnirseDialog = null },
+            onConfirm = { showUnirseDialog = null }
+        )
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -343,14 +400,21 @@ private fun PartidosTab() {
             Spacer(modifier = Modifier.height(8.dp))
             HeaderSection(
                 titulo = "Partidos",
-                subtitulo = "${MockData.partidos.size} partidos disponibles"
+                subtitulo = "${partidosFiltrados.size} partidos"
             )
         }
-
-        items(MockData.partidos) { partido ->
-            PartidoCard(partido = partido)
+        item {
+            FiltrosPartidos(
+                filtros = filtros,
+                onFiltrosChange = { filtros = it }
+            )
         }
-
+        items(partidosFiltrados) { partido ->
+            PartidoCard(
+                partido = partido,
+                onUnirse = { showUnirseDialog = partido }
+            )
+        }
         item {
             Spacer(modifier = Modifier.height(8.dp))
             CrearPartidoCard()
@@ -359,7 +423,80 @@ private fun PartidosTab() {
 }
 
 @Composable
-private fun PartidoCard(partido: Partido) {
+private fun FiltrosPartidos(
+    filtros: FiltroPartidos,
+    onFiltrosChange: (FiltroPartidos) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.FilterList,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Filtros",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = filtros.fecha == FiltroFecha.HOY,
+                onClick = {
+                    onFiltrosChange(filtros.copy(
+                        fecha = if (filtros.fecha == FiltroFecha.HOY) FiltroFecha.TODOS else FiltroFecha.HOY
+                    ))
+                },
+                label = { Text("Hoy") },
+                leadingIcon = if (filtros.fecha == FiltroFecha.HOY) {
+                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                } else null
+            )
+            FilterChip(
+                selected = filtros.fecha == FiltroFecha.ESTA_SEMANA,
+                onClick = {
+                    onFiltrosChange(filtros.copy(
+                        fecha = if (filtros.fecha == FiltroFecha.ESTA_SEMANA) FiltroFecha.TODOS else FiltroFecha.ESTA_SEMANA
+                    ))
+                },
+                label = { Text("Esta semana") },
+                leadingIcon = if (filtros.fecha == FiltroFecha.ESTA_SEMANA) {
+                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                } else null
+            )
+            FilterChip(
+                selected = filtros.estado == FiltroEstado.ABIERTOS,
+                onClick = {
+                    onFiltrosChange(filtros.copy(
+                        estado = if (filtros.estado == FiltroEstado.ABIERTOS) FiltroEstado.TODOS else FiltroEstado.ABIERTOS
+                    ))
+                },
+                label = { Text("Abiertos") },
+                leadingIcon = if (filtros.estado == FiltroEstado.ABIERTOS) {
+                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                } else null
+            )
+        }
+    }
+}
+
+@Composable
+private fun PartidoCard(
+    partido: Partido,
+    onUnirse: () -> Unit
+) {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
     ElevatedCard(
@@ -400,7 +537,6 @@ private fun PartidoCard(partido: Partido) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "VS",
@@ -409,7 +545,6 @@ private fun PartidoCard(partido: Partido) {
                         color = MaterialTheme.colorScheme.tertiary
                     )
                 }
-
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = partido.nombreVisitante,
@@ -445,7 +580,6 @@ private fun PartidoCard(partido: Partido) {
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-
                 Text(
                     text = "${partido.jugadoresActuales}/${partido.jugadoresMaximos} jugadores",
                     style = MaterialTheme.typography.bodySmall,
@@ -466,9 +600,8 @@ private fun PartidoCard(partido: Partido) {
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-
                 if (partido.estado == EstadoPartido.ABIERTO) {
-                    FilledTonalButton(onClick = { }) {
+                    FilledTonalButton(onClick = onUnirse) {
                         Text("Unirse")
                     }
                 } else if (partido.estado == EstadoPartido.LLENO) {
@@ -489,7 +622,6 @@ private fun EstadoPartidoBadge(estado: EstadoPartido) {
         EstadoPartido.EN_JUEGO -> MaterialTheme.colorScheme.secondary to "En juego"
         EstadoPartido.FINALIZADO -> MaterialTheme.colorScheme.onSurfaceVariant to "Finalizado"
     }
-
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = color.copy(alpha = 0.2f)
@@ -501,6 +633,137 @@ private fun EstadoPartidoBadge(estado: EstadoPartido) {
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
     }
+}
+
+@Composable
+private fun UnirsePartidoDialog(
+    partido: Partido,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    var nombreEquipo by remember { mutableStateOf("") }
+    var posicionSeleccionada by remember { mutableStateOf("Delantero") }
+    val posiciones = listOf("Delantero", "Mediocampista", "Defensor", "Arquero")
+    var showPosiciones by remember { mutableStateOf(false) }
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Unirse al partido",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${partido.nombreLocal} vs ${partido.nombreVisitante}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${partido.fecha.format(formatter)} - ${partido.cancha.nombre}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "$${partido.precioPorPersona.toInt()}/persona",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = nombreEquipo,
+                    onValueChange = { nombreEquipo = it },
+                    label = { Text("Nombre de tu equipo") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("Ej: Los Chetos FC") }
+                )
+
+                Column {
+                    Text(
+                        text = "Posición",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(4.dp),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
+                        ),
+                        onClick = { showPosiciones = true }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(posicionSeleccionada)
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    DropdownMenu(
+                        expanded = showPosiciones,
+                        onDismissRequest = { showPosiciones = false }
+                    ) {
+                        posiciones.forEach { posicion ->
+                            DropdownMenuItem(
+                                text = { Text(posicion) },
+                                onClick = {
+                                    posicionSeleccionada = posicion
+                                    showPosiciones = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = nombreEquipo.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Confirmar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 @Composable
@@ -556,7 +819,6 @@ private fun MisReservasTab() {
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-
         items(MockData.reservas) { reserva ->
             ReservaCard(reserva = reserva)
         }
@@ -571,9 +833,7 @@ private fun ReservaCard(reserva: Reserva) {
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -644,7 +904,6 @@ private fun EstadoBadge(estado: EstadoReserva) {
         EstadoReserva.CANCELADA -> MaterialTheme.colorScheme.error to "Cancelada"
         EstadoReserva.COMPLETADA -> MaterialTheme.colorScheme.secondary to "Completada"
     }
-
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = color.copy(alpha = 0.2f)
@@ -678,10 +937,8 @@ private fun PerfilContent(
                 subtitulo = "Gestiona tu cuenta"
             )
         }
-
         item {
             Spacer(modifier = Modifier.height(24.dp))
-
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = CircleShape,
@@ -697,26 +954,21 @@ private fun PerfilContent(
                 }
             }
         }
-
         item {
             Spacer(modifier = Modifier.height(16.dp))
-
             Text(
                 text = user?.displayName ?: "Usuario",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-
             Text(
                 text = user?.email ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
         item {
             Spacer(modifier = Modifier.height(32.dp))
-
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -736,10 +988,8 @@ private fun PerfilContent(
                 }
             }
         }
-
         item {
             Spacer(modifier = Modifier.height(16.dp))
-
             OutlinedButton(
                 onClick = onSignOut,
                 modifier = Modifier.fillMaxWidth()

@@ -27,21 +27,119 @@ Además, la aplicación incorpora el concepto de "fútbol nómade", donde los ju
 
 ## Tecnologías Utilizadas
 
-- **Frontend móvil**: Android (basado en .gitignore y estructura de proyecto)
-- **Backend**: Por definir (por ejemplo, Node.js, Python, o Firebase)
-- **Base de datos**: Por definir (por ejemplo, PostgreSQL, MongoDB, o Firebase Firestore)
-- **Geolocalización**: GPS del dispositivo y servicios de mapas (por ejemplo, Google Maps API)
-- **Notificaciones**: Firebase Cloud Messaging (FCM) o similar
+- **Frontend móvil**: Android con Jetpack Compose + Material3
+- **Autenticación**: Firebase Auth (Google Sign-In)
+- **Backend**: Por definir (Firebase Firestore en roadmap)
+- **Geolocalización**: Google Maps API (pendiente)
+- **Notificaciones**: Firebase Cloud Messaging (pendiente)
 
-## Instalación
+## Pantallas
+
+| Ruta | Composable | Descripción |
+|------|-----------|-------------|
+| `login` | `LoginScreen` | Login con Google via Firebase |
+| `home` | `HomeScreen` | Bottom nav con 4 tabs (Canchas, Reservas, Partidos, Perfil) |
+| `acerca_de` | `AcercaDe` | Info de la app y el equipo |
+
+El diagrama completo de navegación y transiciones está en [`docs/views-flow.xml`](docs/views-flow.xml).
+
+## Build del APK
+
+### Prerrequisitos
+
+| Herramienta | Versión mínima |
+|-------------|---------------|
+| JDK | 17 |
+| Android Studio | Ladybug (2024.2) o superior |
+| Android SDK | API 36 (compileSdk) |
+| Dispositivo / emulador | Android 7.0+ (minSdk 24) |
+
+### Setup local
 
 1. Clonar el repositorio:
     ```bash
-    git clone https://github.com/tu-usuario/tnt-futbol-nomade.git
+    git clone https://github.com/mero02/tnt-futbol-nomade.git
+    cd tnt-futbol-nomade
     ```
-2. Abrir el proyecto en Android Studio.
-3. Configurar las variables de entorno para el backend (API keys, etc.).
-4. Compilar y ejecutar en un dispositivo Android o emulador.
+
+2. Obtener `google-services.json` desde [Firebase Console](https://console.firebase.google.com) (proyecto `futbol-nomade`) y colocarlo en `app/`:
+    ```
+    app/google-services.json   ← este archivo está gitignoreado por seguridad
+    ```
+    Sin este archivo el proyecto no compila.
+
+3. Verificar que `local.properties` apunta al SDK:
+    ```properties
+    sdk.dir=/Users/<tu-usuario>/Library/Android/sdk
+    ```
+    Android Studio lo genera automáticamente al abrir el proyecto.
+
+### Build debug APK (desarrollo)
+
+```bash
+./gradlew assembleDebug
+```
+
+El APK generado queda en:
+```
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Instalar directamente en dispositivo
+
+Con un dispositivo conectado por USB (o emulador corriendo):
+```bash
+./gradlew installDebug
+```
+
+### Build release APK (distribución)
+
+1. Generar un keystore de firma (solo la primera vez):
+    ```bash
+    keytool -genkey -v -keystore futbol-tnt.keystore \
+      -alias futbol-tnt -keyalg RSA -keysize 2048 -validity 10000
+    ```
+
+2. Agregar `signingConfigs` en `app/build.gradle.kts`:
+    ```kotlin
+    signingConfigs {
+        create("release") {
+            storeFile = file("../futbol-tnt.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = "futbol-tnt"
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+    ```
+
+3. Buildear:
+    ```bash
+    ./gradlew assembleRelease
+    # Output: app/build/outputs/apk/release/app-release.apk
+    ```
+
+### Build AAB para Play Store
+
+```bash
+./gradlew bundleRelease
+# Output: app/build/outputs/bundle/release/app-release.aab
+```
+
+### Troubleshooting
+
+| Error | Solución |
+|-------|---------|
+| `google-services.json not found` | Colocar el archivo en `app/` (ver Setup local) |
+| `Unsupported class file major version` | Verificar que Android Studio usa JDK 17: **File → Project Structure → SDK Location → JDK** |
+| Build cacheado con errores | **File → Invalidate Caches → Invalidate and Restart** |
+| `JAVA_HOME` apunta a JDK incorrecto | Agregar en `gradle.properties`: `org.gradle.java.home=/path/to/jdk17` |
 
 ## Uso
 

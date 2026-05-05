@@ -62,6 +62,7 @@ data class Partido(
 - Usuario no está ya en el partido
 
 ### Archivo a Modificar
+- 
 - `data/repository/PartidoRepository.kt` (nuevo)
 
 ---
