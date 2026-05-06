@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 class PartidoRepository : IPartidoRepository {
 
     private val _partidos = MutableStateFlow<List<Partido>>(MockData.partidos)
-    val partidos: StateFlow<List<Partido>> = _partidos.asStateFlow()
+    override val partidos: StateFlow<List<Partido>> = _partidos.asStateFlow()
 
-    fun unirseAPartido(partidoId: String): Boolean {
+    override fun unirseAPartido(partidoId: String): Boolean {
         val lista = _partidos.value.toMutableList()
         val idx = lista.indexOfFirst { it.id == partidoId }
         if (idx == -1) return false
@@ -27,7 +27,7 @@ class PartidoRepository : IPartidoRepository {
         return true
     }
 
-    fun crearPartido(partido: Partido) {
+    override fun crearPartido(partido: Partido) {
         _partidos.value = _partidos.value + partido
     }
 }
