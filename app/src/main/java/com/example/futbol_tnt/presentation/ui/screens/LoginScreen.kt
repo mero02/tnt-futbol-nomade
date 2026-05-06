@@ -43,6 +43,7 @@ fun LoginScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by authViewModel.uiState.collectAsState()
+    val pendingIntent by authViewModel.pendingSignInIntent.collectAsState()
     val context = LocalContext.current
 
     val signInLauncher = rememberLauncherForActivityResult(
@@ -58,6 +59,13 @@ fun LoginScreen(
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
             onLoginSuccess()
+        }
+    }
+
+    LaunchedEffect(pendingIntent) {
+        pendingIntent?.let { intent ->
+            signInLauncher.launch(intent)
+            authViewModel.clearPendingIntent()
         }
     }
 
@@ -112,12 +120,7 @@ fun LoginScreen(
             }
             else -> {
                 GoogleSignInButton(
-                    onClick = {
-                        authViewModel.onGoogleSignInClick()
-                        authViewModel.getPendingSignInIntent()?.let { intent ->
-                            signInLauncher.launch(intent)
-                        }
-                    }
+                    onClick = { authViewModel.onGoogleSignInClick() }
                 )
             }
         }

@@ -24,7 +24,8 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    private var pendingSignInIntent: Intent? = null
+    private val _pendingSignInIntent = MutableStateFlow<Intent?>(null)
+    val pendingSignInIntent: StateFlow<Intent?> = _pendingSignInIntent.asStateFlow()
 
     fun onGoogleSignInClick() {
         viewModelScope.launch {
@@ -40,11 +41,15 @@ class AuthViewModel(
                     _uiState.value = AuthUiState.Error(result.message)
                 }
                 is AuthResult.Pending -> {
-                    pendingSignInIntent = result.signInIntent
+                    _pendingSignInIntent.value = result.signInIntent
                     _uiState.value = AuthUiState.Idle
                 }
             }
         }
+    }
+
+    fun clearPendingIntent() {
+        _pendingSignInIntent.value = null
     }
 
     fun onSignInResult(intent: Intent?) {
@@ -67,8 +72,6 @@ class AuthViewModel(
             }
         }
     }
-
-    fun getPendingSignInIntent(): Intent? = pendingSignInIntent
 
     fun clearError() {
         _uiState.value = AuthUiState.Idle
