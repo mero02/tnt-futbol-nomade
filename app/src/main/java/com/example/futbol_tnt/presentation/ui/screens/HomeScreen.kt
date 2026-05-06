@@ -33,7 +33,6 @@ import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -55,6 +54,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,7 +63,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +75,8 @@ import com.example.futbol_tnt.data.model.MockData
 import com.example.futbol_tnt.data.model.Partido
 import com.example.futbol_tnt.data.model.Reserva
 import com.example.futbol_tnt.data.model.TipoCancha
+import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
+import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.google.firebase.auth.FirebaseAuth
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -100,6 +102,8 @@ data class BottomNavItem(
 fun HomeScreen(
     onSignOut: () -> Unit,
     onNavigateToAcercaDe: () -> Unit,
+    onCrearPartido: () -> Unit,
+    partidoViewModel: PartidoViewModel,
     modifier: Modifier = Modifier
 ) {
     val navItems = listOf(
@@ -151,7 +155,7 @@ fun HomeScreen(
             when (selectedIndex) {
                 0 -> CanchasDisponiblesTab()
                 1 -> MisReservasTab()
-                2 -> PartidosTab()
+                2 -> PartidosTab(viewModel = partidoViewModel, onCrearPartido = onCrearPartido)
                 3 -> PerfilContent(onSignOut = onSignOut)
             }
         }
@@ -221,7 +225,6 @@ private fun CanchaCard3(cancha: Cancha) {
                 )
             }
 
-
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -287,12 +290,18 @@ private fun CanchaCard3(cancha: Cancha) {
 }
 
 @Composable
-private fun PartidosTab() {
+private fun PartidosTab(
+    viewModel: PartidoViewModel,
+    onCrearPartido: () -> Unit
+) {
     var filtros by remember { mutableStateOf(FiltroPartidos()) }
     var showUnirseDialog by remember { mutableStateOf<Partido?>(null) }
 
-    val partidosFiltrados = remember(filtros) {
-        MockData.partidos.filter { partido ->
+    val todosLosPartidos by viewModel.partidos.collectAsState()
+    val evento by viewModel.evento.collectAsState()
+
+    val partidosFiltrados = remember(filtros, todosLosPartidos) {
+        todosLosPartidos.filter { partido ->
             val filtroFechaOk = when (filtros.fecha) {
                 FiltroFecha.HOY -> partido.fecha.toLocalDate() == LocalDate.now()
                 FiltroFecha.ESTA_SEMANA -> {
@@ -317,11 +326,21 @@ private fun PartidosTab() {
         }
     }
 
+    LaunchedEffect(evento) {
+        when (evento) {
+            is PartidoEvento.UnirseExito, is PartidoEvento.PartidoLleno -> {
+                showUnirseDialog = null
+                viewModel.limpiarEvento()
+            }
+            else -> {}
+        }
+    }
+
     showUnirseDialog?.let { partido ->
         UnirsePartidoDialog(
             partido = partido,
             onDismiss = { showUnirseDialog = null },
-            onConfirm = { showUnirseDialog = null }
+            onConfirm = { viewModel.unirseAPartido(partido.id) }
         )
     }
 
@@ -351,7 +370,7 @@ private fun PartidosTab() {
         }
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            CrearPartidoCard()
+            CrearPartidoCard(onClick = onCrearPartido)
         }
     }
 }
@@ -431,7 +450,6 @@ private fun PartidoCard(
     partido: Partido,
     onUnirse: () -> Unit
 ) {
-
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -509,7 +527,7 @@ private fun PartidoCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = partido.fecha.format(formatter),
+                        text = partido.fecha.format(dateTimeFormatter),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -612,7 +630,7 @@ private fun UnirsePartidoDialog(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "${partido.fecha.format(formatter)} - ${partido.cancha.nombre}",
+                            text = "${partido.fecha.format(dateTimeFormatter)} - ${partido.cancha.nombre}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -704,7 +722,7 @@ private fun UnirsePartidoDialog(
 }
 
 @Composable
-private fun CrearPartidoCard() {
+private fun CrearPartidoCard(onClick: () -> Unit) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
@@ -733,7 +751,7 @@ private fun CrearPartidoCard() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Button(onClick = { }) {
+            Button(onClick = onClick) {
                 Text("Crear Partido")
             }
         }
@@ -764,7 +782,6 @@ private fun MisReservasTab() {
 
 @Composable
 private fun ReservaCard(reserva: Reserva) {
-
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -794,7 +811,7 @@ private fun ReservaCard(reserva: Reserva) {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = reserva.fecha.format(formatter),
+                    text = reserva.fecha.format(dateTimeFormatter),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.width(16.dp))
