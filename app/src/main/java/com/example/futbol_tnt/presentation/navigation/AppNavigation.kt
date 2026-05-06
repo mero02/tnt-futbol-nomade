@@ -9,7 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.futbol_tnt.data.auth.GoogleAuthClient
 import com.example.futbol_tnt.presentation.ui.screens.AcercaDe
 import com.example.futbol_tnt.presentation.ui.screens.CrearPartidoScreen
-import com.example.futbol_tnt.presentation.ui.screens.HomeScreen
+import com.example.futbol_tnt.presentation.ui.screens.home.HomeScreen
 import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel

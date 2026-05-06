@@ -3,6 +3,7 @@ package com.example.futbol_tnt.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.futbol_tnt.data.model.Partido
+import com.example.futbol_tnt.data.repository.IPartidoRepository
 import com.example.futbol_tnt.data.repository.PartidoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,7 @@ sealed class PartidoEvento {
 }
 
 class PartidoViewModel(
-    private val repository: PartidoRepository = PartidoRepository()
+    private val repository: IPartidoRepository = PartidoRepository()
 ) : ViewModel() {
 
     val partidos: StateFlow<List<Partido>> = repository.partidos

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class PartidoRepository {
+class PartidoRepository : IPartidoRepository {
 
     private val _partidos = MutableStateFlow<List<Partido>>(MockData.partidos)
     val partidos: StateFlow<List<Partido>> = _partidos.asStateFlow()

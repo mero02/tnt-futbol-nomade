@@ -53,6 +53,53 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.UUID
 
+
+private val crearPartidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
+data class FormPartido(
+    val nombreLocal: String,
+    val nombreVisitante: String,
+    val cancha: com.example.futbol_tnt.data.model.Cancha?,
+    val fecha: String,
+    val hora: String,
+    val jugadoresMax: String,
+    val precio: String
+)
+
+fun validarFormPartido(form: FormPartido): String? {
+    if (form.nombreLocal.isBlank()) return "Ingresá el nombre del equipo local"
+    if (form.nombreVisitante.isBlank()) return "Ingresá el nombre del equipo visitante"
+    if (form.nombreLocal.trim() == form.nombreVisitante.trim()) return "Los equipos deben tener nombres distintos"
+    if (form.cancha == null) return "Seleccioná una cancha"
+    if (form.fecha.isBlank() || form.hora.isBlank()) return "Ingresá fecha y hora"
+    val jugadores = form.jugadoresMax.toIntOrNull()
+    if (jugadores == null || jugadores < 5 || jugadores > 22) return "Jugadores: entre 5 y 22"
+    val precio = form.precio.toDoubleOrNull()
+    if (precio == null || precio <= 0) return "Ingresá un precio válido"
+    return try {
+        val fechaHora = LocalDateTime.parse("${form.fecha} ${form.hora}", crearPartidoFormatter)
+        if (fechaHora.isBefore(LocalDateTime.now())) "La fecha debe ser futura" else null
+    } catch (e: DateTimeParseException) {
+        "Formato incorrecto. Usá dd/MM/yyyy y HH:mm"
+    }
+}
+
+fun buildPartido(form: FormPartido): Partido {
+    val fechaHora = LocalDateTime.parse("${form.fecha} ${form.hora}", crearPartidoFormatter)
+    return Partido(
+        id = UUID.randomUUID().toString(),
+        nombreLocal = form.nombreLocal.trim(),
+        nombreVisitante = form.nombreVisitante.trim(),
+        fecha = fechaHora,
+        cancha = form.cancha!!,
+        precioPorPersona = form.precio.toDouble(),
+        jugadoresActuales = 0,
+        jugadoresMaximos = form.jugadoresMax.toInt(),
+        estado = EstadoPartido.ABIERTO,
+        nombreOrganizador = "Yo"
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrearPartidoScreen(
@@ -70,7 +117,6 @@ fun CrearPartidoScreen(
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
     val evento by viewModel.evento.collectAsState()
-    val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
     LaunchedEffect(evento) {
         if (evento is PartidoEvento.PartidoCreadoExito) {
@@ -80,38 +126,10 @@ fun CrearPartidoScreen(
     }
 
     fun validarYCrear() {
-        errorMsg = null
-        if (nombreLocal.isBlank()) { errorMsg = "Ingresá el nombre del equipo local"; return }
-        if (nombreVisitante.isBlank()) { errorMsg = "Ingresá el nombre del equipo visitante"; return }
-        if (nombreLocal.trim() == nombreVisitante.trim()) { errorMsg = "Los equipos deben tener nombres distintos"; return }
-        if (canchaSeleccionada == null) { errorMsg = "Seleccioná una cancha"; return }
-        if (fecha.isBlank() || hora.isBlank()) { errorMsg = "Ingresá fecha y hora"; return }
-        val jugadores = jugadoresMax.toIntOrNull()
-        if (jugadores == null || jugadores < 5 || jugadores > 22) { errorMsg = "Jugadores: entre 5 y 22"; return }
-        val precioParsed = precio.toDoubleOrNull()
-        if (precioParsed == null || precioParsed <= 0) { errorMsg = "Ingresá un precio válido"; return }
-        val fechaHora = try {
-            LocalDateTime.parse("$fecha $hora", fmt)
-        } catch (e: DateTimeParseException) {
-            errorMsg = "Formato incorrecto. Usá dd/MM/yyyy y HH:mm"
-            return
-        }
-        if (fechaHora.isBefore(LocalDateTime.now())) { errorMsg = "La fecha debe ser futura"; return }
-
-        viewModel.crearPartido(
-            Partido(
-                id = UUID.randomUUID().toString(),
-                nombreLocal = nombreLocal.trim(),
-                nombreVisitante = nombreVisitante.trim(),
-                fecha = fechaHora,
-                cancha = canchaSeleccionada!!,
-                precioPorPersona = precioParsed,
-                jugadoresActuales = 0,
-                jugadoresMaximos = jugadores,
-                estado = EstadoPartido.ABIERTO,
-                nombreOrganizador = "Yo"
-            )
-        )
+        val form = FormPartido(nombreLocal, nombreVisitante, canchaSeleccionada, fecha, hora, jugadoresMax, precio)
+        val error = validarFormPartido(form)
+        if (error != null) { errorMsg = error; return }
+        viewModel.crearPartido(buildPartido(form))
     }
 
     Scaffold(
