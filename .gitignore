@@ -1,38 +1,48 @@
-# Gradle files
+# --- Gradle ---
 .gradle/
 build/
+app/build/
+*.gradle
 
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
+# --- Android Studio / IntelliJ ---
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
 captures/
 .externalNativeBuild/
 .cxx/
-*.aab
+
+# --- Local Configuration ---
+local.properties
+gradle.properties
+# (Nota: gradle.properties a veces se sube, pero si contiene rutas locales o tokens, mejor ignorarlo)
+
+# --- Output Files ---
 *.apk
+*.aab
+*.output
 output-metadata.json
 
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
 
-# Keystore files
-*.jks
-*.keystore
-
-# Google Services (e.g. APIs or Firebase)
+# --- Security / Firebase ---
+# Ignoramos google-services para no subir credenciales privadas al repo público
+app/google-services.json
 google-services.json
 
-# Archivos privados / credenciales sensibles
+# --- Keystores ---
+*.jks
+*.keystore
+*.p12
+
+# --- Logs & Profiling ---
+*.log
+*.hprof
+
+# --- Private Folders ---
 private/
 privado/
-
-# Android Profiling
-*.hprof
