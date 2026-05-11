@@ -1,4 +1,4 @@
-# Buenas Prácticas de Kotlin para FutbolTNT
+# Buenas Prácticas de Kotlin para Entra a la cancha
 
 Esta guía documenta las convenciones y mejores prácticas de Kotlin que seguimos en este proyecto.
 

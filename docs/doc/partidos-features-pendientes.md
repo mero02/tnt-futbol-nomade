@@ -1,4 +1,4 @@
-# FutbolTNT - Partidos: Funcionalidades Pendientes
+# Entra a la cancha - Partidos: Funcionalidades Pendientes
 
 ## Estado Actual
 

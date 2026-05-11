@@ -1,8 +1,8 @@
-# Fútbol Nómade
+# Entra a la cancha
 
 ## Descripción del Proyecto
 
-Fútbol Nómade es una aplicación móvil diseñada para conectar equipos de fútbol amateur incompletos con jugadores disponibles en tiempo real, facilitando la organización de partidos y promoviendo la integración de jugadores en distintas ciudades.
+Entra a la cancha es una aplicación móvil diseñada para conectar equipos de fútbol amateur incompletos con jugadores disponibles en tiempo real, facilitando la organización de partidos y promoviendo la integración de jugadores en distintas ciudades.
 
 ## Problema
 
@@ -101,17 +101,17 @@ Con un dispositivo conectado por USB (o emulador corriendo):
 
 1. Generar un keystore de firma (solo la primera vez):
     ```bash
-    keytool -genkey -v -keystore futbol-tnt.keystore \
-      -alias futbol-tnt -keyalg RSA -keysize 2048 -validity 10000
+    keytool -genkey -v -keystore entra-a-la-cancha.keystore \
+      -alias entra-a-la-cancha -keyalg RSA -keysize 2048 -validity 10000
     ```
 
 2. Agregar `signingConfigs` en `app/build.gradle.kts`:
     ```kotlin
     signingConfigs {
         create("release") {
-            storeFile = file("../futbol-tnt.keystore")
+            storeFile = file("../entra-a-la-cancha.keystore")
             storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = "futbol-tnt"
+            keyAlias = "entra-a-la-cancha"
             keyPassword = System.getenv("KEY_PASSWORD")
         }
     }
