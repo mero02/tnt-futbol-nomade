@@ -34,6 +34,8 @@ internal fun PerfilTab(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Leemos el usuario actual de Firebase una sola vez con remember{}.
+    // currentUser contiene nombre, email y foto provistos por Google al hacer login.
     val user = remember { FirebaseAuth.getInstance().currentUser }
 
     LazyColumn(
@@ -48,6 +50,7 @@ internal fun PerfilTab(
         }
         item {
             Spacer(modifier = Modifier.height(24.dp))
+            // Avatar circular con ícono de persona (placeholder — futura mejora: foto de Google)
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = CircleShape,
@@ -65,6 +68,7 @@ internal fun PerfilTab(
         }
         item {
             Spacer(modifier = Modifier.height(16.dp))
+            // Nombre y email traídos del perfil de Google via Firebase Auth
             Text(
                 text = user?.displayName ?: "Usuario",
                 style = MaterialTheme.typography.headlineSmall,
@@ -78,6 +82,7 @@ internal fun PerfilTab(
         }
         item {
             Spacer(modifier = Modifier.height(32.dp))
+            // Card con estadísticas hardcodeadas (mock). En el futuro vendría de Firestore.
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -99,6 +104,8 @@ internal fun PerfilTab(
         }
         item {
             Spacer(modifier = Modifier.height(16.dp))
+            // Botón de cerrar sesión: llama onSignOut que está definido en AppNavigation.
+            // Eso llama googleAuthClient.signOut() + Firebase.signOut() y navega al login.
             OutlinedButton(
                 onClick = onSignOut,
                 modifier = Modifier.fillMaxWidth()

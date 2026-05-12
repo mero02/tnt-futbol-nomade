@@ -42,26 +42,41 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Observa el estado del ViewModel como State para que Compose recomponga
+    // automáticamente cuando cambie (Loading, Success, Error, Idle).
     val uiState by authViewModel.uiState.collectAsState()
+
+    // pendingSignInIntent es el Intent de Google que hay que lanzar como Activity.
+    // El ViewModel lo emite cuando Google responde con el selector de cuentas.
     val pendingIntent by authViewModel.pendingSignInIntent.collectAsState()
     val context = LocalContext.current
 
+    // Launcher para la Activity de Google Sign-In.
+    // rememberLauncherForActivityResult registra el callback que recibe el resultado
+    // cuando el usuario elige (o cancela) su cuenta de Google.
     val signInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
+            // El usuario eligió una cuenta → pasamos el Intent al ViewModel para
+            // que extraiga el token y lo valide contra Firebase.
             authViewModel.onSignInResult(result.data)
         } else {
+            // El usuario cerró la pantalla sin elegir cuenta → limpiamos el error.
             authViewModel.clearError()
         }
     }
 
+    // Cuando el estado llega a Success, llamamos onLoginSuccess() para navegar a Home.
+    // LaunchedEffect evita ejecutarlo en cada recomposición; solo corre cuando uiState cambia.
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
             onLoginSuccess()
         }
     }
 
+    // Cuando el ViewModel emite el Intent de Google, lo lanzamos con el launcher
+    // y luego lo limpiamos para que no se vuelva a lanzar en una recomposición.
     LaunchedEffect(pendingIntent) {
         pendingIntent?.let { intent ->
             signInLauncher.launch(intent)
@@ -103,6 +118,10 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
+        // La UI cambia según el estado actual del ViewModel:
+        // - Loading: muestra spinner mientras Firebase procesa el token
+        // - Error: muestra el mensaje y vuelve a mostrar el botón para reintentar
+        // - Idle/otros: muestra el botón normalmente
         when (val state = uiState) {
             is AuthUiState.Loading -> {
                 CircularProgressIndicator()

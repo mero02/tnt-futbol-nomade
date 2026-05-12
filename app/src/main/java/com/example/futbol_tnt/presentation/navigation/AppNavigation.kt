@@ -14,6 +14,7 @@ import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 
+// Cada pantalla tiene una ruta string única. El NavController usa estas rutas para navegar.
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
@@ -21,14 +22,22 @@ sealed class Screen(val route: String) {
     data object CrearPartido : Screen("crear_partido")
 }
 
+// AppNavigation es el punto de entrada de toda la navegación de la app.
+// Crea el NavController (el "router"), los ViewModels compartidos, y define qué
+// pantalla renderizar para cada ruta.
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
+
+    // GoogleAuthClient y los ViewModels se crean una sola vez con remember{}
+    // para que sobrevivan recomposiciones sin perder su estado.
     val googleAuthClient = remember { GoogleAuthClient(context) }
     val authViewModel = remember { AuthViewModel(googleAuthClient) }
     val partidoViewModel = remember { PartidoViewModel() }
 
+    // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
+    // Así no vuelve a ver el login al reabrir la app.
     val startDestination = if (googleAuthClient.isLoggedIn()) {
         Screen.Home.route
     } else {
@@ -39,6 +48,9 @@ fun AppNavigation() {
         navController = navController,
         startDestination = startDestination
     ) {
+        // Pantalla de login: cuando el login es exitoso, navega a Home
+        // y elimina Login del back stack (popUpTo inclusive) para que
+        // el botón "atrás" del celular no vuelva al login.
         composable(Screen.Login.route) {
             LoginScreen(
                 authViewModel = authViewModel,
@@ -49,8 +61,14 @@ fun AppNavigation() {
                 }
             )
         }
+
+        // Pantalla principal con tabs. Recibe lambdas de navegación en lugar de
+        // tener acceso directo al navController — esto mantiene HomeScreen
+        // desacoplada del sistema de navegación (más fácil de testear y reutilizar).
         composable(Screen.Home.route) {
             HomeScreen(
+                // Al cerrar sesión: limpia Firebase + Google, y vuelve al login
+                // eliminando Home del back stack para evitar volver con "atrás".
                 onSignOut = {
                     googleAuthClient.signOut()
                     navController.navigate(Screen.Login.route) {
@@ -63,11 +81,14 @@ fun AppNavigation() {
                 onCrearPartido = {
                     navController.navigate(Screen.CrearPartido.route)
                 },
+                // PartidoViewModel se pasa desde acá para que PartidosTab y
+                // CrearPartidoScreen compartan el mismo estado de partidos.
                 partidoViewModel = partidoViewModel
             )
         }
         composable(Screen.AcercaDe.route) {
             AcercaDe(
+                // popBackStack() vuelve a la pantalla anterior (Home)
                 onBack = { navController.popBackStack() }
             )
         }

@@ -68,12 +68,21 @@ internal fun PartidosTab(
     viewModel: PartidoViewModel,
     onCrearPartido: () -> Unit
 ) {
+    // filtros es el estado local de los chips de búsqueda. Cuando cambia,
+    // la lista se recalcula automáticamente via remember(filtros, ...).
     var filtros by remember { mutableStateOf(FiltroPartidos()) }
+
+    // showUnirseDialog guarda el partido sobre el que el usuario tocó "Unirse",
+    // o null si el dialog está cerrado.
     var showUnirseDialog by remember { mutableStateOf<Partido?>(null) }
 
+    // collectAsState() convierte el StateFlow del ViewModel en un State de Compose.
+    // Cada vez que el ViewModel actualice la lista, Compose recompone automáticamente.
     val todosLosPartidos by viewModel.partidos.collectAsState()
     val evento by viewModel.evento.collectAsState()
 
+    // La lista filtrada se recalcula solo cuando cambian los filtros o los partidos.
+    // remember(filtros, todosLosPartidos) evita recalcular en cada recomposición innecesaria.
     val partidosFiltrados = remember(filtros, todosLosPartidos) {
         todosLosPartidos.filter { partido ->
             val filtroFechaOk = when (filtros.fecha) {
@@ -94,6 +103,8 @@ internal fun PartidosTab(
         }
     }
 
+    // Escucha eventos one-shot del ViewModel (Unirse exitoso, partido lleno).
+    // Al recibir alguno, cierra el dialog y limpia el evento para no re-procesarlo.
     LaunchedEffect(evento) {
         when (evento) {
             is PartidoEvento.UnirseExito, is PartidoEvento.PartidoLleno -> {
@@ -104,10 +115,13 @@ internal fun PartidosTab(
         }
     }
 
+    // Dialog de confirmación para unirse. Solo se muestra si showUnirseDialog != null.
     showUnirseDialog?.let { partido ->
         UnirsePartidoDialog(
             partido = partido,
             onDismiss = { showUnirseDialog = null },
+            // Al confirmar, el ViewModel incrementa jugadoresActuales y puede cambiar
+            // el estado a LLENO si se alcanzó el máximo.
             onConfirm = { viewModel.unirseAPartido(partido.id) }
         )
     }
@@ -125,19 +139,27 @@ internal fun PartidosTab(
             )
         }
         item {
+            // FiltrosPartidos recibe los filtros actuales y una lambda para actualizarlos.
+            // Cuando el usuario toca un chip, llama onFiltrosChange con el nuevo FiltroPartidos,
+            // lo que actualiza filtros aquí arriba y desencadena el recálculo de partidosFiltrados.
             FiltrosPartidos(
                 filtros = filtros,
                 onFiltrosChange = { filtros = it }
             )
         }
+        // key = { it.id } permite a Compose identificar cada card individualmente
+        // para animaciones y evitar re-renders innecesarios al actualizar la lista.
         items(partidosFiltrados, key = { it.id }) { partido ->
             PartidoCard(
                 partido = partido,
+                // Guardar el partido en showUnirseDialog abre el AlertDialog de confirmación
                 onUnirse = { showUnirseDialog = partido }
             )
         }
         item {
             Spacer(modifier = Modifier.height(8.dp))
+            // Card al final de la lista con el botón "Crear Partido"
+            // que navega a CrearPartidoScreen via la lambda onCrearPartido.
             CrearPartidoCard(onClick = onCrearPartido)
         }
     }
@@ -166,12 +188,15 @@ private fun FiltrosPartidos(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        // Los chips son desplazables horizontalmente con horizontalScroll
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Chip "Hoy": toggle — si ya está seleccionado, vuelve a TODOS.
+            // Patrón copy() actualiza solo el campo fecha sin tocar el resto del filtro.
             FilterChip(
                 selected = filtros.fecha == FiltroFecha.HOY,
                 onClick = {
@@ -184,6 +209,7 @@ private fun FiltrosPartidos(
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                 } else null
             )
+            // Chip "Esta semana": mismo patrón toggle que "Hoy"
             FilterChip(
                 selected = filtros.fecha == FiltroFecha.ESTA_SEMANA,
                 onClick = {
@@ -196,6 +222,7 @@ private fun FiltrosPartidos(
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                 } else null
             )
+            // Chip "Abiertos": filtra solo los partidos que todavía aceptan jugadores
             FilterChip(
                 selected = filtros.estado == FiltroEstado.ABIERTOS,
                 onClick = {
@@ -232,9 +259,11 @@ private fun PartidoCard(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                // Badge visual del estado: ABIERTO (verde) / LLENO (rojo) / etc.
                 EstadoPartidoBadge(estado = partido.estado)
             }
             Spacer(modifier = Modifier.height(12.dp))
+            // Fila central con Local — VS — Visitante
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -310,6 +339,8 @@ private fun PartidoCard(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
+                // Botón condicional según el estado del partido:
+                // ABIERTO → "Unirse" (habilitado), LLENO → "Lleno" (deshabilitado)
                 when (partido.estado) {
                     EstadoPartido.ABIERTO -> FilledTonalButton(onClick = onUnirse) { Text("Unirse") }
                     EstadoPartido.LLENO -> OutlinedButton(onClick = {}, enabled = false) { Text("Lleno") }
@@ -342,6 +373,7 @@ private fun UnirsePartidoDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Resumen del partido para que el usuario confirme que es el correcto
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.elevatedCardColors(
@@ -380,6 +412,7 @@ private fun UnirsePartidoDialog(
                     singleLine = true,
                     placeholder = { Text("Ej: Los Chetos FC") }
                 )
+                // Selector de posición implementado como Surface clickeable + DropdownMenu
                 Column {
                     Text(
                         text = "Posición",
@@ -428,6 +461,7 @@ private fun UnirsePartidoDialog(
             }
         },
         confirmButton = {
+            // "Confirmar" solo se habilita cuando el usuario escribió un nombre de equipo
             Button(
                 onClick = onConfirm,
                 enabled = nombreEquipo.isNotBlank(),
@@ -476,6 +510,7 @@ private fun CrearPartidoCard(onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
+            // Al tocar navega a CrearPartidoScreen via la lambda que llega desde AppNavigation
             Button(onClick = onClick) { Text("Crear Partido") }
         }
     }

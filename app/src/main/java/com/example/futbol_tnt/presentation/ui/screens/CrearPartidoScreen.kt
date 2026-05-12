@@ -56,6 +56,7 @@ import java.util.UUID
 
 private val crearPartidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
+// Agrupa todos los campos del formulario en un data class para pasarlos juntos a validar y buildear.
 data class FormPartido(
     val nombreLocal: String,
     val nombreVisitante: String,
@@ -66,6 +67,8 @@ data class FormPartido(
     val precio: String
 )
 
+// Retorna un mensaje de error si algún campo es inválido, o null si todo está OK.
+// Se ejecuta antes de crear el partido para darle feedback al usuario.
 fun validarFormPartido(form: FormPartido): String? {
     if (form.nombreLocal.isBlank()) return "Ingresá el nombre del equipo local"
     if (form.nombreVisitante.isBlank()) return "Ingresá el nombre del equipo visitante"
@@ -84,6 +87,8 @@ fun validarFormPartido(form: FormPartido): String? {
     }
 }
 
+// Construye el objeto Partido a partir del formulario validado.
+// Se llama solo después de que validarFormPartido() retorna null (sin errores).
 fun buildPartido(form: FormPartido): Partido {
     val fechaHora = LocalDateTime.parse("${form.fecha} ${form.hora}", crearPartidoFormatter)
     return Partido(
@@ -106,6 +111,7 @@ fun CrearPartidoScreen(
     viewModel: PartidoViewModel,
     onBack: () -> Unit
 ) {
+    // Estado local de cada campo del formulario. remember{} los mantiene entre recomposiciones.
     var nombreLocal by remember { mutableStateOf("") }
     var nombreVisitante by remember { mutableStateOf("") }
     var canchaSeleccionada by remember { mutableStateOf<Cancha?>(null) }
@@ -116,8 +122,9 @@ fun CrearPartidoScreen(
     var precio by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // Escucha eventos del ViewModel. PartidoCreadoExito se emite cuando el partido
+    // fue agregado exitosamente a la lista — entonces volvemos a PartidosTab.
     val evento by viewModel.evento.collectAsState()
-
     LaunchedEffect(evento) {
         if (evento is PartidoEvento.PartidoCreadoExito) {
             viewModel.limpiarEvento()
@@ -125,6 +132,7 @@ fun CrearPartidoScreen(
         }
     }
 
+    // Función local que agrupa validación + creación. Se llama al tocar "Crear Partido".
     fun validarYCrear() {
         val form = FormPartido(nombreLocal, nombreVisitante, canchaSeleccionada, fecha, hora, jugadoresMax, precio)
         val error = validarFormPartido(form)
@@ -137,6 +145,7 @@ fun CrearPartidoScreen(
             TopAppBar(
                 title = { Text("Crear Partido") },
                 navigationIcon = {
+                    // Flecha ← en la TopBar — vuelve a PartidosTab sin crear nada
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
@@ -148,6 +157,7 @@ fun CrearPartidoScreen(
             )
         }
     ) { padding ->
+        // LazyColumn para que el formulario sea scrolleable en pantallas pequeñas
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -163,6 +173,8 @@ fun CrearPartidoScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+            // Cada OutlinedTextField usa onValueChange para actualizar el estado local
+            // en tiempo real mientras el usuario escribe.
             item {
                 OutlinedTextField(
                     value = nombreLocal,
@@ -184,6 +196,8 @@ fun CrearPartidoScreen(
                 )
             }
             item {
+                // ExposedDropdownMenuBox muestra un TextField de solo lectura con flecha.
+                // Al tocarlo, showCanchaMenu se pone en true y aparece el menú con las canchas de MockData.
                 ExposedDropdownMenuBox(
                     expanded = showCanchaMenu,
                     onExpandedChange = { showCanchaMenu = it }
@@ -215,6 +229,7 @@ fun CrearPartidoScreen(
                 }
             }
             item {
+                // Fecha y hora en una sola fila con peso 1f cada una (50% ancho cada campo)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -263,6 +278,8 @@ fun CrearPartidoScreen(
                 )
             }
             item {
+                // El card de error solo se muestra si errorMsg != null.
+                // Desaparece automáticamente cuando el usuario corrige y vuelve a intentar.
                 errorMsg?.let { msg ->
                     Card(
                         colors = CardDefaults.cardColors(
@@ -280,6 +297,8 @@ fun CrearPartidoScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(4.dp))
+                // Botón principal: valida el form y si pasa, crea el partido en el ViewModel.
+                // El ViewModel emite PartidoCreadoExito y LaunchedEffect llama onBack().
                 Button(
                     onClick = { validarYCrear() },
                     modifier = Modifier.fillMaxWidth()

@@ -32,6 +32,7 @@ import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PartidosTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PerfilTab
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 
+// Modelo interno para describir cada ítem del bottom navigation bar
 private data class BottomNavItem(val title: String, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,20 +44,26 @@ fun HomeScreen(
     partidoViewModel: PartidoViewModel,
     modifier: Modifier = Modifier
 ) {
+    // Definición de las 4 tabs del bottom nav.
+    // El índice de cada ítem corresponde al case en el when{} de abajo.
     val navItems = listOf(
-        BottomNavItem("Canchas", Icons.Default.SportsSoccer),
-        BottomNavItem("Reservas", Icons.Default.DateRange),
-        BottomNavItem("Partidos", Icons.Default.Home),
-        BottomNavItem("Perfil", Icons.Default.Person)
+        BottomNavItem("Canchas", Icons.Default.SportsSoccer),   // índice 0
+        BottomNavItem("Reservas", Icons.Default.DateRange),     // índice 1
+        BottomNavItem("Partidos", Icons.Default.Home),          // índice 2
+        BottomNavItem("Perfil", Icons.Default.Person)           // índice 3
     )
 
+    // selectedIndex guarda qué tab está activa. remember{} lo mantiene vivo
+    // entre recomposiciones sin reiniciarse.
     var selectedIndex by remember { mutableIntStateOf(0) }
 
+    // Scaffold provee la estructura visual: topBar + bottomBar + contenido central.
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Entra a la cancha") },
                 actions = {
+                    // Botón ⓘ en la esquina superior derecha → navega a AcercaDe
                     IconButton(onClick = onNavigateToAcercaDe) {
                         Icon(
                             imageVector = Icons.Default.Info,
@@ -72,6 +79,8 @@ fun HomeScreen(
         },
         bottomBar = {
             NavigationBar {
+                // Se genera un ítem por cada tab. Al tocar uno, selectedIndex cambia
+                // y Compose re-renderiza el contenido central con la tab correcta.
                 navItems.forEachIndexed { index, item ->
                     NavigationBarItem(
                         selected = selectedIndex == index,
@@ -83,6 +92,8 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
+        // El contenido central cambia según la tab seleccionada.
+        // paddingValues asegura que el contenido no quede debajo del topBar/bottomBar.
         Box(
             modifier = modifier
                 .fillMaxSize()
