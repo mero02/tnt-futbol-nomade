@@ -31,10 +31,6 @@ import com.example.futbol_tnt.presentation.ui.screens.home.tabs.CanchasTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.MisReservasTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PartidosTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PerfilTab
-import com.example.futbol_tnt.presentation.ui.theme.Blanco
-import com.example.futbol_tnt.presentation.ui.theme.GrisTexto
-import com.example.futbol_tnt.presentation.ui.theme.Negro
-import com.example.futbol_tnt.presentation.ui.theme.Verde
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 
 // Modelo interno para describir cada ítem del bottom navigation bar
@@ -86,8 +82,8 @@ fun HomeScreen(
         },
         bottomBar = {
             NavigationBar(
-                containerColor = Negro,
-                contentColor = Blanco,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
                 // Se genera un ítem por cada tab. Al tocar uno, selectedIndex cambia
                 // y Compose re-renderiza el contenido central con la tab correcta.
@@ -98,14 +94,11 @@ fun HomeScreen(
                         icon = { Icon(item.icon, contentDescription = item.title) },
                         label = { Text(item.title) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Blanco,
-                            selectedTextColor = Blanco,
-                            indicatorColor = Verde,
-                            // Sobre fondo Negro, GrisTexto (#6B7280) queda con contrast
-                            // ratio ~3.5:1 (debajo del minimo WCAG AA de 4.5:1).
-                            // Usamos blanco al 70% para llegar a contrast adecuado.
-                            unselectedIconColor = Blanco.copy(alpha = 0.7f),
-                            unselectedTextColor = Blanco.copy(alpha = 0.7f),
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     )
                 }

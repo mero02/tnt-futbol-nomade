@@ -19,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -84,63 +85,68 @@ fun LoginScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        Icon(
-            imageVector = Icons.Default.SportsSoccer,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.SportsSoccer,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Entra a la cancha",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+            Text(
+                text = "Entra a la cancha",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "Jugá donde quieras,\ncuando quieras",
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+            Text(
+                text = "Jugá donde quieras,\ncuando quieras",
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-        Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-        // La UI cambia según el estado actual del ViewModel:
-        // - Loading: muestra spinner mientras Firebase procesa el token
-        // - Error: muestra el mensaje y vuelve a mostrar el botón para reintentar
-        // - Idle/otros: muestra el botón normalmente
-        when (val state = uiState) {
-            is AuthUiState.Loading -> {
-                CircularProgressIndicator()
-            }
-            is AuthUiState.Error -> {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                GoogleSignInButton(
-                    onClick = { authViewModel.onGoogleSignInClick() }
-                )
-            }
-            else -> {
-                GoogleSignInButton(
-                    onClick = { authViewModel.onGoogleSignInClick() }
-                )
+            // La UI cambia según el estado actual del ViewModel:
+            // - Loading: muestra spinner mientras Firebase procesa el token
+            // - Error: muestra el mensaje y vuelve a mostrar el botón para reintentar
+            // - Idle/otros: muestra el botón normalmente
+            when (val state = uiState) {
+                is AuthUiState.Loading -> {
+                    CircularProgressIndicator()
+                }
+                is AuthUiState.Error -> {
+                    Text(
+                        text = state.message,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    GoogleSignInButton(
+                        onClick = { authViewModel.onGoogleSignInClick() }
+                    )
+                }
+                else -> {
+                    GoogleSignInButton(
+                        onClick = { authViewModel.onGoogleSignInClick() }
+                    )
+                }
             }
         }
     }
