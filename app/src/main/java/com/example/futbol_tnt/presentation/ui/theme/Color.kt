@@ -2,42 +2,51 @@ package com.example.futbol_tnt.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// COLORES APP - Boceto Entra a la cancha
-// Primary: Azul verdadero
-val BluePrimary = Color(0xFF0066CC)
-val BluePrimaryDark = Color(0xFF004C99)
-val BluePrimaryLight = Color(0xFF3388DD)
+// =============================================================================
+// Paleta fija — 7 colores (fuente: docs/design-system.md)
+// =============================================================================
 
-// Secondary/Surface: Gris azulado
-val SurfaceGray = Color(0xFFF5F7FA)
-val SurfaceGrayDark = Color(0xFF2D3748)
-val CardBackground = Color(0xFFFFFFFF)
-val CardBackgroundDark = Color(0xFF1A202C)
+val Verde = Color(0xFF22C55E)         // CTA primario, FAB, badges activos, online
+val VerdeOscuro = Color(0xFF0F5132)   // Header de perfil, contraste sobre verde
+val Blanco = Color(0xFFFFFFFF)        // Background, surface, texto sobre verde/negro
+val Negro = Color(0xFF111827)         // Texto principal, bottom nav, headlines
+val GrisTexto = Color(0xFF6B7280)     // Texto secundario, placeholders, iconos inactivos
+val GrisBorde = Color(0xFFE5E7EB)     // Bordes, separadores, fondo de input
+val Rojo = Color(0xFFEF4444)          // Solo crítico: rechazar, urgente, login
 
-// Accent: Verde para acciones positivas
-val AccentGreen = Color(0xFF22C55E)
-val AccentGreenDark = Color(0xFF16A34A)
+// =============================================================================
+// Aliases de compatibilidad — mapean nombres legacy a la paleta de 7 colores.
+// Permiten que las screens existentes sigan compilando sin tocarlas.
+// Para código nuevo: usar los 7 tokens de arriba directamente.
+// =============================================================================
 
-// Accent: Naranja para warnings/acciones
-val AccentOrange = Color(0xFFF97316)
+val BluePrimary = Verde
+val BluePrimaryDark = VerdeOscuro
+val BluePrimaryLight = Verde
 
-// Estados
-val EstadoConfirmada = Color(0xFF22C55E)
-val EstadoPendiente = Color(0xFFF59E0B)
-val EstadoCancelada = Color(0xFFEF4444)
+val AccentGreen = Verde
+val AccentGreenDark = VerdeOscuro
+val AccentOrange = Rojo
 
-// Neutros
-val Gray50 = Color(0xFFF9FAFB)
-val Gray100 = Color(0xFFF3F4F6)
-val Gray200 = Color(0xFFE5E7EB)
-val Gray300 = Color(0xFFD1D5DB)
-val Gray400 = Color(0xFF9CA3AF)
-val Gray500 = Color(0xFF6B7280)
-val Gray600 = Color(0xFF4B5563)
-val Gray700 = Color(0xFF374151)
-val Gray800 = Color(0xFF1F2937)
-val Gray900 = Color(0xFF111827)
+val SurfaceGray = Blanco
+val SurfaceGrayDark = Negro
+val CardBackground = Blanco
+val CardBackgroundDark = Negro
 
-// Modo Oscuro
-val DarkBackground = Color(0xFF0F172A)
-val DarkSurface = Color(0xFF1E293B)
+val EstadoConfirmada = Verde
+val EstadoPendiente = GrisTexto
+val EstadoCancelada = Rojo
+
+val Gray50 = Blanco
+val Gray100 = GrisBorde
+val Gray200 = GrisBorde
+val Gray300 = GrisBorde
+val Gray400 = GrisTexto
+val Gray500 = GrisTexto
+val Gray600 = GrisTexto
+val Gray700 = Negro
+val Gray800 = Negro
+val Gray900 = Negro
+
+val DarkBackground = Negro
+val DarkSurface = Negro
