@@ -101,8 +101,11 @@ fun HomeScreen(
                             selectedIconColor = Blanco,
                             selectedTextColor = Blanco,
                             indicatorColor = Verde,
-                            unselectedIconColor = GrisTexto,
-                            unselectedTextColor = GrisTexto,
+                            // Sobre fondo Negro, GrisTexto (#6B7280) queda con contrast
+                            // ratio ~3.5:1 (debajo del minimo WCAG AA de 4.5:1).
+                            // Usamos blanco al 70% para llegar a contrast adecuado.
+                            unselectedIconColor = Blanco.copy(alpha = 0.7f),
+                            unselectedTextColor = Blanco.copy(alpha = 0.7f),
                         )
                     )
                 }
