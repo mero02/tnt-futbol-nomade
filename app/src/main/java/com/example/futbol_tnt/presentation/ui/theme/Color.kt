@@ -2,7 +2,7 @@ package com.example.futbol_tnt.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// COLORES APP - Boceto Fútbol TNT
+// COLORES APP - Boceto Entra a la cancha
 // Primary: Azul verdadero
 val BluePrimary = Color(0xFF0066CC)
 val BluePrimaryDark = Color(0xFF004C99)

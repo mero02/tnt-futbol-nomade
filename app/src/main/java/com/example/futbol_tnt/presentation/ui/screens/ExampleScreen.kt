@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
  * Usar data class inmutables para el estado de UI.
  */
 data class ExampleUiState(
-    val title: String = "Bienvenido a FutbolTNT",
+    val title: String = "Bienvenido a Entra a la cancha",
     val counter: Int = 0,
     val isLoading: Boolean = false
 )

@@ -55,7 +55,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Fútbol TNT") },
+                title = { Text("Entra a la cancha") },
                 actions = {
                     IconButton(onClick = onNavigateToAcercaDe) {
                         Icon(
