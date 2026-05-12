@@ -15,6 +15,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,6 +31,10 @@ import com.example.futbol_tnt.presentation.ui.screens.home.tabs.CanchasTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.MisReservasTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PartidosTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PerfilTab
+import com.example.futbol_tnt.presentation.ui.theme.Blanco
+import com.example.futbol_tnt.presentation.ui.theme.GrisTexto
+import com.example.futbol_tnt.presentation.ui.theme.Negro
+import com.example.futbol_tnt.presentation.ui.theme.Verde
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 
 // Modelo interno para describir cada ítem del bottom navigation bar
@@ -80,7 +85,10 @@ fun HomeScreen(
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = Negro,
+                contentColor = Blanco,
+            ) {
                 // Se genera un ítem por cada tab. Al tocar uno, selectedIndex cambia
                 // y Compose re-renderiza el contenido central con la tab correcta.
                 navItems.forEachIndexed { index, item ->
@@ -88,7 +96,14 @@ fun HomeScreen(
                         selected = selectedIndex == index,
                         onClick = { selectedIndex = index },
                         icon = { Icon(item.icon, contentDescription = item.title) },
-                        label = { Text(item.title) }
+                        label = { Text(item.title) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Blanco,
+                            selectedTextColor = Blanco,
+                            indicatorColor = Verde,
+                            unselectedIconColor = GrisTexto,
+                            unselectedTextColor = GrisTexto,
+                        )
                     )
                 }
             }
