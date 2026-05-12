@@ -103,11 +103,13 @@ internal fun PartidosTab(
         }
     }
 
-    // Escucha eventos one-shot del ViewModel (Unirse exitoso, partido lleno).
+    // Escucha eventos one-shot del ViewModel (Unirse exitoso, partido lleno, error).
     // Al recibir alguno, cierra el dialog y limpia el evento para no re-procesarlo.
     LaunchedEffect(evento) {
         when (evento) {
-            is PartidoEvento.UnirseExito, is PartidoEvento.PartidoLleno -> {
+            is PartidoEvento.UnirseExito,
+            is PartidoEvento.PartidoLleno,
+            is PartidoEvento.Error -> {
                 showUnirseDialog = null
                 viewModel.limpiarEvento()
             }

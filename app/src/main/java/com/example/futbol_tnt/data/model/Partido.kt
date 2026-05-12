@@ -14,7 +14,10 @@ data class Partido(
     val jugadoresActuales: Int,
     val jugadoresMaximos: Int,
     val estado: EstadoPartido,
-    val nombreOrganizador: String
+    val nombreOrganizador: String,
+    // uid del usuario que creo el partido (Firebase Auth). Necesario para
+    // que las reglas de Firestore puedan validar quien escribe/edita.
+    val creatorId: String = ""
 )
 
 enum class EstadoPartido {

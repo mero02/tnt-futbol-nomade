@@ -123,12 +123,21 @@ fun CrearPartidoScreen(
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
     // Escucha eventos del ViewModel. PartidoCreadoExito se emite cuando el partido
-    // fue agregado exitosamente a la lista — entonces volvemos a PartidosTab.
+    // se guardo OK en Firestore — entonces volvemos a PartidosTab.
+    // Error se emite si fallo la escritura (sin auth, sin red, reglas, etc.) — lo
+    // mostramos en el card de error y limpiamos para permitir reintentar.
     val evento by viewModel.evento.collectAsState()
     LaunchedEffect(evento) {
-        if (evento is PartidoEvento.PartidoCreadoExito) {
-            viewModel.limpiarEvento()
-            onBack()
+        when (val e = evento) {
+            is PartidoEvento.PartidoCreadoExito -> {
+                viewModel.limpiarEvento()
+                onBack()
+            }
+            is PartidoEvento.Error -> {
+                errorMsg = e.mensaje
+                viewModel.limpiarEvento()
+            }
+            else -> {}
         }
     }
 
