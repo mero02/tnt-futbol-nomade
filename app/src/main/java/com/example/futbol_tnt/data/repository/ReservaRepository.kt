@@ -9,7 +9,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
@@ -53,7 +52,7 @@ class ReservaRepository(
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Necesitas iniciar sesion para reservar")
 
-        val id = if (reserva.id.isBlank()) reservasCol.document().id else reserva.id
+        val id = reserva.id.ifBlank { reservasCol.document().id }
         val conMetadata = reserva.copy(id = id, usuarioId = uid)
 
         reservasCol.document(id).set(conMetadata.toFirestoreMap()).await()
@@ -73,7 +72,7 @@ private fun Reserva.toFirestoreMap(): Map<String, Any?> = mapOf(
     "id" to id,
     "usuarioId" to usuarioId,
     "fecha" to Timestamp(
-        Date.from(fecha.atZone(ZoneId.systemDefault()).toInstant())
+        Date.from(fecha.atZone(ZoneId.systemDefault()).toInstant()),
     ),
     "cancha" to mapOf(
         "id" to cancha.id,
@@ -90,7 +89,7 @@ private fun Reserva.toFirestoreMap(): Map<String, Any?> = mapOf(
 
 private fun DocumentSnapshot.toReservaOrNull(): Reserva? {
     return runCatching {
-        val canchaMap = get("cancha") as? Map<String, Any?>
+        val canchaMap = (get("cancha") as? Map<String, Any?>)
             ?: return@runCatching null
         val fechaTimestamp = getTimestamp("fecha")
             ?: return@runCatching null

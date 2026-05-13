@@ -27,8 +27,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,7 +48,6 @@ fun LoginScreen(
     // pendingSignInIntent es el Intent de Google que hay que lanzar como Activity.
     // El ViewModel lo emite cuando Google responde con el selector de cuentas.
     val pendingIntent by authViewModel.pendingSignInIntent.collectAsState()
-    val context = LocalContext.current
 
     // Launcher para la Activity de Google Sign-In.
     // rememberLauncherForActivityResult registra el callback que recibe el resultado

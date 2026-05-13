@@ -1,7 +1,6 @@
 package com.example.futbol_tnt.data.model
 
 import java.time.LocalDateTime
-import java.time.LocalTime
 
 data class Partido(
     val id: String,
@@ -19,10 +18,3 @@ data class Partido(
     // que las reglas de Firestore puedan validar quien escribe/edita.
     val creatorId: String = ""
 )
-
-enum class EstadoPartido {
-    ABIERTO,      // Buscando jugadores
-    LLENO,        // Completo
-    EN_JUEGO,    // En curso
-    FINALIZADO    // Terminado
-}

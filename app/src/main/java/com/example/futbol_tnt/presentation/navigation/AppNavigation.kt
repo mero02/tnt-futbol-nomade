@@ -59,7 +59,7 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
     ) {
         // Pantalla de login: cuando el login es exitoso, navega a Home
         // y elimina Login del back stack (popUpTo inclusive) para que
@@ -104,16 +104,10 @@ fun AppNavigation() {
             )
         }
         composable(Screen.AcercaDe.route) {
-            AcercaDe(
+            AcercaDe {
                 // popBackStack() vuelve a la pantalla anterior (Home)
-                onBack = { navController.popBackStack() }
-            )
-        }
-        composable(Screen.CrearPartido.route) {
-            CrearPartidoScreen(
-                viewModel = partidoViewModel,
-                onBack = { navController.popBackStack() }
-            )
+                navController.popBackStack()
+            }
         }
         composable(Screen.CanchaDetail.route) { backStackEntry ->
             val canchaId = backStackEntry.arguments?.getString("canchaId") ?: return@composable
