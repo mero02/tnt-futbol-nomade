@@ -83,13 +83,33 @@ Para asegurar que cada partido tenga una cancha real garantizada, el flujo de cr
 
 ---
 
-## Tareas Pendientes
+## Feature: Reserva Blindada (Disponibilidad Real)
 
-- [ ] `CanchaDetailScreen.kt`: Nueva pantalla para ver info de la cancha y elegir turnos.
-- [ ] `CanchaViewModel.kt`: Manejo de disponibilidad de horarios por fecha.
-- [ ] Lógica de guardado en Firestore (Colección `reservas`).
-- [ ] Botón "Convertir en Partido" en el éxito de la reserva.
-- [ ] Eliminar `CrearPartidoCard` de `PartidosTab.kt`.
+Este flujo asegura que no haya solapamiento de turnos y prepara el terreno para pagos reales.
+
+### 1. Consulta de Ocupación
+- Al seleccionar una **Fecha** en el detalle, el `CanchaViewModel` dispara una consulta a la colección `reservas`.
+- Filtros: `canchaId == X` AND `fecha (solo día) == Y`.
+- Los horarios devueltos se marcan como **OCUPADOS** en la UI (grisados/no clickeables).
+
+### 2. Transacción de Reserva
+- No se usa un `.set()` simple. Se usa una **Firestore Transaction**.
+- La transacción lee el documento de disponibilidad. Si el turno se ocupó un milisegundo antes de que el usuario apretara "Confirmar", la transacción falla y muestra: *"Lo sentimos, este turno acaba de ser reservado"*.
+
+### 3. Pago de Seña (Simbólico)
+- **Pantalla de Checkout**: Resumen final (Cancha, Fecha, Hora, Precio Total, Seña a pagar).
+- **Procesamiento**: Botón "Pagar Seña ($500)".
+- **Simulación**: Spinner de 2 segundos simulando pasarela de pago.
+- **Resultado**: Solo si el "pago" es exitoso, se ejecuta la transacción en la base de datos.
+
+---
+
+## Tareas de esta Fase
+
+- [ ] **Repositorio**: Método `getReservasPorCanchaYFecha(id, fecha)`.
+- [ ] **ViewModel**: Lógica para cruzar horarios base de la cancha con reservas reales de Firestore.
+- [ ] **UI**: Nueva pantalla `CheckoutScreen.kt` para el resumen y la seña.
+- [ ] **Lógica**: Cambiar guardado simple por `runTransaction`.
 
 ---
 

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.futbol_tnt.data.model.Cancha
 import com.example.futbol_tnt.data.model.Horario
+import com.example.futbol_tnt.data.model.Reserva
 import com.example.futbol_tnt.presentation.viewmodel.CanchaViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaEvento
 import java.time.LocalDate
@@ -45,6 +46,7 @@ fun CanchaDetailScreen(
     val fechaSeleccionada by viewModel.fechaSeleccionada.collectAsState()
     val horaSeleccionada by viewModel.horaSeleccionada.collectAsState()
     val duracionSeleccionada by viewModel.duracionSeleccionada.collectAsState()
+    val reservasDelDia by viewModel.reservasDelDia.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val evento by viewModel.evento.collectAsState()
 
@@ -171,6 +173,8 @@ fun CanchaDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 HorariosGrid(
                     horarios = c.disponibilidad,
+                    reservasOcupadas = reservasDelDia,
+                    fechaSeleccionada = fechaSeleccionada,
                     horaSeleccionada = horaSeleccionada,
                     onHoraSelected = { viewModel.seleccionarHora(it) }
                 )
@@ -185,6 +189,8 @@ fun CanchaDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 DuracionSelector(
                     duracionSeleccionada = duracionSeleccionada,
+                    horaSeleccionada = horaSeleccionada,
+                    reservasOcupadas = reservasDelDia,
                     onDuracionSelected = { viewModel.seleccionarDuracion(it) }
                 )
 
@@ -261,6 +267,8 @@ fun FechaSelector(
 @Composable
 fun HorariosGrid(
     horarios: List<Horario>,
+    reservasOcupadas: List<Reserva>,
+    fechaSeleccionada: LocalDate,
     horaSeleccionada: LocalTime?,
     onHoraSelected: (LocalTime) -> Unit
 ) {
@@ -275,10 +283,20 @@ fun HorariosGrid(
             ) {
                 fila.forEach { horario ->
                     val isSelected = horario.hora == horaSeleccionada
+                    val estaOcupado = reservasOcupadas.any { res ->
+                        val inicio = res.fecha.toLocalTime()
+                        val fin = inicio.plusMinutes((res.duracionHoras * 60).toLong())
+                        // El slot está ocupado si la hora del botón está dentro del rango [inicio, fin)
+                        !horario.hora.isBefore(inicio) && horario.hora.isBefore(fin)
+                    }
+
+                    // Bloquear si el horario ya pasó (solo para hoy)
+                    val esPasado = LocalDate.now() == fechaSeleccionada && LocalTime.now().isAfter(horario.hora)
+
                     OutlinedButton(
                         onClick = { onHoraSelected(horario.hora) },
                         modifier = Modifier.weight(1f),
-                        enabled = horario.disponible,
+                        enabled = horario.disponible && !estaOcupado && !esPasado,
                         colors = if (isSelected) {
                             ButtonDefaults.outlinedButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -287,7 +305,10 @@ fun HorariosGrid(
                         } else ButtonDefaults.outlinedButtonColors(),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(horario.hora.toString())
+                        Text(
+                            text = horario.hora.toString(),
+                            color = if (estaOcupado) MaterialTheme.colorScheme.error.copy(alpha = 0.6f) else Color.Unspecified
+                        )
                     }
                 }
                 // Rellenar si la fila no está completa
@@ -303,15 +324,30 @@ fun HorariosGrid(
 @Composable
 fun DuracionSelector(
     duracionSeleccionada: Double,
+    horaSeleccionada: LocalTime?,
+    reservasOcupadas: List<Reserva>,
     onDuracionSelected: (Double) -> Unit
 ) {
     val opciones = listOf(1.0, 1.5, 2.0)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         opciones.forEach { opcion ->
             val isSelected = opcion == duracionSeleccionada
+
+            // Lógica para deshabilitar duraciones que pisen otras reservas
+            val habilitado = if (horaSeleccionada != null) {
+                val finPropuesto = horaSeleccionada.plusMinutes((opcion * 60).toLong())
+                reservasOcupadas.none { res ->
+                    val exInicio = res.fecha.toLocalTime()
+                    val exFin = exInicio.plusMinutes((res.duracionHoras * 60).toLong())
+                    // El nuevo turno termina después de que empieza uno existente?
+                    finPropuesto.isAfter(exInicio) && horaSeleccionada.isBefore(exFin)
+                }
+            } else true
+
             InputChip(
                 selected = isSelected,
                 onClick = { onDuracionSelected(opcion) },
+                enabled = habilitado,
                 label = { Text("${opcion}h") }
             )
         }

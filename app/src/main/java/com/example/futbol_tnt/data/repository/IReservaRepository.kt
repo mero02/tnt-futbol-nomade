@@ -7,4 +7,5 @@ interface IReservaRepository {
     val reservas: Flow<List<Reserva>>
     suspend fun crearReserva(reserva: Reserva): String
     suspend fun getReservaById(id: String): Reserva?
+    suspend fun getReservasPorCanchaYFecha(canchaId: String, fecha: java.time.LocalDate): List<Reserva>
 }

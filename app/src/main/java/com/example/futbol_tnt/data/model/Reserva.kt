@@ -7,7 +7,7 @@ data class Reserva(
     val usuarioId: String = "",
     val cancha: Cancha,
     val fecha: LocalDateTime,
-    val duracionHoras: Int,
+    val duracionHoras: Double,
     val precioTotal: Double,
     val estado: EstadoReserva,
     val nombreEquipo: String? = null

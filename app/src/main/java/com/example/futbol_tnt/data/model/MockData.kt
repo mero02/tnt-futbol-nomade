@@ -108,7 +108,7 @@ object MockData {
             id = "r1",
             cancha = canchas[0],
             fecha = LocalDateTime.now().plusDays(1).withHour(16).withMinute(0),
-            duracionHoras = 1,
+            duracionHoras = 1.0,
             precioTotal = 15000.0,
             estado = EstadoReserva.CONFIRMADA,
             nombreEquipo = "Los Chetos FC"
@@ -117,7 +117,7 @@ object MockData {
             id = "r2",
             cancha = canchas[1],
             fecha = LocalDateTime.now().plusDays(2).withHour(18).withMinute(0),
-            duracionHoras = 2,
+            duracionHoras = 2.0,
             precioTotal = 36000.0,
             estado = EstadoReserva.PENDIENTE,
             nombreEquipo = "River Plate"
@@ -126,7 +126,7 @@ object MockData {
             id = "r3",
             cancha = canchas[4],
             fecha = LocalDateTime.now().minusDays(3).withHour(10).withMinute(0),
-            duracionHoras = 1,
+            duracionHoras = 1.0,
             precioTotal = 12000.0,
             estado = EstadoReserva.COMPLETADA,
             nombreEquipo = "Boca Jrs"
@@ -137,7 +137,7 @@ object MockData {
         return (8..22).map { hora ->
             Horario(
                 hora = LocalTime.of(hora, 0),
-                disponible = hora % 3 != 0
+                disponible = true
             )
         }
     }

@@ -38,6 +38,9 @@ class CanchaViewModel(
     private val _duracionSeleccionada = MutableStateFlow(1.0)
     val duracionSeleccionada: StateFlow<Double> = _duracionSeleccionada.asStateFlow()
 
+    private val _reservasDelDia = MutableStateFlow<List<Reserva>>(emptyList())
+    val reservasDelDia: StateFlow<List<Reserva>> = _reservasDelDia.asStateFlow()
+
     private val _isLoading = MutableStateFlow(value = false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -47,11 +50,29 @@ class CanchaViewModel(
     fun cargarCancha(canchaId: String) {
         // En el futuro esto vendrá de un repositorio
         _cancha.value = MockData.canchas.find { it.id == canchaId }
+        actualizarDisponibilidad()
     }
 
     fun seleccionarFecha(fecha: LocalDate) {
         _fechaSeleccionada.value = fecha
         _horaSeleccionada.value = null // Reset hora al cambiar fecha
+        actualizarDisponibilidad()
+    }
+
+    private fun actualizarDisponibilidad() {
+        val id = _cancha.value?.id ?: return
+        val fecha = _fechaSeleccionada.value
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                _reservasDelDia.value = repository.getReservasPorCanchaYFecha(id, fecha)
+            } catch (e: Exception) {
+                // Manejar error
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun seleccionarHora(hora: LocalTime) {
@@ -79,7 +100,7 @@ class CanchaViewModel(
                     id = "",
                     cancha = canchaActual,
                     fecha = LocalDateTime.of(fecha, hora),
-                    duracionHoras = _duracionSeleccionada.value.toInt(),
+                    duracionHoras = _duracionSeleccionada.value,
                     precioTotal = calcularPrecioTotal(),
                     estado = EstadoReserva.CONFIRMADA,
                 )
