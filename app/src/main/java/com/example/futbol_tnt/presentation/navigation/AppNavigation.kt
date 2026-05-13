@@ -18,6 +18,7 @@ import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 import com.example.futbol_tnt.presentation.viewmodel.CanchaViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
+import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 
 // Cada pantalla tiene una ruta string única. El NavController usa estas rutas para navegar.
@@ -25,6 +26,7 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
     data object AcercaDe : Screen("acerca_de")
+    data object Perfil : Screen("perfil")
     data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
         fun createRoute(reservaId: String? = null) =
             if (reservaId != null) "crear_partido?reservaId=$reservaId" else "crear_partido"
@@ -51,6 +53,7 @@ fun AppNavigation() {
     val reservaRepository = remember { ReservaRepository() }
     val canchaViewModel = remember { CanchaViewModel(reservaRepository) }
     val reservaViewModel = remember { ReservaViewModel(reservaRepository) }
+    val profileViewModel = remember { ProfileViewModel(userRepository) }
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
@@ -118,10 +121,14 @@ fun AppNavigation() {
                 onNavigateToCanchaDetail = { canchaId ->
                     navController.navigate(Screen.CanchaDetail.createRoute(canchaId))
                 },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Perfil.route)
+                },
                 // PartidoViewModel se pasa desde acá para que PartidosTab y
                 // CrearPartidoScreen compartan el mismo estado de partidos.
                 partidoViewModel = partidoViewModel,
-                reservaViewModel = reservaViewModel
+                reservaViewModel = reservaViewModel,
+                profileViewModel = profileViewModel
             )
         }
         composable(Screen.AcercaDe.route) {
@@ -129,6 +136,14 @@ fun AppNavigation() {
                 // popBackStack() vuelve a la pantalla anterior (Home)
                 navController.popBackStack()
             }
+        }
+        composable(Screen.Perfil.route) {
+            val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return@composable
+            com.example.futbol_tnt.presentation.ui.screens.profile.ProfileScreen(
+                uid = uid,
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.CanchaDetail.route) { backStackEntry ->
             val canchaId = backStackEntry.arguments?.getString("canchaId") ?: return@composable

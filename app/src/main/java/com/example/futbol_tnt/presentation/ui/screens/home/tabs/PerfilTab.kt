@@ -12,31 +12,47 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.futbol_tnt.data.model.User
 import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
+import com.example.futbol_tnt.presentation.viewmodel.ProfileUiState
+import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 internal fun PerfilTab(
     onSignOut: () -> Unit,
-    modifier: Modifier = Modifier
+    onEditProfile: () -> Unit,
+    viewModel: ProfileViewModel,
+    modifier: Modifier = Modifier,
 ) {
-    // Leemos el usuario actual de Firebase una sola vez con remember{}.
-    // currentUser contiene nombre, email y foto provistos por Google al hacer login.
-    val user = remember { FirebaseAuth.getInstance().currentUser }
+    val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(firebaseUser?.uid) {
+        firebaseUser?.uid?.let { viewModel.loadProfile(it) }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -48,64 +64,81 @@ internal fun PerfilTab(
             Spacer(modifier = Modifier.height(8.dp))
             HeaderSection(titulo = "Mi Perfil", subtitulo = "Gestiona tu cuenta")
         }
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-            // Avatar circular con ícono de persona (placeholder — futura mejora: foto de Google)
-            Surface(
-                modifier = Modifier.size(100.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(50.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            // Nombre y email traídos del perfil de Google via Firebase Auth
-            Text(
-                text = user?.displayName ?: "Usuario",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = user?.email ?: "",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        item {
-            Spacer(modifier = Modifier.height(32.dp))
-            // Card con estadísticas hardcodeadas (mock). En el futuro vendría de Firestore.
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Mis Estadísticas",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        StatItem("Partidos", "12")
-                        StatItem("Victorias", "8")
-                        StatItem("Goles", "24")
+
+        when (val state = uiState) {
+            is ProfileUiState.Loading -> {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
             }
+            is ProfileUiState.Success -> {
+                val user = state.user
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(user.photoUrl)
+                            .crossfade(enable = true)
+                            .build(),
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = user.displayName ?: "Usuario",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = user.email ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    InfoCard(user, onEditProfile)
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Mis Estadísticas",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                StatItem("Partidos", "12")
+                                StatItem("Victorias", "8")
+                                StatItem("Goles", "24")
+                            }
+                        }
+                    }
+                }
+            }
+            is ProfileUiState.Error -> {
+                item {
+                    Text(state.message, color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
+
         item {
-            Spacer(modifier = Modifier.height(16.dp))
-            // Botón de cerrar sesión: llama onSignOut que está definido en AppNavigation.
-            // Eso llama googleAuthClient.signOut() + Firebase.signOut() y navega al login.
+            Spacer(modifier = Modifier.height(32.dp))
             OutlinedButton(
                 onClick = onSignOut,
                 modifier = Modifier.fillMaxWidth()
@@ -115,6 +148,41 @@ internal fun PerfilTab(
         }
     }
 }
+
+@Composable
+private fun InfoCard(user: User, onEdit: () -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Información de Jugador",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                TextButton(onClick = onEdit) {
+                    Text("Editar")
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Posición:", fontWeight = FontWeight.SemiBold)
+                Text(user.posicion?.name?.replace("_", " ")?.lowercase()?.capitalize() ?: "No definida")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Nivel:", fontWeight = FontWeight.SemiBold)
+                Text(user.nivel?.name?.lowercase()?.capitalize() ?: "No definido")
+            }
+        }
+    }
+}
+
+private fun String.capitalize() = this.replaceFirstChar { it.uppercase() }
 
 @Composable
 private fun StatItem(label: String, value: String) {

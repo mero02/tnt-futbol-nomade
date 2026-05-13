@@ -32,6 +32,7 @@ import com.example.futbol_tnt.presentation.ui.screens.home.tabs.MisReservasTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PartidosTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.PerfilTab
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
+import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 
 // Modelo interno para describir cada ítem del bottom navigation bar
@@ -44,8 +45,10 @@ fun HomeScreen(
     onNavigateToAcercaDe: () -> Unit,
     onCrearPartido: () -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
     partidoViewModel: PartidoViewModel,
     reservaViewModel: ReservaViewModel,
+    profileViewModel: ProfileViewModel,
     modifier: Modifier = Modifier
 ) {
     // Definición de las 4 tabs del bottom nav.
@@ -119,7 +122,11 @@ fun HomeScreen(
                 0 -> CanchasTab(onNavigateToCanchaDetail = onNavigateToCanchaDetail)
                 1 -> MisReservasTab(viewModel = reservaViewModel)
                 2 -> PartidosTab(viewModel = partidoViewModel, onCrearPartido = onCrearPartido)
-                3 -> PerfilTab(onSignOut = onSignOut)
+                3 -> PerfilTab(
+                    onSignOut = onSignOut,
+                    viewModel = profileViewModel,
+                    onEditProfile = onNavigateToProfile
+                )
             }
         }
     }
