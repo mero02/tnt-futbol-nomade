@@ -35,7 +35,7 @@ class ReservaRepository(
 
         val listener = reservasCol
             .whereEqualTo("usuarioId", uid)
-            .orderBy("fecha", Query.Direction.DESCENDING)
+            // Quitamos el orderBy temporalmente para evitar el crash por falta de índice
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)

@@ -16,6 +16,7 @@ import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 import com.example.futbol_tnt.presentation.viewmodel.CanchaViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
+import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 
 // Cada pantalla tiene una ruta string única. El NavController usa estas rutas para navegar.
 sealed class Screen(val route: String) {
@@ -46,6 +47,7 @@ fun AppNavigation() {
     val partidoViewModel = remember { PartidoViewModel() }
     val reservaRepository = remember { ReservaRepository() }
     val canchaViewModel = remember { CanchaViewModel(reservaRepository) }
+    val reservaViewModel = remember { ReservaViewModel(reservaRepository) }
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
@@ -97,7 +99,8 @@ fun AppNavigation() {
                 },
                 // PartidoViewModel se pasa desde acá para que PartidosTab y
                 // CrearPartidoScreen compartan el mismo estado de partidos.
-                partidoViewModel = partidoViewModel
+                partidoViewModel = partidoViewModel,
+                reservaViewModel = reservaViewModel
             )
         }
         composable(Screen.AcercaDe.route) {
