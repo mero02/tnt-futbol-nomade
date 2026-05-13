@@ -7,11 +7,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.futbol_tnt.data.auth.GoogleAuthClient
+import com.example.futbol_tnt.data.repository.ReservaRepository
 import com.example.futbol_tnt.presentation.ui.screens.AcercaDe
+import com.example.futbol_tnt.presentation.ui.screens.CanchaDetailScreen
 import com.example.futbol_tnt.presentation.ui.screens.CrearPartidoScreen
 import com.example.futbol_tnt.presentation.ui.screens.home.HomeScreen
 import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
+import com.example.futbol_tnt.presentation.viewmodel.CanchaViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 
 // Cada pantalla tiene una ruta string única. El NavController usa estas rutas para navegar.
@@ -19,7 +22,13 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
     data object AcercaDe : Screen("acerca_de")
-    data object CrearPartido : Screen("crear_partido")
+    data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
+        fun createRoute(reservaId: String? = null) =
+            if (reservaId != null) "crear_partido?reservaId=$reservaId" else "crear_partido"
+    }
+    data object CanchaDetail : Screen("cancha_detail/{canchaId}") {
+        fun createRoute(canchaId: String) = "cancha_detail/$canchaId"
+    }
 }
 
 // AppNavigation es el punto de entrada de toda la navegación de la app.
@@ -35,6 +44,8 @@ fun AppNavigation() {
     val googleAuthClient = remember { GoogleAuthClient(context) }
     val authViewModel = remember { AuthViewModel(googleAuthClient) }
     val partidoViewModel = remember { PartidoViewModel() }
+    val reservaRepository = remember { ReservaRepository() }
+    val canchaViewModel = remember { CanchaViewModel(reservaRepository) }
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
@@ -81,6 +92,9 @@ fun AppNavigation() {
                 onCrearPartido = {
                     navController.navigate(Screen.CrearPartido.route)
                 },
+                onNavigateToCanchaDetail = { canchaId ->
+                    navController.navigate(Screen.CanchaDetail.createRoute(canchaId))
+                },
                 // PartidoViewModel se pasa desde acá para que PartidosTab y
                 // CrearPartidoScreen compartan el mismo estado de partidos.
                 partidoViewModel = partidoViewModel
@@ -95,6 +109,28 @@ fun AppNavigation() {
         composable(Screen.CrearPartido.route) {
             CrearPartidoScreen(
                 viewModel = partidoViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.CanchaDetail.route) { backStackEntry ->
+            val canchaId = backStackEntry.arguments?.getString("canchaId") ?: return@composable
+            CanchaDetailScreen(
+                canchaId = canchaId,
+                viewModel = canchaViewModel,
+                onBack = { navController.popBackStack() },
+                onReservaSuccess = { reservaId ->
+                    navController.navigate(Screen.CrearPartido.createRoute(reservaId)) {
+                        popUpTo(Screen.CanchaDetail.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.CrearPartido.route) { backStackEntry ->
+            val reservaId = backStackEntry.arguments?.getString("reservaId")
+            CrearPartidoScreen(
+                viewModel = partidoViewModel,
+                reservaId = reservaId,
+                reservaRepository = reservaRepository,
                 onBack = { navController.popBackStack() }
             )
         }

@@ -46,6 +46,7 @@ import com.example.futbol_tnt.data.model.Cancha
 import com.example.futbol_tnt.data.model.EstadoPartido
 import com.example.futbol_tnt.data.model.MockData
 import com.example.futbol_tnt.data.model.Partido
+import com.example.futbol_tnt.data.repository.IReservaRepository
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import java.time.LocalDateTime
@@ -109,6 +110,8 @@ fun buildPartido(form: FormPartido): Partido {
 @Composable
 fun CrearPartidoScreen(
     viewModel: PartidoViewModel,
+    reservaId: String? = null,
+    reservaRepository: IReservaRepository? = null,
     onBack: () -> Unit
 ) {
     // Estado local de cada campo del formulario. remember{} los mantiene entre recomposiciones.
@@ -121,6 +124,27 @@ fun CrearPartidoScreen(
     var jugadoresMax by remember { mutableStateOf("10") }
     var precio by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+    var isFromReserva by remember { mutableStateOf(false) }
+    var precioTotalReserva by remember { mutableStateOf(0.0) }
+
+    // Carga de datos de reserva si existe
+    LaunchedEffect(reservaId) {
+        if (reservaId != null && reservaRepository != null) {
+            val reserva = reservaRepository.getReservaById(reservaId)
+            reserva?.let { r ->
+                nombreLocal = r.nombreEquipo ?: ""
+                canchaSeleccionada = r.cancha
+                fecha = r.fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                hora = r.fecha.format(DateTimeFormatter.ofPattern("HH:mm"))
+                isFromReserva = true
+                precioTotalReserva = r.precioTotal
+
+                // Cálculo inicial del precio por persona
+                val jug = jugadoresMax.toIntOrNull() ?: 10
+                precio = (r.precioTotal / jug).toInt().toString()
+            }
+        }
+    }
 
     // Escucha eventos del ViewModel. PartidoCreadoExito se emite cuando el partido
     // se guardo OK en Firestore — entonces volvemos a PartidosTab.
@@ -209,31 +233,36 @@ fun CrearPartidoScreen(
                 // ExposedDropdownMenuBox muestra un TextField de solo lectura con flecha.
                 // Al tocarlo, showCanchaMenu se pone en true y aparece el menú con las canchas de MockData.
                 ExposedDropdownMenuBox(
-                    expanded = showCanchaMenu,
-                    onExpandedChange = { showCanchaMenu = it }
+                    expanded = showCanchaMenu && !isFromReserva,
+                    onExpandedChange = { if (!isFromReserva) showCanchaMenu = it }
                 ) {
                     OutlinedTextField(
                         value = canchaSeleccionada?.nombre ?: "",
                         onValueChange = {},
                         readOnly = true,
+                        enabled = !isFromReserva,
                         label = { Text("Cancha *") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCanchaMenu) },
+                        trailingIcon = {
+                            if (!isFromReserva) ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCanchaMenu)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                     )
-                    ExposedDropdownMenu(
-                        expanded = showCanchaMenu,
-                        onDismissRequest = { showCanchaMenu = false }
-                    ) {
-                        MockData.canchas.forEach { cancha ->
-                            DropdownMenuItem(
-                                text = { Text("${cancha.nombre} — ${cancha.tipo.name.replace("_", " ")}") },
-                                onClick = {
-                                    canchaSeleccionada = cancha
-                                    showCanchaMenu = false
-                                }
-                            )
+                    if (!isFromReserva) {
+                        ExposedDropdownMenu(
+                            expanded = showCanchaMenu,
+                            onDismissRequest = { showCanchaMenu = false }
+                        ) {
+                            MockData.canchas.forEach { cancha ->
+                                DropdownMenuItem(
+                                    text = { Text("${cancha.nombre} — ${cancha.tipo.name.replace("_", " ")}") },
+                                    onClick = {
+                                        canchaSeleccionada = cancha
+                                        showCanchaMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -248,6 +277,7 @@ fun CrearPartidoScreen(
                         value = fecha,
                         onValueChange = { fecha = it },
                         label = { Text("Fecha *") },
+                        readOnly = isFromReserva,
                         placeholder = { Text("dd/MM/yyyy") },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
@@ -257,6 +287,7 @@ fun CrearPartidoScreen(
                         value = hora,
                         onValueChange = { hora = it },
                         label = { Text("Hora *") },
+                        readOnly = isFromReserva,
                         placeholder = { Text("HH:mm") },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
@@ -267,7 +298,16 @@ fun CrearPartidoScreen(
             item {
                 OutlinedTextField(
                     value = jugadoresMax,
-                    onValueChange = { jugadoresMax = it },
+                    onValueChange = { newValue ->
+                        jugadoresMax = newValue
+                        // Recalcular precio por persona automáticamente si viene de una reserva
+                        if (isFromReserva && precioTotalReserva > 0) {
+                            val count = newValue.toIntOrNull()
+                            if (count != null && count > 0) {
+                                precio = (precioTotalReserva / count).toInt().toString()
+                            }
+                        }
+                    },
                     label = { Text("Jugadores máximos *") },
                     placeholder = { Text("Entre 5 y 22") },
                     modifier = Modifier.fillMaxWidth(),

@@ -158,12 +158,6 @@ internal fun PartidosTab(
                 onUnirse = { showUnirseDialog = partido }
             )
         }
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            // Card al final de la lista con el botón "Crear Partido"
-            // que navega a CrearPartidoScreen via la lambda onCrearPartido.
-            CrearPartidoCard(onClick = onCrearPartido)
-        }
     }
 }
 
@@ -480,40 +474,4 @@ private fun UnirsePartidoDialog(
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
-}
-
-@Composable
-private fun CrearPartidoCard(onClick: () -> Unit) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.SportsSoccer,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Organizá tu partido",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Creá un partido y buscá rivales",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            // Al tocar navega a CrearPartidoScreen via la lambda que llega desde AppNavigation
-            Button(onClick = onClick) { Text("Crear Partido") }
-        }
-    }
 }

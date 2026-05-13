@@ -24,6 +24,7 @@ enum class TipoCancha {
 
 data class Reserva(
     val id: String,
+    val usuarioId: String = "",
     val cancha: Cancha,
     val fecha: LocalDateTime,
     val duracionHoras: Int,

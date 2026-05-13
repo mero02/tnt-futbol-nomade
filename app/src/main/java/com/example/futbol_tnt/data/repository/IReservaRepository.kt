@@ -1,0 +1,10 @@
+package com.example.futbol_tnt.data.repository
+
+import com.example.futbol_tnt.data.model.Reserva
+import kotlinx.coroutines.flow.Flow
+
+interface IReservaRepository {
+    val reservas: Flow<List<Reserva>>
+    suspend fun crearReserva(reserva: Reserva): String
+    suspend fun getReservaById(id: String): Reserva?
+}

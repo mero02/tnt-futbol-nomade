@@ -38,7 +38,9 @@ import com.example.futbol_tnt.data.model.MockData
 import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
 
 @Composable
-internal fun CanchasTab() {
+internal fun CanchasTab(
+    onNavigateToCanchaDetail: (String) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -52,14 +54,20 @@ internal fun CanchasTab() {
             )
         }
         items(MockData.canchas, key = { it.id }) { cancha ->
-            CanchaCard(cancha = cancha)
+            CanchaCard(
+                cancha = cancha,
+                onClick = { onNavigateToCanchaDetail(cancha.id) }
+            )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CanchaCard(cancha: Cancha) {
+private fun CanchaCard(
+    cancha: Cancha,
+    onClick: () -> Unit
+) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -133,7 +141,7 @@ private fun CanchaCard(cancha: Cancha) {
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    FilledTonalButton(onClick = { }) {
+                    FilledTonalButton(onClick = onClick) {
                         Text("Reservar")
                     }
                 }

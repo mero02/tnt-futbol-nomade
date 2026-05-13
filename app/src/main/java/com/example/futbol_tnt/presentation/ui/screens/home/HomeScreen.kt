@@ -42,6 +42,7 @@ fun HomeScreen(
     onSignOut: () -> Unit,
     onNavigateToAcercaDe: () -> Unit,
     onCrearPartido: () -> Unit,
+    onNavigateToCanchaDetail: (String) -> Unit,
     partidoViewModel: PartidoViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -113,7 +114,7 @@ fun HomeScreen(
                 .padding(paddingValues)
         ) {
             when (selectedIndex) {
-                0 -> CanchasTab()
+                0 -> CanchasTab(onNavigateToCanchaDetail = onNavigateToCanchaDetail)
                 1 -> MisReservasTab()
                 2 -> PartidosTab(viewModel = partidoViewModel, onCrearPartido = onCrearPartido)
                 3 -> PerfilTab(onSignOut = onSignOut)
