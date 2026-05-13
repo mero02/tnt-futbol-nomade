@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.futbol_tnt.R
 import com.example.futbol_tnt.presentation.viewmodel.AuthUiState
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 
@@ -39,7 +38,7 @@ import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 fun LoginScreen(
     authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // Observa el estado del ViewModel como State para que Compose recomponga
     // automáticamente cuando cambie (Loading, Success, Error, Idle).

@@ -37,7 +37,7 @@ class AuthViewModel(
                 is AuthResult.Success -> {
                     _uiState.value = AuthUiState.Success(
                         userId = result.userId,
-                        displayName = result.displayName
+                        displayName = result.displayName,
                     )
                 }
                 is AuthResult.Error -> {
@@ -65,7 +65,7 @@ class AuthViewModel(
                         uid = result.userId,
                         email = result.email,
                         displayName = result.displayName,
-                        photoUrl = result.photoUrl
+                        photoUrl = result.photoUrl,
                     )
 
                     try {
@@ -77,7 +77,7 @@ class AuthViewModel(
 
                     _uiState.value = AuthUiState.Success(
                         userId = result.userId,
-                        displayName = result.displayName
+                        displayName = result.displayName,
                     )
                 }
                 is AuthResult.Error -> {

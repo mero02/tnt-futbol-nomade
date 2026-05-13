@@ -19,7 +19,7 @@ sealed class ProfileUiState {
 }
 
 class ProfileViewModel(
-    private val userRepository: IUserRepository = UserRepository()
+    private val userRepository: IUserRepository = UserRepository(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -42,7 +42,6 @@ class ProfileViewModel(
     }
 
     fun updateProfile(
-        uid: String,
         displayName: String,
         posicion: Posicion?,
         nivel: NivelJuego?,

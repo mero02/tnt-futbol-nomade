@@ -16,7 +16,7 @@ sealed class AuthResult {
         val userId: String,
         val displayName: String?,
         val email: String?,
-        val photoUrl: String?
+        val photoUrl: String?,
     ) : AuthResult()
     data class Error(val message: String) : AuthResult()
 }
@@ -33,7 +33,7 @@ private val googleSignInClient: GoogleSignInClient by lazy {
         GoogleSignIn.getClient(context, gso)
     }
 
-    suspend fun signIn(): AuthResult {
+    fun signIn(): AuthResult {
         return try {
             val intent = googleSignInClient.signInIntent
             AuthResult.Pending(intent)
@@ -70,8 +70,6 @@ private val googleSignInClient: GoogleSignInClient by lazy {
         FirebaseAuth.getInstance().signOut()
         googleSignInClient.signOut()
     }
-
-    fun getCurrentUserId(): String? = FirebaseAuth.getInstance().currentUser?.uid
 
     fun isLoggedIn(): Boolean = FirebaseAuth.getInstance().currentUser != null
 }

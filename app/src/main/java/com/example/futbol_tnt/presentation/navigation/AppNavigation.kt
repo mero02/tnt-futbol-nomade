@@ -67,7 +67,7 @@ fun AppNavigation() {
                     uid = firebaseUser.uid,
                     email = firebaseUser.email,
                     displayName = firebaseUser.displayName,
-                    photoUrl = firebaseUser.photoUrl?.toString()
+                    photoUrl = firebaseUser.photoUrl?.toString(),
                 )
                 try {
                     userRepository.syncUser(user)
@@ -95,7 +95,7 @@ fun AppNavigation() {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                }
+                },
             )
         }
 
@@ -142,8 +142,9 @@ fun AppNavigation() {
             com.example.futbol_tnt.presentation.ui.screens.profile.ProfileScreen(
                 uid = uid,
                 viewModel = profileViewModel,
-                onBack = { navController.popBackStack() }
-            )
+            ) {
+                navController.popBackStack()
+            }
         }
         composable(Screen.CanchaDetail.route) { backStackEntry ->
             val canchaId = backStackEntry.arguments?.getString("canchaId") ?: return@composable
@@ -155,7 +156,7 @@ fun AppNavigation() {
                     navController.navigate(Screen.CrearPartido.createRoute(reservaId)) {
                         popUpTo(Screen.CanchaDetail.route) { inclusive = true }
                     }
-                }
+                },
             )
         }
         composable(Screen.CrearPartido.route) { backStackEntry ->
@@ -164,8 +165,9 @@ fun AppNavigation() {
                 viewModel = partidoViewModel,
                 reservaId = reservaId,
                 reservaRepository = reservaRepository,
-                onBack = { navController.popBackStack() }
-            )
+            ) {
+                navController.popBackStack()
+            }
         }
     }
 }

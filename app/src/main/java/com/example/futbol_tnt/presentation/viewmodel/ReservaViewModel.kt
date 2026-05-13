@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
 class ReservaViewModel(
-    private val repository: IReservaRepository = ReservaRepository()
+    repository: IReservaRepository = ReservaRepository(),
 ) : ViewModel() {
 
     val reservas: StateFlow<List<Reserva>> = repository.reservas

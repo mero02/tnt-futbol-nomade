@@ -31,7 +31,7 @@ class PartidoViewModel(
     val partidos: StateFlow<List<Partido>> = repository.partidos
         .catch { error ->
             _evento.value = PartidoEvento.Error(
-                error.message ?: "No se pudieron cargar los partidos"
+                error.message ?: "No se pudieron cargar los partidos",
             )
             emit(emptyList())
         }

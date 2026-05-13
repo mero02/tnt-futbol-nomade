@@ -64,7 +64,7 @@ fun ProfileScreen(
                 ProfileContent(
                     user = state.user,
                     onSave = { name, pos, level, bio ->
-                        viewModel.updateProfile(uid, name, pos, level, bio)
+                        viewModel.updateProfile(name, pos, level, bio)
                         scope.launch {
                             snackbarHostState.showSnackbar("Perfil actualizado correctamente")
                             onBack() // Volvemos a la pestaña de perfil después de guardar

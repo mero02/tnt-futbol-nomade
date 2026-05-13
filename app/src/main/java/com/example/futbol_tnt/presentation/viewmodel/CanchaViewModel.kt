@@ -23,7 +23,7 @@ sealed class ReservaEvento {
 }
 
 class CanchaViewModel(
-    private val repository: IReservaRepository = ReservaRepository()
+    private val repository: IReservaRepository = ReservaRepository(),
 ) : ViewModel() {
 
     private val _cancha = MutableStateFlow<Cancha?>(null)
@@ -38,7 +38,7 @@ class CanchaViewModel(
     private val _duracionSeleccionada = MutableStateFlow(1.0)
     val duracionSeleccionada: StateFlow<Double> = _duracionSeleccionada.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
+    private val _isLoading = MutableStateFlow(value = false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _evento = MutableStateFlow<ReservaEvento>(ReservaEvento.Idle)
@@ -81,7 +81,7 @@ class CanchaViewModel(
                     fecha = LocalDateTime.of(fecha, hora),
                     duracionHoras = _duracionSeleccionada.value.toInt(),
                     precioTotal = calcularPrecioTotal(),
-                    estado = EstadoReserva.CONFIRMADA
+                    estado = EstadoReserva.CONFIRMADA,
                 )
 
                 val id = repository.crearReserva(nuevaReserva)

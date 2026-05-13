@@ -49,7 +49,7 @@ fun HomeScreen(
     partidoViewModel: PartidoViewModel,
     reservaViewModel: ReservaViewModel,
     profileViewModel: ProfileViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // Definición de las 4 tabs del bottom nav.
     // El índice de cada ítem corresponde al case en el when{} de abajo.
