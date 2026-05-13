@@ -12,7 +12,12 @@ import kotlinx.coroutines.tasks.await
 
 sealed class AuthResult {
     data class Pending(val signInIntent: Intent) : AuthResult()
-    data class Success(val userId: String, val displayName: String?, val email: String?) : AuthResult()
+    data class Success(
+        val userId: String,
+        val displayName: String?,
+        val email: String?,
+        val photoUrl: String?
+    ) : AuthResult()
     data class Error(val message: String) : AuthResult()
 }
 
@@ -48,7 +53,8 @@ private val googleSignInClient: GoogleSignInClient by lazy {
                 AuthResult.Success(
                     userId = user.uid,
                     displayName = user.displayName,
-                    email = user.email
+                    email = user.email,
+                    photoUrl = user.photoUrl?.toString()
                 )
             } else {
                 AuthResult.Error("User is null")

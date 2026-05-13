@@ -1,6 +1,7 @@
 package com.example.futbol_tnt.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
@@ -8,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.futbol_tnt.data.auth.GoogleAuthClient
 import com.example.futbol_tnt.data.repository.ReservaRepository
+import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.ui.screens.AcercaDe
 import com.example.futbol_tnt.presentation.ui.screens.CanchaDetailScreen
 import com.example.futbol_tnt.presentation.ui.screens.CrearPartidoScreen
@@ -43,7 +45,8 @@ fun AppNavigation() {
     // GoogleAuthClient y los ViewModels se crean una sola vez con remember{}
     // para que sobrevivan recomposiciones sin perder su estado.
     val googleAuthClient = remember { GoogleAuthClient(context) }
-    val authViewModel = remember { AuthViewModel(googleAuthClient) }
+    val userRepository = remember { UserRepository() }
+    val authViewModel = remember { AuthViewModel(googleAuthClient, userRepository) }
     val partidoViewModel = remember { PartidoViewModel() }
     val reservaRepository = remember { ReservaRepository() }
     val canchaViewModel = remember { CanchaViewModel(reservaRepository) }
@@ -52,6 +55,24 @@ fun AppNavigation() {
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
     val startDestination = if (googleAuthClient.isLoggedIn()) {
+        // Si ya está logueado, sincronizamos sus datos en segundo plano por si es la primera vez
+        // que entra con la persistencia nueva o si cambiaron sus datos de Google.
+        LaunchedEffect(Unit) {
+            val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            currentUser?.let { firebaseUser ->
+                val user = com.example.futbol_tnt.data.model.User(
+                    uid = firebaseUser.uid,
+                    email = firebaseUser.email,
+                    displayName = firebaseUser.displayName,
+                    photoUrl = firebaseUser.photoUrl?.toString()
+                )
+                try {
+                    userRepository.syncUser(user)
+                } catch (e: Exception) {
+                    println("Error sincronizando usuario existente: ${e.message}")
+                }
+            }
+        }
         Screen.Home.route
     } else {
         Screen.Login.route

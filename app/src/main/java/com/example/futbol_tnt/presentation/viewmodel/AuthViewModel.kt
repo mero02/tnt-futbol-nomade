@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.futbol_tnt.data.auth.AuthResult
 import com.example.futbol_tnt.data.auth.GoogleAuthClient
+import com.example.futbol_tnt.data.model.User
+import com.example.futbol_tnt.data.repository.IUserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +20,8 @@ sealed class AuthUiState {
 }
 
 class AuthViewModel(
-    private val googleAuthClient: GoogleAuthClient
+    private val googleAuthClient: GoogleAuthClient,
+    private val userRepository: IUserRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
@@ -57,6 +60,21 @@ class AuthViewModel(
             _uiState.value = AuthUiState.Loading
             when (val result = googleAuthClient.handleSignInResult(intent)) {
                 is AuthResult.Success -> {
+                    // Sincronizamos los datos del usuario con Firestore
+                    val user = User(
+                        uid = result.userId,
+                        email = result.email,
+                        displayName = result.displayName,
+                        photoUrl = result.photoUrl
+                    )
+
+                    try {
+                        userRepository.syncUser(user)
+                    } catch (e: Exception) {
+                        // Loguear error o manejarlo si falla la sincronización
+                        println("Error sincronizando usuario: ${e.message}")
+                    }
+
                     _uiState.value = AuthUiState.Success(
                         userId = result.userId,
                         displayName = result.displayName
@@ -66,7 +84,6 @@ class AuthViewModel(
                     _uiState.value = AuthUiState.Error(result.message)
                 }
                 is AuthResult.Pending -> {
-                    // No debería happen en handleSignInResult
                     _uiState.value = AuthUiState.Error("Unexpected state")
                 }
             }
