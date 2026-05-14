@@ -2,9 +2,7 @@ package com.example.futbol_tnt.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.futbol_tnt.data.model.NivelJuego
-import com.example.futbol_tnt.data.model.Posicion
-import com.example.futbol_tnt.data.model.User
+import com.example.futbol_tnt.data.model.*
 import com.example.futbol_tnt.data.repository.IUserRepository
 import com.example.futbol_tnt.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,29 +39,13 @@ class ProfileViewModel(
         }
     }
 
-    fun updateProfile(
-        displayName: String,
-        posicion: Posicion?,
-        nivel: NivelJuego?,
-        biografia: String?
-    ) {
+    fun updateProfile(updatedUser: User) {
         viewModelScope.launch {
-            val currentState = _uiState.value
-            if (currentState is ProfileUiState.Success) {
-                val updatedUser = currentState.user.copy(
-                    displayName = displayName,
-                    posicion = posicion,
-                    nivel = nivel,
-                    biografia = biografia
-                )
-                try {
-                    userRepository.updateUser(updatedUser)
-                    _uiState.value = ProfileUiState.Success(updatedUser)
-                    // Emitimos un evento de éxito si fuera necesario,
-                    // o simplemente confiamos en que el estado Success se mantiene.
-                } catch (e: Exception) {
-                    _uiState.value = ProfileUiState.Error(e.message ?: "Error al actualizar perfil")
-                }
+            try {
+                userRepository.updateUser(updatedUser)
+                _uiState.value = ProfileUiState.Success(updatedUser)
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error(e.message ?: "Error al actualizar perfil")
             }
         }
     }

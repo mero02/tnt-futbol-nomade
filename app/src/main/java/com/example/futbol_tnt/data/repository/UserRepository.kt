@@ -1,8 +1,6 @@
 package com.example.futbol_tnt.data.repository
 
-import com.example.futbol_tnt.data.model.NivelJuego
-import com.example.futbol_tnt.data.model.Posicion
-import com.example.futbol_tnt.data.model.User
+import com.example.futbol_tnt.data.model.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -49,7 +47,13 @@ private fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "posicion" to posicion?.name,
     "nivel" to nivel?.name,
     "telefono" to telefono,
-    "biografia" to biografia
+    "biografia" to biografia,
+    "apodo" to apodo,
+    "fechaNacimiento" to fechaNacimiento,
+    "sexo" to sexo?.name,
+    "piernaDominante" to piernaDominante?.name,
+    "formatoPreferido" to formatoPreferido?.name,
+    "equipo" to equipo
 )
 
 private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
@@ -62,7 +66,13 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?
             posicion = getString("posicion")?.let { runCatching { Posicion.valueOf(it) }.getOrNull() },
             nivel = getString("nivel")?.let { runCatching { NivelJuego.valueOf(it) }.getOrNull() },
             telefono = getString("telefono"),
-            biografia = getString("biografia")
+            biografia = getString("biografia"),
+            apodo = getString("apodo"),
+            fechaNacimiento = getString("fechaNacimiento"),
+            sexo = getString("sexo")?.let { runCatching { Sexo.valueOf(it) }.getOrNull() },
+            piernaDominante = getString("piernaDominante")?.let { runCatching { PiernaDominante.valueOf(it) }.getOrNull() },
+            formatoPreferido = getString("formatoPreferido")?.let { runCatching { FormatoPreferido.valueOf(it) }.getOrNull() },
+            equipo = getString("equipo")
         )
     } else null
 }
