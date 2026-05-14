@@ -1,5 +1,7 @@
 package com.example.futbol_tnt.presentation.ui.screens.home
 
+import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.CanchasTab
 import com.example.futbol_tnt.presentation.ui.screens.home.tabs.MisReservasTab
@@ -52,6 +55,19 @@ import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 import kotlinx.coroutines.launch
+
+private fun shareApp(context: Context) {
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(
+            Intent.EXTRA_TEXT,
+            "¡Descarga 'Entra a la cancha' y empezá a organizar tus partidos! Unite a nuestra comunidad: https://entraalacancha.example.com/download"
+        )
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, "Compartir app")
+    context.startActivity(shareIntent)
+}
 
 // Modelo interno para describir cada ítem del bottom navigation bar
 private data class BottomNavItem(val title: String, val icon: ImageVector)
@@ -84,6 +100,7 @@ fun HomeScreen(
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     // Manejo del botón atrás: si no estamos en la pestaña 0, el primer "atrás" nos lleva a Inicio.
     BackHandler(enabled = selectedIndex != 0) {
@@ -184,7 +201,7 @@ fun HomeScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        // TODO: Implementar compartir app
+                        shareApp(context)
                     },
                     icon = { Icon(Icons.Default.Star, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
