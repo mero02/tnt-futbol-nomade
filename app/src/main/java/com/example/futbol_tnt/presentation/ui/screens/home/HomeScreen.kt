@@ -78,6 +78,7 @@ fun HomeScreen(
     onSignOut: () -> Unit,
     onNavigateToAcercaDe: () -> Unit,
     onNavigateToReporte: () -> Unit,
+    onNavigateToTarjetas: () -> Unit,
     onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -182,7 +183,7 @@ fun HomeScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        // TODO: Implementar pantalla de tarjetas
+                        onNavigateToTarjetas()
                     },
                     icon = { Icon(Icons.Default.CreditCard, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

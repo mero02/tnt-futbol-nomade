@@ -28,6 +28,7 @@ sealed class Screen(val route: String) {
     data object AcercaDe : Screen("acerca_de")
     data object Perfil : Screen("perfil")
     data object Reporte : Screen("reporte")
+    data object Tarjetas : Screen("tarjetas")
     data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
         fun createRoute(reservaId: String? = null) =
             if (reservaId != null) "crear_partido?reservaId=$reservaId" else "crear_partido"
@@ -61,6 +62,7 @@ fun AppNavigation() {
     val profileViewModel = remember { ProfileViewModel(userRepository) }
     val checkoutViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.CheckoutViewModel(reservaRepository) }
     val reporteViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.ReporteViewModel() }
+    val tarjetaViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.TarjetaViewModel() }
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
@@ -126,6 +128,9 @@ fun AppNavigation() {
                 },
                 onNavigateToReporte = {
                     navController.navigate(Screen.Reporte.route)
+                },
+                onNavigateToTarjetas = {
+                    navController.navigate(Screen.Tarjetas.route)
                 },
                 onCrearPartido = { reservaId ->
                     navController.navigate(Screen.CrearPartido.createRoute(reservaId))
@@ -206,6 +211,12 @@ fun AppNavigation() {
         composable(Screen.Reporte.route) {
             com.example.futbol_tnt.presentation.ui.screens.ReporteScreen(
                 viewModel = reporteViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Tarjetas.route) {
+            com.example.futbol_tnt.presentation.ui.screens.profile.MisTarjetasScreen(
+                viewModel = tarjetaViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
