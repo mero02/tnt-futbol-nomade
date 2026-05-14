@@ -77,6 +77,7 @@ private data class BottomNavItem(val title: String, val icon: ImageVector)
 fun HomeScreen(
     onSignOut: () -> Unit,
     onNavigateToAcercaDe: () -> Unit,
+    onNavigateToReporte: () -> Unit,
     onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -211,7 +212,7 @@ fun HomeScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        // TODO: Implementar feedback
+                        onNavigateToReporte()
                     },
                     icon = { Icon(Icons.Default.BugReport, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
