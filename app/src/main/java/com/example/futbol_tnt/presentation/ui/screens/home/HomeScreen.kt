@@ -1,5 +1,6 @@
 package com.example.futbol_tnt.presentation.ui.screens.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,12 +78,17 @@ fun HomeScreen(
         BottomNavItem("Perfil", Icons.Default.Person)           // índice 3
     )
 
-    // selectedIndex guarda qué tab está activa. remember{} lo mantiene vivo
-    // entre recomposiciones sin reiniciarse.
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    // selectedIndex guarda qué tab está activa. rememberSaveable asegura que se mantenga
+    // incluso si se navega a otra pantalla y se vuelve.
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    // Manejo del botón atrás: si no estamos en la pestaña 0, el primer "atrás" nos lleva a Inicio.
+    BackHandler(enabled = selectedIndex != 0) {
+        selectedIndex = 0
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -222,7 +229,17 @@ fun HomeScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Entra a la cancha") },
+                    title = {
+                        Text(
+                            when (selectedIndex) {
+                                0 -> "Entra a la cancha"
+                                1 -> "Mis Reservas"
+                                2 -> "Partidos Organizados"
+                                3 -> "Mi Perfil"
+                                else -> "Entra a la cancha"
+                            }
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = {
                             scope.launch { drawerState.open() }
