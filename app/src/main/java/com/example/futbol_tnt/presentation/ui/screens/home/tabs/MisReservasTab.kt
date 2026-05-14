@@ -1,10 +1,12 @@
 package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.futbol_tnt.data.model.EstadoReserva
@@ -43,6 +46,7 @@ internal fun MisReservasTab(
     // Estados para diálogos
     var reservaParaCancelar by remember { mutableStateOf<Reserva?>(null) }
     var reservaParaPagar by remember { mutableStateOf<Reserva?>(null) }
+    var reservaParaTicket by remember { mutableStateOf<Reserva?>(null) }
     var isPaying by remember { mutableStateOf(false) }
 
     LaunchedEffect(rawEvento) {
@@ -126,6 +130,14 @@ internal fun MisReservasTab(
         }
     }
 
+    // Diálogo de Ticket
+    reservaParaTicket?.let { reserva ->
+        TicketDialog(
+            reserva = reserva,
+            onDismiss = { reservaParaTicket = null }
+        )
+    }
+
     val reservasFiltradas = remember(reservas, filtros) {
         reservas.filter { reserva ->
             val filtroFechaOk = when (filtros.fecha) {
@@ -192,12 +204,116 @@ internal fun MisReservasTab(
                         reserva = reserva,
                         onCancelar = { reservaParaCancelar = reserva },
                         onPagar = { reservaParaPagar = reserva },
-                        onOrganizar = { onOrganizarPartido(reserva.id) }
+                        onOrganizar = { onOrganizarPartido(reserva.id) },
+                        onVerTicket = { reservaParaTicket = reserva }
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun TicketDialog(
+    reserva: Reserva,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.ConfirmationNumber, null, tint = MaterialTheme.colorScheme.primary)
+                Text("Ticket de Reserva", style = MaterialTheme.typography.headlineSmall)
+            }
+        },
+        text = {
+            if (reserva.estado == EstadoReserva.CONFIRMADA) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(reserva.cancha.nombre, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            Text(reserva.cancha.direccion, style = MaterialTheme.typography.bodySmall)
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("FECHA", style = MaterialTheme.typography.labelSmall)
+                                    Text(reserva.fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), fontWeight = FontWeight.Bold)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("HORA", style = MaterialTheme.typography.labelSmall)
+                                    Text(reserva.fecha.format(DateTimeFormatter.ofPattern("HH:mm'hs'")), fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .size(140.dp)
+                                    .background(Color.White, RoundedCornerShape(8.dp))
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCode2,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    tint = Color.Black
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("ID: ${reserva.id.take(8).uppercase()}", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    Text(
+                        "Mostrá este código al llegar al predio.",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        "Ticket no disponible",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Tu reserva aún está pendiente de pago. Debes completar el pago total para obtener tu ticket de acceso.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    )
 }
 
 @Composable
@@ -279,7 +395,8 @@ private fun ReservaCard(
     reserva: Reserva,
     onCancelar: () -> Unit,
     onPagar: () -> Unit,
-    onOrganizar: () -> Unit
+    onOrganizar: () -> Unit,
+    onVerTicket: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -308,7 +425,7 @@ private fun ReservaCard(
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
                             text = { Text("Ver Ticket") },
-                            onClick = { /* Implementar Dialog */ showMenu = false },
+                            onClick = { onVerTicket(); showMenu = false },
                             leadingIcon = { Icon(Icons.Default.ConfirmationNumber, null) }
                         )
                         DropdownMenuItem(
