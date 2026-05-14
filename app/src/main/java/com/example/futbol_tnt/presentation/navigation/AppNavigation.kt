@@ -109,10 +109,12 @@ fun AppNavigation() {
         // desacoplada del sistema de navegación (más fácil de testear y reutilizar).
         composable(Screen.Home.route) {
             HomeScreen(
-                // Al cerrar sesión: limpia Firebase + Google, y vuelve al login
-                // eliminando Home del back stack para evitar volver con "atrás".
+                // Al cerrar sesión: limpia Firebase + Google, resetea el estado del ViewModel
+                // y vuelve al login eliminando Home del back stack.
                 onSignOut = {
                     googleAuthClient.signOut()
+                    authViewModel.resetState()
+                    profileViewModel.clearProfile()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }

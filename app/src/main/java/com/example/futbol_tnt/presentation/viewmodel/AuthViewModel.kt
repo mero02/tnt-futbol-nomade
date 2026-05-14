@@ -93,4 +93,9 @@ class AuthViewModel(
     fun clearError() {
         _uiState.value = AuthUiState.Idle
     }
+
+    fun resetState() {
+        _uiState.value = AuthUiState.Idle
+        _pendingSignInIntent.value = null
+    }
 }

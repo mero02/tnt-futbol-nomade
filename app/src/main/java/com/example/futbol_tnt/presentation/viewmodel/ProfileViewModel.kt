@@ -67,4 +67,8 @@ class ProfileViewModel(
             }
         }
     }
+
+    fun clearProfile() {
+        _uiState.value = ProfileUiState.Loading
+    }
 }

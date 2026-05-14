@@ -30,9 +30,13 @@ class PartidoViewModel(
     // un valor inicial (lista vacia) hasta que llegue el primer snapshot.
     val partidos: StateFlow<List<Partido>> = repository.partidos
         .catch { error ->
-            _evento.value = PartidoEvento.Error(
-                error.message ?: "No se pudieron cargar los partidos",
-            )
+            // Durante el logout es normal recibir PERMISSION_DENIED.
+            // Solo emitimos error si no es un tema de permisos (o si queremos manejarlo en la UI).
+            if (error.message?.contains("PERMISSION_DENIED") == false) {
+                _evento.value = PartidoEvento.Error(
+                    error.message ?: "No se pudieron cargar los partidos",
+                )
+            }
             emit(emptyList())
         }
         .stateIn(
