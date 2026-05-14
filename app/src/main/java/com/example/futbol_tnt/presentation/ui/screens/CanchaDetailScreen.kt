@@ -40,7 +40,8 @@ fun CanchaDetailScreen(
     canchaId: String,
     viewModel: CanchaViewModel,
     onBack: () -> Unit,
-    onReservaSuccess: (String) -> Unit // Recibe reservaId
+    onReservaSuccess: (String) -> Unit, // Recibe reservaId
+    onNavigateToCheckout: (String, java.time.LocalDate, java.time.LocalTime, Double) -> Unit
 ) {
     val cancha by viewModel.cancha.collectAsState()
     val fechaSeleccionada by viewModel.fechaSeleccionada.collectAsState()
@@ -51,52 +52,16 @@ fun CanchaDetailScreen(
     val evento by viewModel.evento.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
-    var showSuccessDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(canchaId) {
         viewModel.cargarCancha(canchaId)
     }
 
     LaunchedEffect(evento) {
-        when (evento) {
-            is ReservaEvento.ReservaExitosa -> {
-                showSuccessDialog = true
-            }
-            is ReservaEvento.Error -> {
-                snackbarHostState.showSnackbar((evento as ReservaEvento.Error).mensaje)
-                viewModel.limpiarEvento()
-            }
-            else -> {}
+        if (evento is ReservaEvento.Error) {
+            snackbarHostState.showSnackbar((evento as ReservaEvento.Error).mensaje)
+            viewModel.limpiarEvento()
         }
-    }
-
-    if (showSuccessDialog) {
-        val reserva = (evento as? ReservaEvento.ReservaExitosa)?.reserva
-        AlertDialog(
-            onDismissRequest = { /* No permitir cerrar sin elegir */ },
-            title = { Text("¡Reserva Confirmada!") },
-            text = { Text("Tu cancha ya está reservada. ¿Te faltan jugadores para completar el equipo? Podés crear un partido público ahora.") },
-            confirmButton = {
-                Button(onClick = {
-                    showSuccessDialog = false
-                    viewModel.limpiarEvento()
-                    if (reserva != null) {
-                        onReservaSuccess(reserva.id) // Aquí navegaremos a crear partido
-                    }
-                }) {
-                    Text("Crear Partido Público")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showSuccessDialog = false
-                    viewModel.limpiarEvento()
-                    onBack() // Solo volver atrás
-                }) {
-                    Text("Solo reservar")
-                }
-            }
-        )
     }
 
     Scaffold(
@@ -215,20 +180,16 @@ fun CanchaDetailScreen(
                         )
                     }
                     Button(
-                        onClick = { viewModel.realizarReserva() },
+                        onClick = {
+                            horaSeleccionada?.let { h ->
+                                onNavigateToCheckout(canchaId, fechaSeleccionada, h, duracionSeleccionada)
+                            }
+                        },
                         enabled = horaSeleccionada != null && !isLoading,
                         modifier = Modifier.height(56.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Reservar Ahora")
-                        }
+                        Text("Continuar")
                     }
                 }
 

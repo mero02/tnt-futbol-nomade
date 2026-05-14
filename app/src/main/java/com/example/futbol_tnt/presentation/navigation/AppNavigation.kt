@@ -34,6 +34,10 @@ sealed class Screen(val route: String) {
     data object CanchaDetail : Screen("cancha_detail/{canchaId}") {
         fun createRoute(canchaId: String) = "cancha_detail/$canchaId"
     }
+    data object Checkout : Screen("checkout/{canchaId}/{fechaHora}/{duracion}") {
+        fun createRoute(canchaId: String, fechaHora: String, duracion: Double) =
+            "checkout/$canchaId/$fechaHora/$duracion"
+    }
 }
 
 // AppNavigation es el punto de entrada de toda la navegación de la app.
@@ -54,6 +58,7 @@ fun AppNavigation() {
     val canchaViewModel = remember { CanchaViewModel(reservaRepository) }
     val reservaViewModel = remember { ReservaViewModel(reservaRepository) }
     val profileViewModel = remember { ProfileViewModel(userRepository) }
+    val checkoutViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.CheckoutViewModel(reservaRepository) }
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
@@ -157,6 +162,28 @@ fun AppNavigation() {
                         popUpTo(Screen.CanchaDetail.route) { inclusive = true }
                     }
                 },
+                onNavigateToCheckout = { cId, f, h, d ->
+                    val combined = java.time.LocalDateTime.of(f, h).toString()
+                    navController.navigate(Screen.Checkout.createRoute(cId, combined, d))
+                }
+            )
+        }
+        composable(Screen.Checkout.route) { backStackEntry ->
+            val canchaId = backStackEntry.arguments?.getString("canchaId") ?: ""
+            val fechaHora = backStackEntry.arguments?.getString("fechaHora") ?: ""
+            val duracion = backStackEntry.arguments?.getString("duracion")?.toDoubleOrNull() ?: 1.0
+
+            com.example.futbol_tnt.presentation.ui.screens.CheckoutScreen(
+                canchaId = canchaId,
+                fechaHoraStr = fechaHora,
+                duracion = duracion,
+                viewModel = checkoutViewModel,
+                onBack = { navController.popBackStack() },
+                onSuccess = { reservaId ->
+                    navController.navigate(Screen.CrearPartido.createRoute(reservaId)) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
+                }
             )
         }
         composable(Screen.CrearPartido.route) { backStackEntry ->

@@ -9,6 +9,7 @@ data class Reserva(
     val fecha: LocalDateTime,
     val duracionHoras: Double,
     val precioTotal: Double,
+    val montoPagado: Double = 0.0,
     val estado: EstadoReserva,
     val nombreEquipo: String? = null
 )

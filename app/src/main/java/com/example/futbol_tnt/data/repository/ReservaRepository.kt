@@ -124,6 +124,7 @@ private fun Reserva.toFirestoreMap(): Map<String, Any?> = mapOf(
     ),
     "duracionHoras" to duracionHoras,
     "precioTotal" to precioTotal,
+    "montoPagado" to montoPagado,
     "estado" to estado.name,
     "nombreEquipo" to nombreEquipo,
 )
@@ -150,6 +151,7 @@ private fun DocumentSnapshot.toReservaOrNull(): Reserva? {
             ),
             duracionHoras = (get("duracionHoras") as? Number)?.toDouble() ?: 1.0,
             precioTotal = getDouble("precioTotal") ?: 0.0,
+            montoPagado = getDouble("montoPagado") ?: 0.0,
             estado = parseEstadoReserva(getString("estado")),
             nombreEquipo = getString("nombreEquipo")
         )
