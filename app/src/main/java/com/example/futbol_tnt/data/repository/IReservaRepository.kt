@@ -8,4 +8,6 @@ interface IReservaRepository {
     suspend fun crearReserva(reserva: Reserva): String
     suspend fun getReservaById(id: String): Reserva?
     suspend fun getReservasPorCanchaYFecha(canchaId: String, fecha: java.time.LocalDate): List<Reserva>
+    suspend fun cancelarReserva(reservaId: String)
+    suspend fun pagarReserva(reservaId: String, monto: Double)
 }

@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -90,19 +91,27 @@ fun validarFormPartido(form: FormPartido): String? {
 
 // Construye el objeto Partido a partir del formulario validado.
 // Se llama solo después de que validarFormPartido() retorna null (sin errores).
-fun buildPartido(form: FormPartido): Partido {
+fun buildPartido(
+    form: FormPartido,
+    reservaId: String? = null,
+    partidoId: String? = null,
+    jugadoresActuales: Int = 1
+): Partido {
     val fechaHora = LocalDateTime.parse("${form.fecha} ${form.hora}", crearPartidoFormatter)
+    val maxJugadores = form.jugadoresMax.toInt()
+
     return Partido(
-        id = UUID.randomUUID().toString(),
+        id = partidoId ?: UUID.randomUUID().toString(),
         nombreLocal = form.nombreLocal.trim(),
         nombreVisitante = form.nombreVisitante.trim(),
         fecha = fechaHora,
         cancha = form.cancha!!,
         precioPorPersona = form.precio.toDouble(),
-        jugadoresActuales = 0,
-        jugadoresMaximos = form.jugadoresMax.toInt(),
-        estado = EstadoPartido.ABIERTO,
-        nombreOrganizador = "Yo"
+        jugadoresActuales = jugadoresActuales,
+        jugadoresMaximos = maxJugadores,
+        estado = if (jugadoresActuales >= maxJugadores) EstadoPartido.LLENO else EstadoPartido.ABIERTO,
+        nombreOrganizador = "Yo",
+        reservaId = reservaId
     )
 }
 
@@ -126,22 +135,36 @@ fun CrearPartidoScreen(
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var isFromReserva by remember { mutableStateOf(false) }
     var precioTotalReserva by remember { mutableStateOf(0.0) }
+    var existingMatchId by remember { mutableStateOf<String?>(null) }
+    var jugadoresActuales by remember { mutableIntStateOf(1) }
 
     // Carga de datos de reserva si existe
     LaunchedEffect(reservaId) {
         if (reservaId != null && reservaRepository != null) {
             val reserva = reservaRepository.getReservaById(reservaId)
             reserva?.let { r ->
-                nombreLocal = r.nombreEquipo ?: ""
                 canchaSeleccionada = r.cancha
                 fecha = r.fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                 hora = r.fecha.format(DateTimeFormatter.ofPattern("HH:mm"))
                 isFromReserva = true
                 precioTotalReserva = r.precioTotal
 
-                // Cálculo inicial del precio por persona
-                val jug = jugadoresMax.toIntOrNull() ?: 10
-                precio = (r.precioTotal / jug).toInt().toString()
+                // Buscar si ya existe un partido para esta reserva
+                val existingMatch = viewModel.getPartidoByReservaId(reservaId)
+                if (existingMatch != null) {
+                    existingMatchId = existingMatch.id
+                    nombreLocal = existingMatch.nombreLocal
+                    nombreVisitante = existingMatch.nombreVisitante
+                    jugadoresMax = existingMatch.jugadoresMaximos.toString()
+                    precio = existingMatch.precioPorPersona.toInt().toString()
+                    jugadoresActuales = existingMatch.jugadoresActuales
+                } else {
+                    nombreLocal = r.nombreEquipo ?: ""
+                    jugadoresActuales = 1
+                    // Cálculo inicial del precio por persona si no hay partido previo
+                    val jug = jugadoresMax.toIntOrNull() ?: 10
+                    precio = (r.precioTotal / jug).toInt().toString()
+                }
             }
         }
     }
@@ -170,7 +193,7 @@ fun CrearPartidoScreen(
         val form = FormPartido(nombreLocal, nombreVisitante, canchaSeleccionada, fecha, hora, jugadoresMax, precio)
         val error = validarFormPartido(form)
         if (error != null) { errorMsg = error; return }
-        viewModel.crearPartido(buildPartido(form))
+        viewModel.crearPartido(buildPartido(form, reservaId, existingMatchId, jugadoresActuales))
     }
 
     Scaffold(
@@ -355,7 +378,7 @@ fun CrearPartidoScreen(
                 ) {
                     Icon(Icons.Default.SportsSoccer, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Crear Partido")
+                    Text("Guardar")
                 }
             }
         }

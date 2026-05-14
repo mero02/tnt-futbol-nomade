@@ -43,7 +43,7 @@ private data class BottomNavItem(val title: String, val icon: ImageVector)
 fun HomeScreen(
     onSignOut: () -> Unit,
     onNavigateToAcercaDe: () -> Unit,
-    onCrearPartido: () -> Unit,
+    onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     partidoViewModel: PartidoViewModel,
@@ -120,8 +120,13 @@ fun HomeScreen(
         ) {
             when (selectedIndex) {
                 0 -> CanchasTab(onNavigateToCanchaDetail = onNavigateToCanchaDetail)
-                1 -> MisReservasTab(viewModel = reservaViewModel)
-                2 -> PartidosTab(viewModel = partidoViewModel, onCrearPartido = onCrearPartido)
+                1 -> MisReservasTab(
+                    viewModel = reservaViewModel,
+                    onOrganizarPartido = { reservaId ->
+                        onCrearPartido(reservaId)
+                    }
+                )
+                2 -> PartidosTab(viewModel = partidoViewModel, onCrearPartido = { onCrearPartido(null) })
                 3 -> PerfilTab(
                     onSignOut = onSignOut,
                     viewModel = profileViewModel,

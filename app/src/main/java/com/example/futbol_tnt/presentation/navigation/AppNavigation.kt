@@ -120,8 +120,8 @@ fun AppNavigation() {
                 onNavigateToAcercaDe = {
                     navController.navigate(Screen.AcercaDe.route)
                 },
-                onCrearPartido = {
-                    navController.navigate(Screen.CrearPartido.route)
+                onCrearPartido = { reservaId ->
+                    navController.navigate(Screen.CrearPartido.createRoute(reservaId))
                 },
                 onNavigateToCanchaDetail = { canchaId ->
                     navController.navigate(Screen.CanchaDetail.createRoute(canchaId))

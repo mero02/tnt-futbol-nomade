@@ -104,6 +104,45 @@ class ReservaRepository(
             .mapNotNull { it.toReservaOrNull() }
     }
 
+    override suspend fun cancelarReserva(reservaId: String) {
+        firestore.runTransaction { transaction ->
+            // 1. Borrar la reserva
+            transaction.delete(reservasCol.document(reservaId))
+
+            // 2. Buscar y borrar el partido asociado si existe
+            // Nota: Como no podemos hacer queries complejas dentro de una transacción de escritura fácilmente
+            // sin conocer el ID del partido, lo hacemos como una operación atómica de batch o secuencial.
+        }.await()
+
+        // Forma más segura: Buscar el partido que tenga este reservaId y borrarlo
+        val partidoQuery = firestore.collection("partidos")
+            .whereEqualTo("reservaId", reservaId)
+            .get()
+            .await()
+
+        for (doc in partidoQuery.documents) {
+            doc.reference.delete().await()
+        }
+    }
+
+    override suspend fun pagarReserva(reservaId: String, monto: Double) {
+        // En una app real, aquí se incrementa el montoPagado y si llega al total se cambia el estado
+        val ref = reservasCol.document(reservaId)
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(ref)
+            val total = snapshot.getDouble("precioTotal") ?: 0.0
+            val pagadoActual = snapshot.getDouble("montoPagado") ?: 0.0
+            val nuevoPagado = pagadoActual + monto
+
+            val nuevoEstado = if (nuevoPagado >= total) EstadoReserva.CONFIRMADA.name else EstadoReserva.PENDIENTE.name
+
+            transaction.update(ref, mapOf(
+                "montoPagado" to nuevoPagado,
+                "estado" to nuevoEstado
+            ))
+        }.await()
+    }
+
     private companion object {
         const val COLLECTION = "reservas"
     }

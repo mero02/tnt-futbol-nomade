@@ -60,7 +60,8 @@ object MockData {
             jugadoresActuales = 6,
             jugadoresMaximos = 10,
             estado = EstadoPartido.ABIERTO,
-            nombreOrganizador = "Juan Pérez"
+            nombreOrganizador = "Juan Pérez",
+            reservaId = "r1"
         ),
         Partido(
             id = "p2",
@@ -73,7 +74,8 @@ object MockData {
             jugadoresActuales = 14,
             jugadoresMaximos = 14,
             estado = EstadoPartido.LLENO,
-            nombreOrganizador = "Pedro Gómez"
+            nombreOrganizador = "Pedro Gómez",
+            reservaId = "r2"
         ),
         Partido(
             id = "p3",
@@ -86,7 +88,8 @@ object MockData {
             jugadoresActuales = 8,
             jugadoresMaximos = 22,
             estado = EstadoPartido.ABIERTO,
-            nombreOrganizador = "Carlos Díaz"
+            nombreOrganizador = "Carlos Díaz",
+            reservaId = null
         ),
         Partido(
             id = "p4",
@@ -99,7 +102,8 @@ object MockData {
             jugadoresActuales = 9,
             jugadoresMaximos = 10,
             estado = EstadoPartido.LLENO,
-            nombreOrganizador = "María López"
+            nombreOrganizador = "María López",
+            reservaId = null
         )
     )
 

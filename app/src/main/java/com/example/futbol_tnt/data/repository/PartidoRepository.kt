@@ -87,6 +87,17 @@ class PartidoRepository(
         }.await()
     }
 
+    override suspend fun getPartidoByReservaId(reservaId: String): Partido? {
+        return partidosCol
+            .whereEqualTo("reservaId", reservaId)
+            .limit(1)
+            .get()
+            .await()
+            .documents
+            .firstOrNull()
+            ?.toPartidoOrNull()
+    }
+
     private companion object {
         const val COLLECTION = "partidos"
     }
@@ -122,6 +133,7 @@ private fun Partido.toFirestoreMap(): Map<String, Any?> = mapOf(
     "jugadoresMaximos" to jugadoresMaximos,
     "estado" to estado.name,
     "nombreOrganizador" to nombreOrganizador,
+    "reservaId" to reservaId,
     "creatorId" to creatorId,
 )
 
@@ -154,6 +166,7 @@ private fun DocumentSnapshot.toPartidoOrNull(): Partido? {
             jugadoresMaximos = (getLong("jugadoresMaximos") ?: 0L).toInt(),
             estado = parseEstadoPartido(getString("estado")),
             nombreOrganizador = getString("nombreOrganizador").orEmpty(),
+            reservaId = getString("reservaId"),
             creatorId = getString("creatorId").orEmpty(),
         )
     }.getOrNull()
