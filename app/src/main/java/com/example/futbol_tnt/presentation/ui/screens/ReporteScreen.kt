@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,9 +22,9 @@ fun ReporteScreen(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var tipoSeleccionado by remember { mutableStateOf(TipoReporte.ERROR) }
-    var descripcion by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
+    var tipoSeleccionadoName by rememberSaveable { mutableStateOf(TipoReporte.ERROR.name) }
+    var descripcion by rememberSaveable { mutableStateOf("") }
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(uiState) {
         if (uiState is ReporteUiState.Success) {
@@ -67,7 +68,7 @@ fun ReporteScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = tipoSeleccionado.displayName,
+                    value = tipoSeleccionadoName.let { TipoReporte.valueOf(it) }.displayName,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Motivo") },
@@ -82,7 +83,7 @@ fun ReporteScreen(
                         DropdownMenuItem(
                             text = { Text(tipo.displayName) },
                             onClick = {
-                                tipoSeleccionado = tipo
+                                tipoSeleccionadoName = tipo.name
                                 expanded = false
                             }
                         )
@@ -114,7 +115,7 @@ fun ReporteScreen(
             }
 
             Button(
-                onClick = { viewModel.enviarReporte(tipoSeleccionado, descripcion) },
+                onClick = { viewModel.enviarReporte(TipoReporte.valueOf(tipoSeleccionadoName), descripcion) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState !is ReporteUiState.Loading,
                 shape = MaterialTheme.shapes.medium

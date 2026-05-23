@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -31,7 +32,7 @@ fun MisTarjetasScreen(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
+    var showAddDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadTarjetas()
@@ -163,11 +164,11 @@ fun CardItem(tarjeta: Tarjeta, onDelete: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTarjetaDialog(onDismiss: () -> Unit, onConfirm: (Tarjeta) -> Unit) {
-    var titular by remember { mutableStateOf("") }
-    var numero by remember { mutableStateOf("") }
-    var vencimiento by remember { mutableStateOf("") }
-    var marca by remember { mutableStateOf(MarcaTarjeta.VISA) }
-    var expanded by remember { mutableStateOf(false) }
+    var titular by rememberSaveable { mutableStateOf("") }
+    var numero by rememberSaveable { mutableStateOf("") }
+    var vencimiento by rememberSaveable { mutableStateOf("") }
+    var marcaName by rememberSaveable { mutableStateOf(MarcaTarjeta.VISA.name) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -199,7 +200,7 @@ fun AddTarjetaDialog(onDismiss: () -> Unit, onConfirm: (Tarjeta) -> Unit) {
                         modifier = Modifier.weight(1f)
                     ) {
                         OutlinedTextField(
-                            value = marca.displayName,
+                            value = MarcaTarjeta.valueOf(marcaName).displayName,
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Marca") },
@@ -211,7 +212,7 @@ fun AddTarjetaDialog(onDismiss: () -> Unit, onConfirm: (Tarjeta) -> Unit) {
                                 DropdownMenuItem(
                                     text = { Text(m.displayName) },
                                     onClick = {
-                                        marca = m
+                                        marcaName = m.name
                                         expanded = false
                                     }
                                 )
@@ -230,7 +231,7 @@ fun AddTarjetaDialog(onDismiss: () -> Unit, onConfirm: (Tarjeta) -> Unit) {
                                 nombreTitular = titular,
                                 last4 = numero.takeLast(4),
                                 vencimiento = vencimiento,
-                                marca = marca
+                                marca = MarcaTarjeta.valueOf(marcaName)
                             )
                         )
                     }

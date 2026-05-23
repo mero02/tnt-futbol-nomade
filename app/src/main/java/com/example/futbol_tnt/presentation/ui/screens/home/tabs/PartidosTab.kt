@@ -43,6 +43,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,7 @@ import com.example.futbol_tnt.data.model.FiltroEstado
 import com.example.futbol_tnt.data.model.FiltroFecha
 import com.example.futbol_tnt.data.model.FiltroPartidos
 import com.example.futbol_tnt.data.model.Partido
+import com.example.futbol_tnt.data.model.TipoCancha
 import com.example.futbol_tnt.presentation.ui.screens.home.components.EstadoPartidoBadge
 import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
@@ -70,7 +73,19 @@ internal fun PartidosTab(
 ) {
     // filtros es el estado local de los chips de búsqueda. Cuando cambia,
     // la lista se recalcula automáticamente via remember(filtros, ...).
-    var filtros by remember { mutableStateOf(FiltroPartidos()) }
+    var filtros by rememberSaveable(
+        stateSaver = Saver<FiltroPartidos, Any>(
+            save = { listOf(it.fecha.name, it.tipoCancha?.name, it.estado.name) },
+            restore = { values ->
+                val list = values as List<String>
+                FiltroPartidos(
+                    fecha = FiltroFecha.valueOf(list[0]),
+                    tipoCancha = list[1]?.let { TipoCancha.valueOf(it) },
+                    estado = FiltroEstado.valueOf(list[2])
+                )
+            }
+        )
+    ) { mutableStateOf(FiltroPartidos()) }
 
     // showUnirseDialog guarda el partido sobre el que el usuario tocó "Unirse",
     // o null si el dialog está cerrado.
@@ -353,10 +368,10 @@ private fun UnirsePartidoDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    var nombreEquipo by remember { mutableStateOf("") }
-    var posicionSeleccionada by remember { mutableStateOf("Delantero") }
+    var nombreEquipo by rememberSaveable { mutableStateOf("") }
+    var posicionSeleccionada by rememberSaveable { mutableStateOf("Delantero") }
     val posiciones = listOf("Delantero", "Mediocampista", "Defensor", "Arquero")
-    var showPosiciones by remember { mutableStateOf(false) }
+    var showPosiciones by rememberSaveable { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

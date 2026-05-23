@@ -4,6 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,9 +20,12 @@ import com.example.futbol_tnt.presentation.ui.screens.home.HomeScreen
 import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 import com.example.futbol_tnt.presentation.viewmodel.CanchaViewModel
+import com.example.futbol_tnt.presentation.viewmodel.CheckoutViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
+import com.example.futbol_tnt.presentation.viewmodel.ReporteViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
+import com.example.futbol_tnt.presentation.viewmodel.TarjetaViewModel
 
 // Cada pantalla tiene una ruta string única. El NavController usa estas rutas para navegar.
 sealed class Screen(val route: String) {
@@ -50,19 +56,45 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // GoogleAuthClient y los ViewModels se crean una sola vez con remember{}
-    // para que sobrevivan recomposiciones sin perder su estado.
+    // Repositorios y GoogleAuthClient se crean con remember (son stateless, no hay problema si se recrean).
     val googleAuthClient = remember { GoogleAuthClient(context) }
     val userRepository = remember { UserRepository() }
-    val authViewModel = remember { AuthViewModel(googleAuthClient, userRepository) }
-    val partidoViewModel = remember { PartidoViewModel() }
     val reservaRepository = remember { ReservaRepository() }
-    val canchaViewModel = remember { CanchaViewModel(reservaRepository) }
-    val reservaViewModel = remember { ReservaViewModel(reservaRepository) }
-    val profileViewModel = remember { ProfileViewModel(userRepository) }
-    val checkoutViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.CheckoutViewModel(reservaRepository) }
-    val reporteViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.ReporteViewModel() }
-    val tarjetaViewModel = remember { com.example.futbol_tnt.presentation.viewmodel.TarjetaViewModel() }
+
+    // ViewModels se crean con viewModel() para que sobrevivan cambios de configuración (rotación).
+    val authViewModel: AuthViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                AuthViewModel(googleAuthClient, userRepository) as T
+        }
+    )
+    val partidoViewModel: PartidoViewModel = viewModel()
+    val canchaViewModel: CanchaViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                CanchaViewModel(reservaRepository) as T
+        }
+    )
+    val reservaViewModel: ReservaViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                ReservaViewModel(reservaRepository) as T
+        }
+    )
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                ProfileViewModel(userRepository) as T
+        }
+    )
+    val checkoutViewModel: CheckoutViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                CheckoutViewModel(reservaRepository) as T
+        }
+    )
+    val reporteViewModel: ReporteViewModel = viewModel()
+    val tarjetaViewModel: TarjetaViewModel = viewModel()
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.

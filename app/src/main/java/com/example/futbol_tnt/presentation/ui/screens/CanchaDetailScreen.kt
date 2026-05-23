@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,17 +45,26 @@ fun CanchaDetailScreen(
     onNavigateToCheckout: (String, java.time.LocalDate, java.time.LocalTime, Double) -> Unit
 ) {
     val cancha by viewModel.cancha.collectAsState()
-    val fechaSeleccionada by viewModel.fechaSeleccionada.collectAsState()
-    val horaSeleccionada by viewModel.horaSeleccionada.collectAsState()
-    val duracionSeleccionada by viewModel.duracionSeleccionada.collectAsState()
     val reservasDelDia by viewModel.reservasDelDia.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val evento by viewModel.evento.collectAsState()
+
+    // Estado local que sobrevive cambios de configuración (rotación)
+    var fechaSeleccionadaStr by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
+    var horaSeleccionadaStr by rememberSaveable { mutableStateOf<String?>(null) }
+    var duracionSeleccionada by rememberSaveable { mutableStateOf(1.0) }
+
+    val fechaSeleccionada = LocalDate.parse(fechaSeleccionadaStr)
+    val horaSeleccionada = horaSeleccionadaStr?.let { LocalTime.parse(it) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(canchaId) {
         viewModel.cargarCancha(canchaId)
+    }
+
+    LaunchedEffect(canchaId, fechaSeleccionada) {
+        viewModel.cargarDisponibilidad(fechaSeleccionada)
     }
 
     LaunchedEffect(evento) {
@@ -125,7 +135,10 @@ fun CanchaDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 FechaSelector(
                     fechaSeleccionada = fechaSeleccionada,
-                    onFechaSelected = { viewModel.seleccionarFecha(it) }
+                    onFechaSelected = { nuevaFecha ->
+                        fechaSeleccionadaStr = nuevaFecha.toString()
+                        horaSeleccionadaStr = null
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -141,7 +154,7 @@ fun CanchaDetailScreen(
                     reservasOcupadas = reservasDelDia,
                     fechaSeleccionada = fechaSeleccionada,
                     horaSeleccionada = horaSeleccionada,
-                    onHoraSelected = { viewModel.seleccionarHora(it) }
+                    onHoraSelected = { horaSeleccionadaStr = it.toString() }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -156,7 +169,7 @@ fun CanchaDetailScreen(
                     duracionSeleccionada = duracionSeleccionada,
                     horaSeleccionada = horaSeleccionada,
                     reservasOcupadas = reservasDelDia,
-                    onDuracionSelected = { viewModel.seleccionarDuracion(it) }
+                    onDuracionSelected = { duracionSeleccionada = it }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -169,7 +182,7 @@ fun CanchaDetailScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Total: $${viewModel.calcularPrecioTotal().toInt()}",
+                            text = "Total: $${((c.precioPorHora) * duracionSeleccionada).toInt()}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary

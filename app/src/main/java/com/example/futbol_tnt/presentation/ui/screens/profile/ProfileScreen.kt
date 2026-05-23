@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,17 +102,17 @@ fun ProfileContent(
     onSave: (User) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var displayName by remember { mutableStateOf(user.displayName ?: "") }
-    var apodo by remember { mutableStateOf(user.apodo ?: "") }
-    var telefono by remember { mutableStateOf(user.telefono ?: "") }
-    var biografia by remember { mutableStateOf(user.biografia ?: "") }
-    var fechaNacimiento by remember { mutableStateOf(user.fechaNacimiento ?: "") }
-    var sexo by remember { mutableStateOf(user.sexo) }
-    var posicion by remember { mutableStateOf(user.posicion) }
-    var nivel by remember { mutableStateOf(user.nivel) }
-    var piernaDominante by remember { mutableStateOf(user.piernaDominante) }
-    var formatoPreferido by remember { mutableStateOf(user.formatoPreferido) }
-    var equipo by remember { mutableStateOf(user.equipo ?: "") }
+    var displayName by rememberSaveable { mutableStateOf(user.displayName ?: "") }
+    var apodo by rememberSaveable { mutableStateOf(user.apodo ?: "") }
+    var telefono by rememberSaveable { mutableStateOf(user.telefono ?: "") }
+    var biografia by rememberSaveable { mutableStateOf(user.biografia ?: "") }
+    var fechaNacimiento by rememberSaveable { mutableStateOf(user.fechaNacimiento ?: "") }
+    var sexoName by rememberSaveable { mutableStateOf(user.sexo?.name) }
+    var posicionName by rememberSaveable { mutableStateOf(user.posicion?.name) }
+    var nivelName by rememberSaveable { mutableStateOf(user.nivel?.name) }
+    var piernaDominanteName by rememberSaveable { mutableStateOf(user.piernaDominante?.name) }
+    var formatoPreferidoName by rememberSaveable { mutableStateOf(user.formatoPreferido?.name) }
+    var equipo by rememberSaveable { mutableStateOf(user.equipo ?: "") }
 
     Column(
         modifier = modifier
@@ -195,45 +196,45 @@ fun ProfileContent(
 
         EnumDropdown(
             label = "Sexo",
-            selectedOption = sexo,
+            selectedOption = sexoName?.let { Sexo.valueOf(it) },
             options = Sexo.values(),
-            onOptionSelected = { sexo = it }
+            onOptionSelected = { sexoName = it.name }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         EnumDropdown(
             label = "Posición",
-            selectedOption = posicion,
+            selectedOption = posicionName?.let { Posicion.valueOf(it) },
             options = Posicion.values(),
-            onOptionSelected = { posicion = it }
+            onOptionSelected = { posicionName = it.name }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         EnumDropdown(
             label = "Nivel de juego",
-            selectedOption = nivel,
+            selectedOption = nivelName?.let { NivelJuego.valueOf(it) },
             options = NivelJuego.values(),
-            onOptionSelected = { nivel = it }
+            onOptionSelected = { nivelName = it.name }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         EnumDropdown(
             label = "Pierna dominante",
-            selectedOption = piernaDominante,
+            selectedOption = piernaDominanteName?.let { PiernaDominante.valueOf(it) },
             options = PiernaDominante.values(),
-            onOptionSelected = { piernaDominante = it }
+            onOptionSelected = { piernaDominanteName = it.name }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         EnumDropdown(
             label = "Formato preferido",
-            selectedOption = formatoPreferido,
+            selectedOption = formatoPreferidoName?.let { FormatoPreferido.valueOf(it) },
             options = FormatoPreferido.values(),
-            onOptionSelected = { formatoPreferido = it }
+            onOptionSelected = { formatoPreferidoName = it.name }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -256,11 +257,11 @@ fun ProfileContent(
                     telefono = telefono,
                     biografia = biografia,
                     fechaNacimiento = fechaNacimiento,
-                    sexo = sexo,
-                    posicion = posicion,
-                    nivel = nivel,
-                    piernaDominante = piernaDominante,
-                    formatoPreferido = formatoPreferido,
+                    sexo = sexoName?.let { Sexo.valueOf(it) },
+                    posicion = posicionName?.let { Posicion.valueOf(it) },
+                    nivel = nivelName?.let { NivelJuego.valueOf(it) },
+                    piernaDominante = piernaDominanteName?.let { PiernaDominante.valueOf(it) },
+                    formatoPreferido = formatoPreferidoName?.let { FormatoPreferido.valueOf(it) },
                     equipo = equipo
                 )
                 onSave(updatedUser)

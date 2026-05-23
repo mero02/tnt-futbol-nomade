@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,7 +41,18 @@ internal fun MisReservasTab(
 ) {
     val reservas by viewModel.reservas.collectAsState()
     val rawEvento by viewModel.evento.collectAsState()
-    var filtros by remember { mutableStateOf(FiltroReservas()) }
+    var filtros by rememberSaveable(
+        stateSaver = Saver<FiltroReservas, Any>(
+            save = { listOf(it.fecha.name, it.estado.name) },
+            restore = { values ->
+                val list = values as List<String>
+                FiltroReservas(
+                    fecha = FiltroFecha.valueOf(list[0]),
+                    estado = FiltroEstadoReserva.valueOf(list[1])
+                )
+            }
+        )
+    ) { mutableStateOf(FiltroReservas()) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 

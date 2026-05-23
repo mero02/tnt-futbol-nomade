@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,15 +41,15 @@ fun CheckoutScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val evento by viewModel.evento.collectAsState()
 
-    var showSuccessDialog by remember { mutableStateOf(false) }
-    var reservedId by remember { mutableStateOf("") }
+    var showSuccessDialog by rememberSaveable { mutableStateOf(false) }
+    var reservedId by rememberSaveable { mutableStateOf("") }
 
     val fechaHora = remember { LocalDateTime.parse(fechaHoraStr) }
     val total = (cancha?.precioPorHora ?: 0.0) * duracion
     val sugeridoPersona = total / 10 // Asumiendo 10 personas por defecto
 
-    var montoSeleccionado by remember { mutableStateOf(sugeridoPersona) }
-    var selectedOption by remember { mutableIntStateOf(1) } // 0: Nada, 1: Tu parte, 2: Total
+    var montoSeleccionado by rememberSaveable { mutableStateOf(sugeridoPersona) }
+    var selectedOption by rememberSaveable { mutableIntStateOf(1) } // 0: Nada, 1: Tu parte, 2: Total
 
     LaunchedEffect(canchaId) {
         viewModel.cargarCancha(canchaId)

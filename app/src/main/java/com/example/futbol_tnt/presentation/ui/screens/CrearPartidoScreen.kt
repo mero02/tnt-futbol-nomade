@@ -38,6 +38,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -123,20 +125,26 @@ fun CrearPartidoScreen(
     reservaRepository: IReservaRepository? = null,
     onBack: () -> Unit
 ) {
-    // Estado local de cada campo del formulario. remember{} los mantiene entre recomposiciones.
-    var nombreLocal by remember { mutableStateOf("") }
-    var nombreVisitante by remember { mutableStateOf("") }
-    var canchaSeleccionada by remember { mutableStateOf<Cancha?>(null) }
-    var showCanchaMenu by remember { mutableStateOf(false) }
-    var fecha by remember { mutableStateOf("") }
-    var hora by remember { mutableStateOf("") }
-    var jugadoresMax by remember { mutableStateOf("10") }
-    var precio by remember { mutableStateOf("") }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    var isFromReserva by remember { mutableStateOf(false) }
-    var precioTotalReserva by remember { mutableStateOf(0.0) }
-    var existingMatchId by remember { mutableStateOf<String?>(null) }
-    var jugadoresActuales by remember { mutableIntStateOf(1) }
+    // Estado local de cada campo del formulario. rememberSaveable los mantiene entre
+    // recomposiciones y cambios de configuración (rotación de pantalla).
+    var nombreLocal by rememberSaveable { mutableStateOf("") }
+    var nombreVisitante by rememberSaveable { mutableStateOf("") }
+    var canchaSeleccionada by rememberSaveable(
+        stateSaver = Saver<Cancha?, String>(
+            save = { it?.id ?: "" },
+            restore = { savedId -> if (savedId.isBlank()) null else MockData.canchas.find { it.id == savedId } }
+        )
+    ) { mutableStateOf<Cancha?>(null) }
+    var showCanchaMenu by rememberSaveable { mutableStateOf(false) }
+    var fecha by rememberSaveable { mutableStateOf("") }
+    var hora by rememberSaveable { mutableStateOf("") }
+    var jugadoresMax by rememberSaveable { mutableStateOf("10") }
+    var precio by rememberSaveable { mutableStateOf("") }
+    var errorMsg by rememberSaveable { mutableStateOf<String?>(null) }
+    var isFromReserva by rememberSaveable { mutableStateOf(false) }
+    var precioTotalReserva by rememberSaveable { mutableStateOf(0.0) }
+    var existingMatchId by rememberSaveable { mutableStateOf<String?>(null) }
+    var jugadoresActuales by rememberSaveable { mutableIntStateOf(1) }
 
     // Carga de datos de reserva si existe
     LaunchedEffect(reservaId) {
