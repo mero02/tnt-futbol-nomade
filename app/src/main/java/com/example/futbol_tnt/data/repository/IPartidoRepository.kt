@@ -12,5 +12,6 @@ interface IPartidoRepository {
     suspend fun unirseAPartido(partidoId: String): Boolean // Mantener por compatibilidad o remover luego
     suspend fun enviarSolicitud(partidoId: String): Boolean
     suspend fun gestionarSolicitud(partidoId: String, applicantId: String, aceptar: Boolean): Boolean
+    suspend fun abandonarPartido(partidoId: String): Boolean
     suspend fun getPartidoByReservaId(reservaId: String): Partido?
 }

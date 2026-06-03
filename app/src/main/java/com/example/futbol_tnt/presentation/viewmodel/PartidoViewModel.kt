@@ -17,6 +17,7 @@ sealed class PartidoEvento {
     data object Idle : PartidoEvento()
     data object SolicitudEnviada : PartidoEvento()
     data object SolicitudGestionada : PartidoEvento()
+    data object AbandonarExito : PartidoEvento()
     data object PartidoLleno : PartidoEvento()
     data object PartidoCreadoExito : PartidoEvento()
     data class Error(val mensaje: String) : PartidoEvento()
@@ -62,6 +63,17 @@ class PartidoViewModel(
                 if (exito) PartidoEvento.SolicitudGestionada else PartidoEvento.PartidoLleno
             }.getOrElse { error ->
                 PartidoEvento.Error(error.message ?: "Error al gestionar solicitud")
+            }
+        }
+    }
+
+    fun abandonarPartido(partidoId: String) {
+        viewModelScope.launch {
+            _evento.value = runCatching {
+                val exito = repository.abandonarPartido(partidoId)
+                if (exito) PartidoEvento.AbandonarExito else PartidoEvento.Error("No se pudo abandonar el partido")
+            }.getOrElse { error ->
+                PartidoEvento.Error(error.message ?: "Error al abandonar el partido")
             }
         }
     }

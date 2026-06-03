@@ -115,6 +115,47 @@ class PartidoRepository(
         }.await()
     }
 
+    override suspend fun abandonarPartido(partidoId: String): Boolean {
+        val uid = auth.currentUser?.uid ?: return false
+        val ref = partidosCol.document(partidoId)
+
+        return firestore.runTransaction { tx ->
+            val snap = tx.get(ref)
+            val creatorId = snap.getString("creatorId") ?: ""
+            val participantes = snap.get("participantesIds") as? List<*> ?: emptyList<String>()
+            val actuales = (snap.getLong("jugadoresActuales") ?: 0L).toInt()
+
+            // El organizador no puede abandonar su propio partido
+            if (uid == creatorId) return@runTransaction false
+            // Solo si es participante puede abandonar
+            if (!participantes.contains(uid)) return@runTransaction false
+
+            val nuevos = actuales - 1
+            tx.update(ref, mapOf(
+                "participantesIds" to FieldValue.arrayRemove(uid),
+                "jugadoresActuales" to nuevos,
+                "estado" to EstadoPartido.ABIERTO.name // Siempre vuelve a abierto si alguien sale
+            ))
+
+            // Notificar al organizador
+            val notifCol = firestore.collection("notificaciones")
+            val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+
+            val notifData = mapOf(
+                "userId" to creatorId,
+                "titulo" to "Jugador abandonó el partido",
+                "mensaje" to "Un jugador ha salido del partido en $nombreCancha. Hay un nuevo lugar disponible.",
+                "fecha" to Timestamp.now(),
+                "leido" to false,
+                "tipo" to "INFO"
+            )
+            val newNotifRef = notifCol.document()
+            tx.set(newNotifRef, notifData)
+
+            true
+        }.await()
+    }
+
     override suspend fun getPartidoByReservaId(reservaId: String): Partido? {
         return partidosCol
             .whereEqualTo("reservaId", reservaId)

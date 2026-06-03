@@ -60,6 +60,8 @@ internal fun PartidosTab(
 
     var showUnirseDialog by remember { mutableStateOf<Partido?>(null) }
     var showGestionarDialog by remember { mutableStateOf<Partido?>(null) }
+    var showAbandonarDialog by remember { mutableStateOf<Partido?>(null) }
+    var showParticipantesDialog by remember { mutableStateOf<Partido?>(null) }
 
     val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     val todosLosPartidos by viewModel.partidos.collectAsState()
@@ -89,10 +91,12 @@ internal fun PartidosTab(
         when (evento) {
             is PartidoEvento.SolicitudEnviada,
             is PartidoEvento.SolicitudGestionada,
+            is PartidoEvento.AbandonarExito,
             is PartidoEvento.PartidoLleno,
             is PartidoEvento.Error -> {
                 showUnirseDialog = null
                 showGestionarDialog = null
+                showAbandonarDialog = null
                 viewModel.limpiarEvento()
             }
             else -> {}
@@ -115,6 +119,24 @@ internal fun PartidosTab(
             onRechazar = { applicantId -> viewModel.gestionarSolicitud(partido.id, applicantId, false) },
             onViewProfile = { uid ->
                 showGestionarDialog = null
+                onNavigateToProfile(uid)
+            }
+        )
+    }
+
+    showAbandonarDialog?.let { partido ->
+        ConfirmarAbandonarDialog(
+            onDismiss = { showAbandonarDialog = null },
+            onConfirm = { viewModel.abandonarPartido(partido.id) }
+        )
+    }
+
+    showParticipantesDialog?.let { partido ->
+        VerParticipantesDialog(
+            partido = partido,
+            onDismiss = { showParticipantesDialog = null },
+            onViewProfile = { uid ->
+                showParticipantesDialog = null
                 onNavigateToProfile(uid)
             }
         )
@@ -143,7 +165,9 @@ internal fun PartidosTab(
                 partido = partido,
                 currentUid = currentUid,
                 onUnirse = { showUnirseDialog = partido },
-                onGestionar = { showGestionarDialog = partido }
+                onGestionar = { showGestionarDialog = partido },
+                onAbandonar = { showAbandonarDialog = partido },
+                onVerParticipantes = { showParticipantesDialog = partido }
             )
         }
     }
@@ -223,7 +247,9 @@ private fun PartidoCard(
     partido: Partido,
     currentUid: String?,
     onUnirse: () -> Unit,
-    onGestionar: () -> Unit
+    onGestionar: () -> Unit,
+    onAbandonar: () -> Unit,
+    onVerParticipantes: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -278,7 +304,18 @@ private fun PartidoCard(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(partido.fecha.format(partidoFormatter), style = MaterialTheme.typography.bodySmall)
                 }
-                Text("${partido.jugadoresActuales}/${partido.jugadoresMaximos} jugadores", style = MaterialTheme.typography.bodySmall)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onVerParticipantes() }
+                ) {
+                    Text(
+                        text = "${partido.jugadoresActuales}/${partido.jugadoresMaximos} jugadores",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(Icons.Default.Groups, null, modifier = Modifier.size(16.dp).padding(start = 4.dp), tint = MaterialTheme.colorScheme.primary)
+                }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(
@@ -319,14 +356,19 @@ private fun PartidoCard(
                         }
                     }
                     partido.participantesIds.contains(currentUid) -> {
-                        OutlinedButton(onClick = {}, enabled = false) {
-                            Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
-                            Text("Participo")
+                        Button(
+                            onClick = onAbandonar,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
+                        ) {
+                            Icon(Icons.Default.ExitToApp, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Abandonar")
                         }
                     }
                     partido.solicitudesIds.contains(currentUid) -> {
                         OutlinedButton(onClick = {}, enabled = false) {
                             Icon(Icons.Default.HourglassEmpty, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text("En espera")
                         }
                     }
@@ -361,6 +403,115 @@ private fun UnirsePartidoDialog(
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
+}
+
+@Composable
+private fun ConfirmarAbandonarDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¿Abandonar partido?") },
+        text = { Text("¿Estás seguro de que querés salir de este partido? Tu lugar quedará disponible para otro jugador.") },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Confirmar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
+}
+
+@Composable
+private fun VerParticipantesDialog(
+    partido: Partido,
+    onDismiss: () -> Unit,
+    onViewProfile: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Participantes") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                partido.participantesIds.forEach { uid ->
+                    ParticipanteItem(
+                        uid = uid,
+                        isOrganizer = uid == partido.creatorId,
+                        onViewProfile = { onViewProfile(uid) }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        }
+    )
+}
+
+@Composable
+private fun ParticipanteItem(
+    uid: String,
+    isOrganizer: Boolean,
+    onViewProfile: () -> Unit
+) {
+    val userRepository = remember { UserRepository() }
+    var user by remember { mutableStateOf<User?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(uid) {
+        user = userRepository.getUser(uid)
+        isLoading = false
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onViewProfile() }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(user?.photoUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user?.apodo ?: user?.displayName ?: "Jugador",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                if (isOrganizer) {
+                    Text(
+                        text = "Organizador",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
