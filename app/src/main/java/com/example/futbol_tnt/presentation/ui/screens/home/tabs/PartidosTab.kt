@@ -46,6 +46,8 @@ internal fun PartidosTab(
     onCrearPartido: () -> Unit,
     onNavigateToProfile: (String) -> Unit = {}
 ) {
+    var internalSelectedTab by rememberSaveable { mutableIntStateOf(0) } // 0: Todos, 1: Mis Partidos
+
     var filtros by rememberSaveable(
         stateSaver = Saver<FiltroPartidos, Any>(
             save = { listOf(it.fecha.name, it.tipoCancha?.name, it.estado.name) },
@@ -69,10 +71,9 @@ internal fun PartidosTab(
     val todosLosPartidos by viewModel.partidos.collectAsState()
     val evento by viewModel.evento.collectAsState()
 
-    val partidosFiltrados = remember(filtros, todosLosPartidos) {
+    val partidosFiltrados = remember(filtros, todosLosPartidos, internalSelectedTab, currentUid) {
         val ahora = LocalDateTime.now()
         todosLosPartidos.map { partido ->
-            // Determinar estado real basado en el tiempo
             val horaFin = partido.fecha.plusHours(partido.duracionHoras.toLong())
             val nuevoEstado = when {
                 ahora.isAfter(horaFin) -> EstadoPartido.FINALIZADO
@@ -81,11 +82,19 @@ internal fun PartidosTab(
             }
             partido.copy(estado = nuevoEstado)
         }.filter { partido ->
-            // Filtramos por estado
+            // Primero filtramos por pestaña interna
+            val perteneceAMisPartidos = if (internalSelectedTab == 1) {
+                partido.creatorId == currentUid || partido.participantesIds.contains(currentUid)
+            } else true
+
+            // Luego aplicamos los filtros de búsqueda
             val filtroEstadoOk = when (filtros.estado) {
                 FiltroEstado.ABIERTOS -> partido.estado == EstadoPartido.ABIERTO
                 FiltroEstado.LLENOS -> partido.estado == EstadoPartido.LLENO
-                FiltroEstado.TODOS -> partido.estado != EstadoPartido.FINALIZADO
+                FiltroEstado.TODOS -> {
+                    // En "Mis Partidos" mostramos incluso los finalizados, en "Todos" los ocultamos.
+                    if (internalSelectedTab == 1) true else partido.estado != EstadoPartido.FINALIZADO
+                }
             }
 
             val filtroFechaOk = when (filtros.fecha) {
@@ -98,7 +107,7 @@ internal fun PartidosTab(
             }
             val filtroTipoOk = filtros.tipoCancha == null || partido.cancha.tipo == filtros.tipoCancha
 
-            filtroFechaOk && filtroTipoOk && filtroEstadoOk
+            perteneceAMisPartidos && filtroFechaOk && filtroTipoOk && filtroEstadoOk
         }
     }
 
@@ -157,33 +166,67 @@ internal fun PartidosTab(
         )
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            HeaderSection(
-                titulo = "Partidos",
-                subtitulo = "${partidosFiltrados.size} partidos disponibles"
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.height(16.dp))
+        HeaderSection(
+            titulo = "Partidos",
+            subtitulo = if (internalSelectedTab == 0) "Explorá partidos disponibles" else "Tus compromisos futboleros",
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        TabRow(
+            selectedTabIndex = internalSelectedTab,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            divider = {}
+        ) {
+            Tab(
+                selected = internalSelectedTab == 0,
+                onClick = { internalSelectedTab = 0 },
+                text = { Text("Todos") }
+            )
+            Tab(
+                selected = internalSelectedTab == 1,
+                onClick = { internalSelectedTab = 1 },
+                text = { Text("Mis Partidos") }
             )
         }
-        item {
-            FiltrosPartidos(
-                filtros = filtros,
-                onFiltrosChange = { filtros = it }
-            )
-        }
-        items(partidosFiltrados, key = { it.id }) { partido ->
-            PartidoCard(
-                partido = partido,
-                currentUid = currentUid,
-                onUnirse = { showUnirseDialog = partido },
-                onGestionar = { showGestionarDialog = partido },
-                onAbandonar = { showAbandonarDialog = partido },
-                onVerParticipantes = { showParticipantesDialog = partido }
-            )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (internalSelectedTab == 0) {
+                item {
+                    FiltrosPartidos(
+                        filtros = filtros,
+                        onFiltrosChange = { filtros = it }
+                    )
+                }
+            }
+
+            if (partidosFiltrados.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = if (internalSelectedTab == 1) "No tenés partidos todavía." else "No se encontraron partidos.",
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            } else {
+                items(partidosFiltrados, key = { it.id }) { partido ->
+                    PartidoCard(
+                        partido = partido,
+                        currentUid = currentUid,
+                        onUnirse = { showUnirseDialog = partido },
+                        onGestionar = { showGestionarDialog = partido },
+                        onAbandonar = { showAbandonarDialog = partido },
+                        onVerParticipantes = { showParticipantesDialog = partido }
+                    )
+                }
+            }
         }
     }
 }

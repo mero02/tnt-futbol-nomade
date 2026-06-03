@@ -10,8 +10,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun HeaderSection(titulo: String, subtitulo: String) {
-    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+internal fun HeaderSection(
+    titulo: String,
+    subtitulo: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.padding(bottom = 8.dp)) {
         Text(
             text = titulo,
             style = MaterialTheme.typography.headlineMedium,
