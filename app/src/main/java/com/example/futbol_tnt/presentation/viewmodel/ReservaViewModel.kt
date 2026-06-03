@@ -23,7 +23,7 @@ class ReservaViewModel(
 ) : ViewModel() {
 
     val reservas: StateFlow<List<Reserva>> = repository.reservas
-        .catch { error ->
+        .catch { _ ->
             // Durante el logout es normal recibir PERMISSION_DENIED.
             // Simplemente emitimos lista vacía y evitamos el crash.
             emit(emptyList())

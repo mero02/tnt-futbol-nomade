@@ -29,7 +29,7 @@ fun AcercaDe(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.acerca_de_back)
+                            contentDescription = stringResource(R.string.acerca_de_back),
                         )
                     }
                 },

@@ -92,7 +92,7 @@ class PartidoViewModel(
     suspend fun getPartidoByReservaId(reservaId: String): Partido? {
         return try {
             repository.getPartidoByReservaId(reservaId)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

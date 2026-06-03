@@ -1,7 +1,6 @@
 package com.example.futbol_tnt.presentation.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -41,7 +40,6 @@ fun CanchaDetailScreen(
     canchaId: String,
     viewModel: CanchaViewModel,
     onBack: () -> Unit,
-    onReservaSuccess: (String) -> Unit, // Recibe reservaId
     onNavigateToCheckout: (String, java.time.LocalDate, java.time.LocalTime, Double) -> Unit
 ) {
     val cancha by viewModel.cancha.collectAsState()

@@ -49,7 +49,7 @@ class CanchaViewModel(
             _isLoading.value = true
             try {
                 _reservasDelDia.value = repository.getReservasPorCanchaYFecha(id, fecha)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Manejar error
             } finally {
                 _isLoading.value = false

@@ -52,7 +52,7 @@ fun LoginScreen(
     // rememberLauncherForActivityResult registra el callback que recibe el resultado
     // cuando el usuario elige (o cancela) su cuenta de Google.
     val signInLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
+        contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             // El usuario eligió una cuenta → pasamos el Intent al ViewModel para

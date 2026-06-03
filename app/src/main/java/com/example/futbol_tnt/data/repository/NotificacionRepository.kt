@@ -3,7 +3,6 @@ package com.example.futbol_tnt.data.repository
 import com.example.futbol_tnt.data.model.Notificacion
 import com.example.futbol_tnt.data.model.TipoNotificacion
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose

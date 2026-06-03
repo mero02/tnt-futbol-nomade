@@ -28,7 +28,7 @@ class CheckoutViewModel(
     private val _cancha = MutableStateFlow<Cancha?>(null)
     val cancha: StateFlow<Cancha?> = _cancha.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
+    private val _isLoading = MutableStateFlow(value = false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _evento = MutableStateFlow<CheckoutEvento>(CheckoutEvento.Idle)

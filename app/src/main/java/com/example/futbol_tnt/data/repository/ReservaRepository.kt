@@ -118,7 +118,6 @@ class ReservaRepository(
         val partidoDoc = partidoQuery.documents.firstOrNull()
         val participantesIds = partidoDoc?.get("participantesIds") as? List<String> ?: emptyList()
         val nombreCancha = partidoDoc?.get("cancha.nombre") as? String ?: "la cancha"
-        val fechaPartido = partidoDoc?.getTimestamp("fecha")?.toDate()
 
         firestore.runTransaction { transaction ->
             // 2. Borrar la reserva

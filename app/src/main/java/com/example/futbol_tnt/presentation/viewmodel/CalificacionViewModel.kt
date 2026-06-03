@@ -50,7 +50,7 @@ class CalificacionViewModel(
         val currentUid = auth.currentUser?.uid ?: return emptyList()
         return try {
             repository.getCalificacionesPorPartido(partidoId, currentUid)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }

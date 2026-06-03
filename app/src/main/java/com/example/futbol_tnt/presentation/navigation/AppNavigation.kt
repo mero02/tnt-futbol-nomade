@@ -64,34 +64,39 @@ fun AppNavigation() {
 
     val authViewModel: AuthViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 AuthViewModel(googleAuthClient, userRepository) as T
-        }
+        },
     )
     val partidoViewModel: PartidoViewModel = viewModel()
     val canchaViewModel: CanchaViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 CanchaViewModel(reservaRepository) as T
-        }
+        },
     )
     val reservaViewModel: ReservaViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 ReservaViewModel(reservaRepository) as T
-        }
+        },
     )
     val profileViewModel: ProfileViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 ProfileViewModel(userRepository, com.example.futbol_tnt.data.repository.CalificacionRepository()) as T
-        }
+        },
     )
     val checkoutViewModel: CheckoutViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 CheckoutViewModel(reservaRepository) as T
-        }
+        },
     )
     val reporteViewModel: ReporteViewModel = viewModel()
     val tarjetaViewModel: TarjetaViewModel = viewModel()
@@ -176,17 +181,11 @@ fun AppNavigation() {
             CanchaDetailScreen(
                 canchaId = canchaId,
                 viewModel = canchaViewModel,
-                onBack = { navController.popBackStack() },
-                onReservaSuccess = { reservaId ->
-                    navController.navigate(Screen.CrearPartido.createRoute(reservaId)) {
-                        popUpTo(Screen.CanchaDetail.route) { inclusive = true }
-                    }
-                },
-                onNavigateToCheckout = { cId, f, h, d ->
-                    val combined = java.time.LocalDateTime.of(f, h).toString()
-                    navController.navigate(Screen.Checkout.createRoute(cId, combined, d))
-                }
-            )
+                onBack = { navController.popBackStack() }
+            ) { cId, f, h, d ->
+                val combined = java.time.LocalDateTime.of(f, h).toString()
+                navController.navigate(Screen.Checkout.createRoute(cId, combined, d))
+            }
         }
         composable(Screen.Checkout.route) { backStackEntry ->
             val canchaId = backStackEntry.arguments?.getString("canchaId") ?: ""

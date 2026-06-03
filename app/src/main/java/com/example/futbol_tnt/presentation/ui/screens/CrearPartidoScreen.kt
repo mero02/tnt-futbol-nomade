@@ -37,7 +37,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -64,7 +63,7 @@ private val crearPartidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:m
 data class FormPartido(
     val nombreLocal: String,
     val nombreVisitante: String,
-    val cancha: com.example.futbol_tnt.data.model.Cancha?,
+    val cancha: Cancha?,
     val fecha: String,
     val hora: String,
     val jugadoresMax: String,
@@ -86,7 +85,7 @@ fun validarFormPartido(form: FormPartido): String? {
     return try {
         val fechaHora = LocalDateTime.parse("${form.fecha} ${form.hora}", crearPartidoFormatter)
         if (fechaHora.isBefore(LocalDateTime.now())) "La fecha debe ser futura" else null
-    } catch (e: DateTimeParseException) {
+    } catch (_: DateTimeParseException) {
         "Formato incorrecto. Usá dd/MM/yyyy y HH:mm"
     }
 }
