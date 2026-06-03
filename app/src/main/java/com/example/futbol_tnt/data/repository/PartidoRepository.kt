@@ -84,6 +84,22 @@ class PartidoRepository(
             if (solicitudes.contains(uid)) return@runTransaction false
 
             tx.update(ref, "solicitudesIds", FieldValue.arrayUnion(uid))
+
+            // Notificar al organizador sobre la nueva solicitud
+            val creatorId = snap.getString("creatorId") ?: ""
+            if (creatorId.isNotBlank()) {
+                val notifCol = firestore.collection("notificaciones")
+                val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+                val newNotifRef = notifCol.document()
+                tx.set(newNotifRef, mapOf(
+                    "userId" to creatorId,
+                    "titulo" to "Nueva Solicitud",
+                    "mensaje" to "Un jugador quiere unirse a tu partido en $nombreCancha.",
+                    "fecha" to Timestamp.now(),
+                    "leido" to false,
+                    "tipo" to "SOLICITUD_RECIBIDA"
+                ))
+            }
             true
         }.await()
     }
@@ -109,6 +125,32 @@ class PartidoRepository(
                     "participantesIds" to FieldValue.arrayUnion(applicantId),
                     "jugadoresActuales" to nuevos,
                     "estado" to nuevoEstado
+                ))
+
+                // Notificar al jugador que fue aceptado
+                val notifCol = firestore.collection("notificaciones")
+                val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+                val newNotifRef = notifCol.document()
+                tx.set(newNotifRef, mapOf(
+                    "userId" to applicantId,
+                    "titulo" to "¡Solicitud Aprobada!",
+                    "mensaje" to "Has sido aceptado en el partido en $nombreCancha. ¡A jugar!",
+                    "fecha" to Timestamp.now(),
+                    "leido" to false,
+                    "tipo" to "SOLICITUD_APROBADA"
+                ))
+            } else {
+                // Notificar al jugador que fue rechazado
+                val notifCol = firestore.collection("notificaciones")
+                val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+                val newNotifRef = notifCol.document()
+                tx.set(newNotifRef, mapOf(
+                    "userId" to applicantId,
+                    "titulo" to "Solicitud Rechazada",
+                    "mensaje" to "Tu solicitud para el partido en $nombreCancha no ha sido aprobada.",
+                    "fecha" to Timestamp.now(),
+                    "leido" to false,
+                    "tipo" to "SOLICITUD_RECHAZADA"
                 ))
             }
             true

@@ -248,7 +248,7 @@ private fun InfoCard(user: User, onEdit: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "4.5",
+                        text = String.format("%.1f", user.valoracionPromedio),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary

@@ -27,7 +27,6 @@ import com.example.futbol_tnt.presentation.viewmodel.ReporteViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 import com.example.futbol_tnt.presentation.viewmodel.TarjetaViewModel
 
-// Cada pantalla tiene una ruta string única. El NavController usa estas rutas para navegar.
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
@@ -38,6 +37,9 @@ sealed class Screen(val route: String) {
     data object Reporte : Screen("reporte")
     data object Tarjetas : Screen("tarjetas")
     data object Notificaciones : Screen("notificaciones")
+    data object CalificarJugadores : Screen("calificar_jugadores/{partidoId}") {
+        fun createRoute(partidoId: String) = "calificar_jugadores/$partidoId"
+    }
     data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
         fun createRoute(reservaId: String? = null) =
             if (reservaId != null) "crear_partido?reservaId=$reservaId" else "crear_partido"
@@ -51,20 +53,15 @@ sealed class Screen(val route: String) {
     }
 }
 
-// AppNavigation es el punto de entrada de toda la navegación de la app.
-// Crea el NavController (el "router"), los ViewModels compartidos, y define qué
-// pantalla renderizar para cada ruta.
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Repositorios y GoogleAuthClient se crean con remember (son stateless, no hay problema si se recrean).
     val googleAuthClient = remember { GoogleAuthClient(context) }
     val userRepository = remember { UserRepository() }
     val reservaRepository = remember { ReservaRepository() }
 
-    // ViewModels se crean con viewModel() para que sobrevivan cambios de configuración (rotación).
     val authViewModel: AuthViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
@@ -99,12 +96,9 @@ fun AppNavigation() {
     val reporteViewModel: ReporteViewModel = viewModel()
     val tarjetaViewModel: TarjetaViewModel = viewModel()
     val notificacionViewModel: com.example.futbol_tnt.presentation.viewmodel.NotificacionViewModel = viewModel()
+    val calificacionViewModel: com.example.futbol_tnt.presentation.viewmodel.CalificacionViewModel = viewModel()
 
-    // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
-    // Así no vuelve a ver el login al reabrir la app.
     val startDestination = if (googleAuthClient.isLoggedIn()) {
-        // Si ya está logueado, sincronizamos sus datos en segundo plano por si es la primera vez
-        // que entra con la persistencia nueva o si cambiaron sus datos de Google.
         LaunchedEffect(Unit) {
             val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
             currentUser?.let { firebaseUser ->
@@ -130,9 +124,6 @@ fun AppNavigation() {
         navController = navController,
         startDestination = startDestination,
     ) {
-        // Pantalla de login: cuando el login es exitoso, navega a Home
-        // y elimina Login del back stack (popUpTo inclusive) para que
-        // el botón "atrás" del celular no vuelva al login.
         composable(Screen.Login.route) {
             LoginScreen(
                 authViewModel = authViewModel,
@@ -144,13 +135,8 @@ fun AppNavigation() {
             )
         }
 
-        // Pantalla principal con tabs. Recibe lambdas de navegación en lugar de
-        // tener acceso directo al navController — esto mantiene HomeScreen
-        // desacoplada del sistema de navegación (más fácil de testear y reutilizar).
         composable(Screen.Home.route) {
             HomeScreen(
-                // Al cerrar sesión: limpia Firebase + Google, resetea el estado del ViewModel
-                // y vuelve al login eliminando Home del back stack.
                 onSignOut = {
                     googleAuthClient.signOut()
                     authViewModel.resetState()
@@ -159,29 +145,14 @@ fun AppNavigation() {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
-                onNavigateToAcercaDe = {
-                    navController.navigate(Screen.AcercaDe.route)
-                },
-                onNavigateToReporte = {
-                    navController.navigate(Screen.Reporte.route)
-                },
-                onNavigateToTarjetas = {
-                    navController.navigate(Screen.Tarjetas.route)
-                },
-                onNavigateToNotificaciones = {
-                    navController.navigate(Screen.Notificaciones.route)
-                },
-                onCrearPartido = { reservaId ->
-                    navController.navigate(Screen.CrearPartido.createRoute(reservaId))
-                },
-                onNavigateToCanchaDetail = { canchaId ->
-                    navController.navigate(Screen.CanchaDetail.createRoute(canchaId))
-                },
-                onNavigateToProfile = { uid ->
-                    navController.navigate(Screen.Perfil.createRoute(uid))
-                },
-                // PartidoViewModel se pasa desde acá para que PartidosTab y
-                // CrearPartidoScreen compartan el mismo estado de partidos.
+                onNavigateToAcercaDe = { navController.navigate(Screen.AcercaDe.route) },
+                onNavigateToReporte = { navController.navigate(Screen.Reporte.route) },
+                onNavigateToTarjetas = { navController.navigate(Screen.Tarjetas.route) },
+                onNavigateToNotificaciones = { navController.navigate(Screen.Notificaciones.route) },
+                onNavigateToCalificar = { partidoId -> navController.navigate(Screen.CalificarJugadores.createRoute(partidoId)) },
+                onCrearPartido = { reservaId -> navController.navigate(Screen.CrearPartido.createRoute(reservaId)) },
+                onNavigateToCanchaDetail = { canchaId -> navController.navigate(Screen.CanchaDetail.createRoute(canchaId)) },
+                onNavigateToProfile = { uid -> navController.navigate(Screen.Perfil.createRoute(uid)) },
                 partidoViewModel = partidoViewModel,
                 reservaViewModel = reservaViewModel,
                 profileViewModel = profileViewModel,
@@ -189,10 +160,7 @@ fun AppNavigation() {
             )
         }
         composable(Screen.AcercaDe.route) {
-            AcercaDe {
-                // popBackStack() vuelve a la pantalla anterior (Home)
-                navController.popBackStack()
-            }
+            AcercaDe { navController.popBackStack() }
         }
         composable(Screen.Perfil.route) { backStackEntry ->
             val uid = backStackEntry.arguments?.getString("uid")
@@ -201,9 +169,7 @@ fun AppNavigation() {
             com.example.futbol_tnt.presentation.ui.screens.profile.ProfileScreen(
                 uid = uid,
                 viewModel = profileViewModel,
-            ) {
-                navController.popBackStack()
-            }
+            ) { navController.popBackStack() }
         }
         composable(Screen.CanchaDetail.route) { backStackEntry ->
             val canchaId = backStackEntry.arguments?.getString("canchaId") ?: return@composable
@@ -246,9 +212,7 @@ fun AppNavigation() {
                 viewModel = partidoViewModel,
                 reservaId = reservaId,
                 reservaRepository = reservaRepository,
-            ) {
-                navController.popBackStack()
-            }
+            ) { navController.popBackStack() }
         }
         composable(Screen.Reporte.route) {
             com.example.futbol_tnt.presentation.ui.screens.ReporteScreen(
@@ -265,6 +229,15 @@ fun AppNavigation() {
         composable(Screen.Notificaciones.route) {
             com.example.futbol_tnt.presentation.ui.screens.NotificacionesScreen(
                 viewModel = notificacionViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.CalificarJugadores.route) { backStackEntry ->
+            val partidoId = backStackEntry.arguments?.getString("partidoId") ?: return@composable
+            val partido = partidoViewModel.partidos.value.find { it.id == partidoId } ?: return@composable
+            com.example.futbol_tnt.presentation.ui.screens.CalificarJugadoresScreen(
+                partido = partido,
+                viewModel = calificacionViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

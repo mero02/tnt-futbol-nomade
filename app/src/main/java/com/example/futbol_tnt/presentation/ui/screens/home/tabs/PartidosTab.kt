@@ -44,7 +44,8 @@ private val partidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 internal fun PartidosTab(
     viewModel: PartidoViewModel,
     onCrearPartido: () -> Unit,
-    onNavigateToProfile: (String) -> Unit = {}
+    onNavigateToProfile: (String) -> Unit = {},
+    onNavigateToCalificar: (String) -> Unit = {}
 ) {
     var internalSelectedTab by rememberSaveable { mutableIntStateOf(0) } // 0: Todos, 1: Mis Partidos
 
@@ -223,7 +224,8 @@ internal fun PartidosTab(
                         onUnirse = { showUnirseDialog = partido },
                         onGestionar = { showGestionarDialog = partido },
                         onAbandonar = { showAbandonarDialog = partido },
-                        onVerParticipantes = { showParticipantesDialog = partido }
+                        onVerParticipantes = { showParticipantesDialog = partido },
+                        onCalificar = { onNavigateToCalificar(partido.id) }
                     )
                 }
             }
@@ -307,7 +309,8 @@ private fun PartidoCard(
     onUnirse: () -> Unit,
     onGestionar: () -> Unit,
     onAbandonar: () -> Unit,
-    onVerParticipantes: () -> Unit
+    onVerParticipantes: () -> Unit,
+    onCalificar: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -389,8 +392,13 @@ private fun PartidoCard(
 
                 when {
                     partido.estado == EstadoPartido.FINALIZADO -> {
-                        OutlinedButton(onClick = {}, enabled = false) {
-                            Text("Finalizado")
+                        Button(
+                            onClick = onCalificar,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Calificar Jugadores")
                         }
                     }
                     partido.estado == EstadoPartido.EN_JUEGO -> {

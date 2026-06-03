@@ -14,7 +14,8 @@ data class User(
     val sexo: Sexo? = null,
     val piernaDominante: PiernaDominante? = null,
     val formatoPreferido: FormatoPreferido? = null,
-    val equipo: String? = null
+    val equipo: String? = null,
+    val valoracionPromedio: Double = 0.0
 )
 
 interface HasDisplayName {

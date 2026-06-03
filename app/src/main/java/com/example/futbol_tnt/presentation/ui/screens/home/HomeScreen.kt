@@ -47,6 +47,7 @@ fun HomeScreen(
     onNavigateToReporte: () -> Unit,
     onNavigateToTarjetas: () -> Unit,
     onNavigateToNotificaciones: () -> Unit,
+    onNavigateToCalificar: (String) -> Unit,
     onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
     onNavigateToProfile: (String?) -> Unit,
@@ -283,7 +284,8 @@ fun HomeScreen(
                     2 -> PartidosTab(
                         viewModel = partidoViewModel,
                         onCrearPartido = { onCrearPartido(null) },
-                        onNavigateToProfile = { uid -> onNavigateToProfile(uid) }
+                        onNavigateToProfile = { uid -> onNavigateToProfile(uid) },
+                        onNavigateToCalificar = onNavigateToCalificar
                     )
                     3 -> PerfilTab(
                         onSignOut = onSignOut,

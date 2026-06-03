@@ -53,7 +53,8 @@ private fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "sexo" to sexo?.name,
     "piernaDominante" to piernaDominante?.name,
     "formatoPreferido" to formatoPreferido?.name,
-    "equipo" to equipo
+    "equipo" to equipo,
+    "valoracionPromedio" to valoracionPromedio
 )
 
 private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
@@ -72,7 +73,8 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?
             sexo = getString("sexo")?.let { runCatching { Sexo.valueOf(it) }.getOrNull() },
             piernaDominante = getString("piernaDominante")?.let { runCatching { PiernaDominante.valueOf(it) }.getOrNull() },
             formatoPreferido = getString("formatoPreferido")?.let { runCatching { FormatoPreferido.valueOf(it) }.getOrNull() },
-            equipo = getString("equipo")
+            equipo = getString("equipo"),
+            valoracionPromedio = getDouble("valoracionPromedio") ?: 0.0
         )
     } else null
 }
