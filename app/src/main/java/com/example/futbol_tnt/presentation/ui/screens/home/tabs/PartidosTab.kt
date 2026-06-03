@@ -33,7 +33,9 @@ import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSect
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.google.firebase.auth.FirebaseAuth
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private val partidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
@@ -68,7 +70,24 @@ internal fun PartidosTab(
     val evento by viewModel.evento.collectAsState()
 
     val partidosFiltrados = remember(filtros, todosLosPartidos) {
-        todosLosPartidos.filter { partido ->
+        val ahora = LocalDateTime.now()
+        todosLosPartidos.map { partido ->
+            // Determinar estado real basado en el tiempo
+            val horaFin = partido.fecha.plusHours(partido.duracionHoras.toLong())
+            val nuevoEstado = when {
+                ahora.isAfter(horaFin) -> EstadoPartido.FINALIZADO
+                ahora.isAfter(partido.fecha) && ahora.isBefore(horaFin) -> EstadoPartido.EN_JUEGO
+                else -> partido.estado
+            }
+            partido.copy(estado = nuevoEstado)
+        }.filter { partido ->
+            // Filtramos por estado
+            val filtroEstadoOk = when (filtros.estado) {
+                FiltroEstado.ABIERTOS -> partido.estado == EstadoPartido.ABIERTO
+                FiltroEstado.LLENOS -> partido.estado == EstadoPartido.LLENO
+                FiltroEstado.TODOS -> partido.estado != EstadoPartido.FINALIZADO
+            }
+
             val filtroFechaOk = when (filtros.fecha) {
                 FiltroFecha.HOY -> partido.fecha.toLocalDate() == LocalDate.now()
                 FiltroFecha.ESTA_SEMANA -> {
@@ -78,11 +97,7 @@ internal fun PartidosTab(
                 FiltroFecha.TODOS -> true
             }
             val filtroTipoOk = filtros.tipoCancha == null || partido.cancha.tipo == filtros.tipoCancha
-            val filtroEstadoOk = when (filtros.estado) {
-                FiltroEstado.ABIERTOS -> partido.estado == EstadoPartido.ABIERTO
-                FiltroEstado.LLENOS -> partido.estado == EstadoPartido.LLENO
-                FiltroEstado.TODOS -> true
-            }
+
             filtroFechaOk && filtroTipoOk && filtroEstadoOk
         }
     }
@@ -330,6 +345,16 @@ private fun PartidoCard(
                 )
 
                 when {
+                    partido.estado == EstadoPartido.FINALIZADO -> {
+                        OutlinedButton(onClick = {}, enabled = false) {
+                            Text("Finalizado")
+                        }
+                    }
+                    partido.estado == EstadoPartido.EN_JUEGO -> {
+                        OutlinedButton(onClick = {}, enabled = false) {
+                            Text("En juego")
+                        }
+                    }
                     partido.creatorId == currentUid -> {
                         val reqCount = partido.solicitudesIds.size
                         if (reqCount > 0) {
@@ -356,13 +381,31 @@ private fun PartidoCard(
                         }
                     }
                     partido.participantesIds.contains(currentUid) -> {
-                        Button(
-                            onClick = onAbandonar,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
-                        ) {
-                            Icon(Icons.Default.ExitToApp, null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Abandonar")
+                        val ahora = LocalDateTime.now()
+                        val horasRestantes = Duration.between(ahora, partido.fecha).toHours()
+                        val puedeAbandonar = horasRestantes >= 2
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Button(
+                                onClick = onAbandonar,
+                                enabled = puedeAbandonar,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            ) {
+                                Icon(Icons.Default.ExitToApp, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Abandonar")
+                            }
+                            if (!puedeAbandonar) {
+                                Text(
+                                    "Límite excedido (2h antes)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
                         }
                     }
                     partido.solicitudesIds.contains(currentUid) -> {
