@@ -13,7 +13,10 @@ import kotlinx.coroutines.launch
 
 sealed class ProfileUiState {
     data object Loading : ProfileUiState()
-    data class Success(val user: User) : ProfileUiState()
+    data class Success(
+        val user: User,
+        val calificaciones: List<Calificacion> = emptyList()
+    ) : ProfileUiState()
     data class Error(val message: String) : ProfileUiState()
 }
 
@@ -31,9 +34,14 @@ class ProfileViewModel(
             try {
                 val user = userRepository.getUser(uid)
                 if (user != null) {
-                    // Cargamos el promedio real desde las calificaciones
+                    // Cargamos el promedio real y la lista de reseñas
                     val promedio = califRepository.getPromedioUsuario(uid)
-                    _uiState.value = ProfileUiState.Success(user.copy(valoracionPromedio = promedio))
+                    val listaCalif = califRepository.getCalificacionesRecibidas(uid)
+
+                    _uiState.value = ProfileUiState.Success(
+                        user = user.copy(valoracionPromedio = promedio),
+                        calificaciones = listaCalif
+                    )
                 } else {
                     _uiState.value = ProfileUiState.Error("Usuario no encontrado")
                 }

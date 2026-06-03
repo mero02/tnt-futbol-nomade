@@ -33,12 +33,38 @@ class CalificacionRepository(
         return snapshot.documents.mapNotNull { it.getString("calificadoId") }
     }
 
+    suspend fun getCalificacionesRecibidas(userId: String): List<Calificacion> {
+        val snapshot = califCol
+            .whereEqualTo("calificadoId", userId)
+            // Quitamos el orderBy de Firestore para evitar el error de índice.
+            // Ordenaremos en memoria en el ViewModel o aquí mismo.
+            .get()
+            .await()
+        return snapshot.documents
+            .mapNotNull { it.toCalificacion() }
+            .sortedByDescending { it.fecha }
+    }
+
     private fun Calificacion.toFirestoreMap(): Map<String, Any?> = mapOf(
         "partidoId" to partidoId,
         "calificadorId" to calificadorId,
         "calificadoId" to calificadoId,
-        "estrellas" to estrellas,
+        "estrellas" to estrellas.toLong(),
         "comentario" to comentario,
         "fecha" to fecha
     )
+
+    private fun com.google.firebase.firestore.DocumentSnapshot.toCalificacion(): Calificacion? {
+        return if (exists()) {
+            Calificacion(
+                id = id,
+                partidoId = getString("partidoId") ?: "",
+                calificadorId = getString("calificadorId") ?: "",
+                calificadoId = getString("calificadoId") ?: "",
+                estrellas = (getLong("estrellas") ?: 0L).toInt(),
+                comentario = getString("comentario"),
+                fecha = getTimestamp("fecha") ?: com.google.firebase.Timestamp.now()
+            )
+        } else null
+    }
 }

@@ -1,6 +1,10 @@
 package com.example.futbol_tnt.presentation.ui.screens.profile
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -22,14 +27,17 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.futbol_tnt.data.model.*
+import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.viewmodel.ProfileUiState
 import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.Period
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +53,8 @@ fun ProfileScreen(
     val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     val isOwnProfile = uid == currentUid
 
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+
     LaunchedEffect(uid) {
         viewModel.loadProfile(uid)
     }
@@ -52,7 +62,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isOwnProfile) "Mi Perfil" else "Perfil de Jugador") },
+                title = { Text(if (isOwnProfile) "Editar Perfil" else "Perfil de Jugador") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -70,6 +80,7 @@ fun ProfileScreen(
             }
             is ProfileUiState.Success -> {
                 if (isOwnProfile) {
+                    // Modo Edición Directo
                     ProfileContent(
                         user = state.user,
                         onSave = { updatedUser ->
@@ -82,24 +93,125 @@ fun ProfileScreen(
                         modifier = Modifier.padding(padding)
                     )
                 } else {
-                    ReadOnlyProfileContent(
-                        user = state.user,
-                        modifier = Modifier.padding(padding)
-                    )
+                    // Modo Visualización con Pestañas para otros jugadores
+                    Column(modifier = Modifier.padding(padding)) {
+                        TabRow(selectedTabIndex = selectedTab) {
+                            Tab(
+                                selected = selectedTab == 0,
+                                onClick = { selectedTab = 0 },
+                                text = { Text("Ficha") }
+                            )
+                            Tab(
+                                selected = selectedTab == 1,
+                                onClick = { selectedTab = 1 },
+                                text = { Text("Reputación") }
+                            )
+                        }
+
+                        if (selectedTab == 0) {
+                            ReadOnlyProfileContent(
+                                user = state.user,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            ReputacionContent(
+                                calificaciones = state.calificaciones,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
                 }
             }
             is ProfileUiState.Error -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(state.message, color = MaterialTheme.colorScheme.error)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadProfile(uid) }) {
-                        Text("Reintentar")
-                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReputacionContent(
+    calificaciones: List<Calificacion>,
+    modifier: Modifier = Modifier
+) {
+    if (calificaciones.isEmpty()) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text("Aún no hay calificaciones.", color = MaterialTheme.colorScheme.outline)
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(calificaciones) { calif ->
+                CalificacionItem(calif)
+            }
+        }
+    }
+}
+
+@Composable
+fun CalificacionItem(calif: Calificacion) {
+    val userRepository = remember { UserRepository() }
+    var user by remember { mutableStateOf<User?>(null) }
+    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    LaunchedEffect(calif.calificadorId) {
+        user = userRepository.getUser(calif.calificadorId)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AsyncImage(
+                        model = user?.photoUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Text(
+                        text = user?.apodo ?: user?.displayName ?: "Jugador",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = sdf.format(calif.fecha.toDate()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                for (i in 1..5) {
+                    Icon(
+                        imageVector = if (i <= calif.estrellas) Icons.Default.Star else Icons.Default.StarOutline,
+                        contentDescription = null,
+                        tint = if (i <= calif.estrellas) Color(0xFFFFB300) else MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            if (!calif.comentario.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "\"${calif.comentario}\"",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                )
             }
         }
     }
@@ -108,7 +220,8 @@ fun ProfileScreen(
 @Composable
 fun ReadOnlyProfileContent(
     user: User,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    footer: @Composable ColumnScope.() -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -243,6 +356,10 @@ fun ReadOnlyProfileContent(
                 }
             }
         }
+
+        // Contenido adicional (botones, etc) que se mueve con el scroll
+        footer()
+
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
@@ -523,12 +640,10 @@ fun DatePickerField(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        // DatePicker trabaja en UTC. Usamos ZoneOffset.UTC para evitar saltos de día
-                        // por la diferencia horaria local.
                         val date = Instant.ofEpochMilli(millis)
                             .atZone(ZoneOffset.UTC)
                             .toLocalDate()
-                        onValueChange(date.toString()) // Guarda en formato ISO YYYY-MM-DD
+                        onValueChange(date.toString())
                     }
                     showDatePicker = false
                 }) {
