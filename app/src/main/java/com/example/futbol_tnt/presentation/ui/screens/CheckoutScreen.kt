@@ -48,11 +48,21 @@ fun CheckoutScreen(
     val total = (cancha?.precioPorHora ?: 0.0) * duracion
     val sugeridoPersona = total / 10 // Asumiendo 10 personas por defecto
 
-    var montoSeleccionado by rememberSaveable { mutableStateOf(sugeridoPersona) }
+    var montoSeleccionado by rememberSaveable { mutableDoubleStateOf(0.0) }
     var selectedOption by rememberSaveable { mutableIntStateOf(1) } // 0: Nada, 1: Tu parte, 2: Total
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(canchaId) {
         viewModel.cargarCancha(canchaId)
+    }
+
+    // Inicializar monto una vez que la cancha carga, pero solo una vez
+    LaunchedEffect(cancha) {
+        if (!isInitialized && cancha != null) {
+            val total = (cancha?.precioPorHora ?: 0.0) * duracion
+            montoSeleccionado = total / 10
+            isInitialized = true
+        }
     }
 
     LaunchedEffect(evento) {

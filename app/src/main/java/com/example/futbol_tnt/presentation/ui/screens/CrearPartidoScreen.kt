@@ -145,10 +145,11 @@ fun CrearPartidoScreen(
     var precioTotalReserva by rememberSaveable { mutableStateOf(0.0) }
     var existingMatchId by rememberSaveable { mutableStateOf<String?>(null) }
     var jugadoresActuales by rememberSaveable { mutableIntStateOf(1) }
+    var isInitialized by rememberSaveable { mutableStateOf(false) }
 
     // Carga de datos de reserva si existe
     LaunchedEffect(reservaId) {
-        if (reservaId != null && reservaRepository != null) {
+        if (!isInitialized && reservaId != null && reservaRepository != null) {
             val reserva = reservaRepository.getReservaById(reservaId)
             reserva?.let { r ->
                 canchaSeleccionada = r.cancha
@@ -173,6 +174,7 @@ fun CrearPartidoScreen(
                     val jug = jugadoresMax.toIntOrNull() ?: 10
                     precio = (r.precioTotal / jug).toInt().toString()
                 }
+                isInitialized = true
             }
         }
     }
