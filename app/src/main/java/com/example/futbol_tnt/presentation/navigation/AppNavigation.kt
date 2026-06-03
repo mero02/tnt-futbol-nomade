@@ -37,6 +37,7 @@ sealed class Screen(val route: String) {
     }
     data object Reporte : Screen("reporte")
     data object Tarjetas : Screen("tarjetas")
+    data object Notificaciones : Screen("notificaciones")
     data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
         fun createRoute(reservaId: String? = null) =
             if (reservaId != null) "crear_partido?reservaId=$reservaId" else "crear_partido"
@@ -97,6 +98,7 @@ fun AppNavigation() {
     )
     val reporteViewModel: ReporteViewModel = viewModel()
     val tarjetaViewModel: TarjetaViewModel = viewModel()
+    val notificacionViewModel: com.example.futbol_tnt.presentation.viewmodel.NotificacionViewModel = viewModel()
 
     // Si el usuario ya tiene sesión activa en Firebase, arranca en Home directamente.
     // Así no vuelve a ver el login al reabrir la app.
@@ -166,6 +168,9 @@ fun AppNavigation() {
                 onNavigateToTarjetas = {
                     navController.navigate(Screen.Tarjetas.route)
                 },
+                onNavigateToNotificaciones = {
+                    navController.navigate(Screen.Notificaciones.route)
+                },
                 onCrearPartido = { reservaId ->
                     navController.navigate(Screen.CrearPartido.createRoute(reservaId))
                 },
@@ -179,7 +184,8 @@ fun AppNavigation() {
                 // CrearPartidoScreen compartan el mismo estado de partidos.
                 partidoViewModel = partidoViewModel,
                 reservaViewModel = reservaViewModel,
-                profileViewModel = profileViewModel
+                profileViewModel = profileViewModel,
+                notificacionViewModel = notificacionViewModel
             )
         }
         composable(Screen.AcercaDe.route) {
@@ -253,6 +259,12 @@ fun AppNavigation() {
         composable(Screen.Tarjetas.route) {
             com.example.futbol_tnt.presentation.ui.screens.profile.MisTarjetasScreen(
                 viewModel = tarjetaViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Notificaciones.route) {
+            com.example.futbol_tnt.presentation.ui.screens.NotificacionesScreen(
+                viewModel = notificacionViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

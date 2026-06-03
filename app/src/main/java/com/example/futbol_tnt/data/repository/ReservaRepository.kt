@@ -2,6 +2,8 @@ package com.example.futbol_tnt.data.repository
 
 import com.example.futbol_tnt.data.model.Cancha
 import com.example.futbol_tnt.data.model.EstadoReserva
+import com.example.futbol_tnt.data.model.Notificacion
+import com.example.futbol_tnt.data.model.TipoNotificacion
 import com.example.futbol_tnt.data.model.Reserva
 import com.example.futbol_tnt.data.model.TipoCancha
 import com.google.firebase.Timestamp
@@ -105,23 +107,48 @@ class ReservaRepository(
     }
 
     override suspend fun cancelarReserva(reservaId: String) {
-        firestore.runTransaction { transaction ->
-            // 1. Borrar la reserva
-            transaction.delete(reservasCol.document(reservaId))
+        val uid = auth.currentUser?.uid ?: return
 
-            // 2. Buscar y borrar el partido asociado si existe
-            // Nota: Como no podemos hacer queries complejas dentro de una transacción de escritura fácilmente
-            // sin conocer el ID del partido, lo hacemos como una operación atómica de batch o secuencial.
-        }.await()
-
-        // Forma más segura: Buscar el partido que tenga este reservaId y borrarlo
+        // 1. Obtener datos del partido y sus participantes antes de borrar
         val partidoQuery = firestore.collection("partidos")
             .whereEqualTo("reservaId", reservaId)
             .get()
             .await()
 
+        val partidoDoc = partidoQuery.documents.firstOrNull()
+        val participantesIds = partidoDoc?.get("participantesIds") as? List<String> ?: emptyList()
+        val nombreCancha = partidoDoc?.get("cancha.nombre") as? String ?: "la cancha"
+        val fechaPartido = partidoDoc?.getTimestamp("fecha")?.toDate()
+
+        firestore.runTransaction { transaction ->
+            // 2. Borrar la reserva
+            transaction.delete(reservasCol.document(reservaId))
+        }.await()
+
+        // 3. Borrar el partido y enviar notificaciones
         for (doc in partidoQuery.documents) {
             doc.reference.delete().await()
+        }
+
+        // 4. Enviar notificaciones a los participantes (excepto al que cancela)
+        val notifCol = firestore.collection("notificaciones")
+        participantesIds.forEach { targetUid ->
+            if (targetUid != uid) {
+                val notif = Notificacion(
+                    userId = targetUid,
+                    titulo = "Partido Cancelado",
+                    mensaje = "El partido en $nombreCancha ha sido cancelado por el organizador.",
+                    tipo = TipoNotificacion.CANCELACION
+                )
+                notifCol.add(mapOf(
+                    "userId" to notif.userId,
+                    "titulo" to notif.titulo,
+                    "mensaje" to notif.mensaje,
+                    "fecha" to notif.fecha,
+                    "leido" to notif.leido,
+                    "tipo" to notif.tipo.name
+                ))
+            }
         }
     }
 
