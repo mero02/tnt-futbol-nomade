@@ -1,66 +1,38 @@
 package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.SportsSoccer
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.futbol_tnt.data.model.EstadoPartido
-import com.example.futbol_tnt.data.model.FiltroEstado
-import com.example.futbol_tnt.data.model.FiltroFecha
-import com.example.futbol_tnt.data.model.FiltroPartidos
-import com.example.futbol_tnt.data.model.Partido
-import com.example.futbol_tnt.data.model.TipoCancha
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.futbol_tnt.data.model.*
+import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.ui.screens.home.components.EstadoPartidoBadge
 import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
+import com.google.firebase.auth.FirebaseAuth
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -69,35 +41,30 @@ private val partidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 @Composable
 internal fun PartidosTab(
     viewModel: PartidoViewModel,
-    onCrearPartido: () -> Unit
+    onCrearPartido: () -> Unit,
+    onNavigateToProfile: (String) -> Unit = {}
 ) {
-    // filtros es el estado local de los chips de búsqueda. Cuando cambia,
-    // la lista se recalcula automáticamente via remember(filtros, ...).
     var filtros by rememberSaveable(
         stateSaver = Saver<FiltroPartidos, Any>(
             save = { listOf(it.fecha.name, it.tipoCancha?.name, it.estado.name) },
             restore = { values ->
-                val list = values as List<String>
+                val list = values as List<String?>
                 FiltroPartidos(
-                    fecha = FiltroFecha.valueOf(list[0]),
+                    fecha = FiltroFecha.valueOf(list[0] ?: "TODOS"),
                     tipoCancha = list[1]?.let { TipoCancha.valueOf(it) },
-                    estado = FiltroEstado.valueOf(list[2])
+                    estado = FiltroEstado.valueOf(list[2] ?: "TODOS")
                 )
             }
         )
     ) { mutableStateOf(FiltroPartidos()) }
 
-    // showUnirseDialog guarda el partido sobre el que el usuario tocó "Unirse",
-    // o null si el dialog está cerrado.
     var showUnirseDialog by remember { mutableStateOf<Partido?>(null) }
+    var showGestionarDialog by remember { mutableStateOf<Partido?>(null) }
 
-    // collectAsState() convierte el StateFlow del ViewModel en un State de Compose.
-    // Cada vez que el ViewModel actualice la lista, Compose recompone automáticamente.
+    val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     val todosLosPartidos by viewModel.partidos.collectAsState()
     val evento by viewModel.evento.collectAsState()
 
-    // La lista filtrada se recalcula solo cuando cambian los filtros o los partidos.
-    // remember(filtros, todosLosPartidos) evita recalcular en cada recomposición innecesaria.
     val partidosFiltrados = remember(filtros, todosLosPartidos) {
         todosLosPartidos.filter { partido ->
             val filtroFechaOk = when (filtros.fecha) {
@@ -118,28 +85,38 @@ internal fun PartidosTab(
         }
     }
 
-    // Escucha eventos one-shot del ViewModel (Unirse exitoso, partido lleno, error).
-    // Al recibir alguno, cierra el dialog y limpia el evento para no re-procesarlo.
     LaunchedEffect(evento) {
         when (evento) {
-            is PartidoEvento.UnirseExito,
+            is PartidoEvento.SolicitudEnviada,
+            is PartidoEvento.SolicitudGestionada,
             is PartidoEvento.PartidoLleno,
             is PartidoEvento.Error -> {
                 showUnirseDialog = null
+                showGestionarDialog = null
                 viewModel.limpiarEvento()
             }
             else -> {}
         }
     }
 
-    // Dialog de confirmación para unirse. Solo se muestra si showUnirseDialog != null.
     showUnirseDialog?.let { partido ->
         UnirsePartidoDialog(
             partido = partido,
             onDismiss = { showUnirseDialog = null },
-            // Al confirmar, el ViewModel incrementa jugadoresActuales y puede cambiar
-            // el estado a LLENO si se alcanzó el máximo.
-            onConfirm = { viewModel.unirseAPartido(partido.id) }
+            onConfirm = { viewModel.enviarSolicitud(partido.id) }
+        )
+    }
+
+    showGestionarDialog?.let { partido ->
+        GestionarSolicitudesDialog(
+            partido = partido,
+            onDismiss = { showGestionarDialog = null },
+            onAceptar = { applicantId -> viewModel.gestionarSolicitud(partido.id, applicantId, true) },
+            onRechazar = { applicantId -> viewModel.gestionarSolicitud(partido.id, applicantId, false) },
+            onViewProfile = { uid ->
+                showGestionarDialog = null
+                onNavigateToProfile(uid)
+            }
         )
     }
 
@@ -152,25 +129,21 @@ internal fun PartidosTab(
             Spacer(modifier = Modifier.height(8.dp))
             HeaderSection(
                 titulo = "Partidos",
-                subtitulo = "${partidosFiltrados.size} partidos"
+                subtitulo = "${partidosFiltrados.size} partidos disponibles"
             )
         }
         item {
-            // FiltrosPartidos recibe los filtros actuales y una lambda para actualizarlos.
-            // Cuando el usuario toca un chip, llama onFiltrosChange con el nuevo FiltroPartidos,
-            // lo que actualiza filtros aquí arriba y desencadena el recálculo de partidosFiltrados.
             FiltrosPartidos(
                 filtros = filtros,
                 onFiltrosChange = { filtros = it }
             )
         }
-        // key = { it.id } permite a Compose identificar cada card individualmente
-        // para animaciones y evitar re-renders innecesarios al actualizar la lista.
         items(partidosFiltrados, key = { it.id }) { partido ->
             PartidoCard(
                 partido = partido,
-                // Guardar el partido en showUnirseDialog abre el AlertDialog de confirmación
-                onUnirse = { showUnirseDialog = partido }
+                currentUid = currentUid,
+                onUnirse = { showUnirseDialog = partido },
+                onGestionar = { showGestionarDialog = partido }
             )
         }
     }
@@ -199,15 +172,12 @@ private fun FiltrosPartidos(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        // Los chips son desplazables horizontalmente con horizontalScroll
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Chip "Hoy": toggle — si ya está seleccionado, vuelve a TODOS.
-            // Patrón copy() actualiza solo el campo fecha sin tocar el resto del filtro.
             FilterChip(
                 selected = filtros.fecha == FiltroFecha.HOY,
                 onClick = {
@@ -220,7 +190,6 @@ private fun FiltrosPartidos(
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                 } else null
             )
-            // Chip "Esta semana": mismo patrón toggle que "Hoy"
             FilterChip(
                 selected = filtros.fecha == FiltroFecha.ESTA_SEMANA,
                 onClick = {
@@ -233,7 +202,6 @@ private fun FiltrosPartidos(
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                 } else null
             )
-            // Chip "Abiertos": filtra solo los partidos que todavía aceptan jugadores
             FilterChip(
                 selected = filtros.estado == FiltroEstado.ABIERTOS,
                 onClick = {
@@ -253,7 +221,9 @@ private fun FiltrosPartidos(
 @Composable
 private fun PartidoCard(
     partido: Partido,
-    onUnirse: () -> Unit
+    currentUid: String?,
+    onUnirse: () -> Unit,
+    onGestionar: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -270,11 +240,9 @@ private fun PartidoCard(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                // Badge visual del estado: ABIERTO (verde) / LLENO (rojo) / etc.
                 EstadoPartidoBadge(estado = partido.estado)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            // Fila central con Local — VS — Visitante
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -287,18 +255,9 @@ private fun PartidoCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        text = "LOCAL",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(text = "LOCAL", style = MaterialTheme.typography.labelSmall)
                 }
-                Text(
-                    text = "VS",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
+                Text(text = "VS", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = partido.nombreVisitante,
@@ -306,37 +265,20 @@ private fun PartidoCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
                     )
-                    Text(
-                        text = "VISITANTE",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(text = "VISITANTE", style = MaterialTheme.typography.labelSmall)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = partido.fecha.format(partidoFormatter),
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(partido.fecha.format(partidoFormatter), style = MaterialTheme.typography.bodySmall)
                 }
-                Text(
-                    text = "${partido.jugadoresActuales}/${partido.jugadoresMaximos} jugadores",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("${partido.jugadoresActuales}/${partido.jugadoresMaximos} jugadores", style = MaterialTheme.typography.bodySmall)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(
@@ -347,15 +289,53 @@ private fun PartidoCard(
                 Text(
                     text = "$${partido.precioPorPersona.toInt()}/persona",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.Bold
                 )
-                // Botón condicional según el estado del partido:
-                // ABIERTO → "Unirse" (habilitado), LLENO → "Lleno" (deshabilitado)
-                when (partido.estado) {
-                    EstadoPartido.ABIERTO -> FilledTonalButton(onClick = onUnirse) { Text("Unirse") }
-                    EstadoPartido.LLENO -> OutlinedButton(onClick = {}, enabled = false) { Text("Lleno") }
-                    else -> {}
+
+                when {
+                    partido.creatorId == currentUid -> {
+                        val reqCount = partido.solicitudesIds.size
+                        if (reqCount > 0) {
+                            BadgedBox(
+                                badge = {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = Color.White
+                                    ) {
+                                        Text(reqCount.toString())
+                                    }
+                                }
+                            ) {
+                                Button(onClick = onGestionar) {
+                                    Icon(Icons.Default.GroupAdd, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Solicitudes")
+                                }
+                            }
+                        } else {
+                            OutlinedButton(onClick = {}, enabled = false) {
+                                Text("Organizador")
+                            }
+                        }
+                    }
+                    partido.participantesIds.contains(currentUid) -> {
+                        OutlinedButton(onClick = {}, enabled = false) {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
+                            Text("Participo")
+                        }
+                    }
+                    partido.solicitudesIds.contains(currentUid) -> {
+                        OutlinedButton(onClick = {}, enabled = false) {
+                            Icon(Icons.Default.HourglassEmpty, null, modifier = Modifier.size(18.dp))
+                            Text("En espera")
+                        }
+                    }
+                    partido.estado == EstadoPartido.LLENO -> {
+                        OutlinedButton(onClick = {}, enabled = false) { Text("Lleno") }
+                    }
+                    else -> {
+                        FilledTonalButton(onClick = onUnirse) { Text("Unirse") }
+                    }
                 }
             }
         }
@@ -368,125 +348,117 @@ private fun UnirsePartidoDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    var nombreEquipo by rememberSaveable { mutableStateOf("") }
-    var posicionSeleccionada by rememberSaveable { mutableStateOf("Delantero") }
-    val posiciones = listOf("Delantero", "Mediocampista", "Defensor", "Arquero")
-    var showPosiciones by rememberSaveable { mutableStateOf(false) }
-
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Unirse al partido",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
+        title = { Text("Enviar Solicitud") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Resumen del partido para que el usuario confirme que es el correcto
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "${partido.nombreLocal} vs ${partido.nombreVisitante}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "${partido.fecha.format(partidoFormatter)} - ${partido.cancha.nombre}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "$${partido.precioPorPersona.toInt()}/persona",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                OutlinedTextField(
-                    value = nombreEquipo,
-                    onValueChange = { nombreEquipo = it },
-                    label = { Text("Nombre de tu equipo") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("Ej: Los Chetos FC") }
-                )
-                // Selector de posición implementado como Surface clickeable + DropdownMenu
-                Column {
-                    Text(
-                        text = "Posición",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
-                            brush = SolidColor(MaterialTheme.colorScheme.outline)
-                        ),
-                        onClick = { showPosiciones = true }
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(posicionSeleccionada)
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    DropdownMenu(
-                        expanded = showPosiciones,
-                        onDismissRequest = { showPosiciones = false }
-                    ) {
-                        posiciones.forEach { posicion ->
-                            DropdownMenuItem(
-                                text = { Text(posicion) },
-                                onClick = {
-                                    posicionSeleccionada = posicion
-                                    showPosiciones = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+            Text("¿Querés enviarle una solicitud al organizador para unirte a este partido?")
         },
         confirmButton = {
-            // "Confirmar" solo se habilita cuando el usuario escribió un nombre de equipo
-            Button(
-                onClick = onConfirm,
-                enabled = nombreEquipo.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Confirmar")
-            }
+            Button(onClick = onConfirm) { Text("Enviar") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
+}
+
+@Composable
+private fun GestionarSolicitudesDialog(
+    partido: Partido,
+    onDismiss: () -> Unit,
+    onAceptar: (String) -> Unit,
+    onRechazar: (String) -> Unit,
+    onViewProfile: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Solicitudes Pendientes") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (partido.solicitudesIds.isEmpty()) {
+                    Text("No hay solicitudes pendientes.")
+                }
+                partido.solicitudesIds.forEach { applicantId ->
+                    SolicitanteItem(
+                        uid = applicantId,
+                        onAceptar = { onAceptar(applicantId) },
+                        onRechazar = { onRechazar(applicantId) },
+                        onViewProfile = { onViewProfile(applicantId) }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        }
+    )
+}
+
+@Composable
+private fun SolicitanteItem(
+    uid: String,
+    onAceptar: () -> Unit,
+    onRechazar: () -> Unit,
+    onViewProfile: () -> Unit
+) {
+    val userRepository = remember { UserRepository() }
+    var user by remember { mutableStateOf<User?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(uid) {
+        user = userRepository.getUser(uid)
+        isLoading = false
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onViewProfile() }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(user?.photoUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user?.apodo ?: user?.displayName ?: "Jugador",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = user?.posicion?.displayName ?: "Posición no definida",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row {
+                IconButton(onClick = onRechazar) {
+                    Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.error)
+                }
+                IconButton(onClick = onAceptar) {
+                    Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+    }
 }

@@ -81,7 +81,7 @@ fun HomeScreen(
     onNavigateToTarjetas: () -> Unit,
     onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
-    onNavigateToProfile: () -> Unit,
+    onNavigateToProfile: (String?) -> Unit,
     partidoViewModel: PartidoViewModel,
     reservaViewModel: ReservaViewModel,
     profileViewModel: ProfileViewModel,
@@ -326,12 +326,16 @@ fun HomeScreen(
                             onCrearPartido(reservaId)
                         }
                     )
-                    2 -> PartidosTab(viewModel = partidoViewModel, onCrearPartido = { onCrearPartido(null) })
+                    2 -> PartidosTab(
+                    viewModel = partidoViewModel,
+                    onCrearPartido = { onCrearPartido(null) },
+                    onNavigateToProfile = { uid -> onNavigateToProfile(uid) }
+                )
                     3 -> PerfilTab(
-                        onSignOut = onSignOut,
-                        viewModel = profileViewModel,
-                        onEditProfile = onNavigateToProfile
-                    )
+                    onSignOut = onSignOut,
+                    viewModel = profileViewModel,
+                    onEditProfile = { onNavigateToProfile(null) }
+                )
                 }
             }
         }

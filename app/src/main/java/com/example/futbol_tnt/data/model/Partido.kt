@@ -18,5 +18,9 @@ data class Partido(
     val reservaId: String? = null,
     // uid del usuario que creo el partido (Firebase Auth). Necesario para
     // que las reglas de Firestore puedan validar quien escribe/edita.
-    val creatorId: String = ""
+    val creatorId: String = "",
+    // Lista de UIDs de los jugadores confirmados
+    val participantesIds: List<String> = emptyList(),
+    // Lista de UIDs de los jugadores que enviaron solicitud y esperan aprobación
+    val solicitudesIds: List<String> = emptyList()
 )

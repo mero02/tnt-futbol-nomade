@@ -9,6 +9,8 @@ interface IPartidoRepository {
 
     // Operaciones suspend porque tocan red (Firestore).
     suspend fun crearPartido(partido: Partido)
-    suspend fun unirseAPartido(partidoId: String): Boolean
+    suspend fun unirseAPartido(partidoId: String): Boolean // Mantener por compatibilidad o remover luego
+    suspend fun enviarSolicitud(partidoId: String): Boolean
+    suspend fun gestionarSolicitud(partidoId: String, applicantId: String, aceptar: Boolean): Boolean
     suspend fun getPartidoByReservaId(reservaId: String): Partido?
 }

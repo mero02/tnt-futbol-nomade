@@ -15,7 +15,8 @@ import kotlinx.coroutines.launch
 
 sealed class PartidoEvento {
     data object Idle : PartidoEvento()
-    data object UnirseExito : PartidoEvento()
+    data object SolicitudEnviada : PartidoEvento()
+    data object SolicitudGestionada : PartidoEvento()
     data object PartidoLleno : PartidoEvento()
     data object PartidoCreadoExito : PartidoEvento()
     data class Error(val mensaje: String) : PartidoEvento()
@@ -25,13 +26,8 @@ class PartidoViewModel(
     private val repository: IPartidoRepository = PartidoRepository(),
 ) : ViewModel() {
 
-    // El repositorio expone un Flow (snapshots de Firestore en vivo). Lo convertimos
-    // a StateFlow con stateIn para que la UI pueda hacer .collectAsState() y reciba
-    // un valor inicial (lista vacia) hasta que llegue el primer snapshot.
     val partidos: StateFlow<List<Partido>> = repository.partidos
         .catch { error ->
-            // Durante el logout es normal recibir PERMISSION_DENIED.
-            // Solo emitimos error si no es un tema de permisos (o si queremos manejarlo en la UI).
             if (error.message?.contains("PERMISSION_DENIED") == false) {
                 _evento.value = PartidoEvento.Error(
                     error.message ?: "No se pudieron cargar los partidos",
@@ -48,13 +44,24 @@ class PartidoViewModel(
     private val _evento = MutableStateFlow<PartidoEvento>(PartidoEvento.Idle)
     val evento: StateFlow<PartidoEvento> = _evento.asStateFlow()
 
-    fun unirseAPartido(partidoId: String) {
+    fun enviarSolicitud(partidoId: String) {
         viewModelScope.launch {
             _evento.value = runCatching {
-                val exito = repository.unirseAPartido(partidoId)
-                if (exito) PartidoEvento.UnirseExito else PartidoEvento.PartidoLleno
+                val exito = repository.enviarSolicitud(partidoId)
+                if (exito) PartidoEvento.SolicitudEnviada else PartidoEvento.PartidoLleno
             }.getOrElse { error ->
-                PartidoEvento.Error(error.message ?: "Error al unirse al partido")
+                PartidoEvento.Error(error.message ?: "Error al enviar solicitud")
+            }
+        }
+    }
+
+    fun gestionarSolicitud(partidoId: String, applicantId: String, aceptar: Boolean) {
+        viewModelScope.launch {
+            _evento.value = runCatching {
+                val exito = repository.gestionarSolicitud(partidoId, applicantId, aceptar)
+                if (exito) PartidoEvento.SolicitudGestionada else PartidoEvento.PartidoLleno
+            }.getOrElse { error ->
+                PartidoEvento.Error(error.message ?: "Error al gestionar solicitud")
             }
         }
     }
@@ -83,8 +90,6 @@ class PartidoViewModel(
     }
 
     private companion object {
-        // Mantiene el snapshot listener activo 5s despues de que la UI deja de
-        // observar — evita reconectar si el usuario rota la pantalla.
         const val STOP_TIMEOUT_MS = 5_000L
     }
 }

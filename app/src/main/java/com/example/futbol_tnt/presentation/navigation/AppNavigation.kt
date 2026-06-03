@@ -32,7 +32,9 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
     data object AcercaDe : Screen("acerca_de")
-    data object Perfil : Screen("perfil")
+    data object Perfil : Screen("perfil?uid={uid}") {
+        fun createRoute(uid: String? = null) = if (uid != null) "perfil?uid=$uid" else "perfil"
+    }
     data object Reporte : Screen("reporte")
     data object Tarjetas : Screen("tarjetas")
     data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
@@ -170,8 +172,8 @@ fun AppNavigation() {
                 onNavigateToCanchaDetail = { canchaId ->
                     navController.navigate(Screen.CanchaDetail.createRoute(canchaId))
                 },
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Perfil.route)
+                onNavigateToProfile = { uid ->
+                    navController.navigate(Screen.Perfil.createRoute(uid))
                 },
                 // PartidoViewModel se pasa desde acá para que PartidosTab y
                 // CrearPartidoScreen compartan el mismo estado de partidos.
@@ -186,8 +188,10 @@ fun AppNavigation() {
                 navController.popBackStack()
             }
         }
-        composable(Screen.Perfil.route) {
-            val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return@composable
+        composable(Screen.Perfil.route) { backStackEntry ->
+            val uid = backStackEntry.arguments?.getString("uid")
+                ?: com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                ?: return@composable
             com.example.futbol_tnt.presentation.ui.screens.profile.ProfileScreen(
                 uid = uid,
                 viewModel = profileViewModel,

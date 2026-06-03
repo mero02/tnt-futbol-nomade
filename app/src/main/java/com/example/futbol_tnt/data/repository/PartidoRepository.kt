@@ -8,6 +8,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
@@ -21,11 +22,6 @@ import java.util.Date
 
 /**
  * Repositorio de partidos persistidos en Cloud Firestore (coleccion "partidos").
- *
- * - partidos: Flow en tiempo real (snapshot listener) ordenado por fecha asc.
- * - crearPartido: upsert con id autogenerado si viene vacio. Inyecta creatorId desde Firebase Auth.
- * - unirseAPartido: transaccion atomica para evitar race conditions cuando dos
- *   personas se unen casi al mismo tiempo.
  */
 class PartidoRepository(
     private val firestore: FirebaseFirestore = Firebase.firestore,
@@ -54,35 +50,67 @@ class PartidoRepository(
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Necesitas iniciar sesion para crear un partido")
 
-        // Si el partido viene sin id (caso comun al crear desde el form), generamos uno
-        // unico via .document() — asi el id local matchea con el de Firestore.
         val id = partido.id.ifBlank { partidosCol.document().id }
-        val conMetadata = partido.copy(id = id, creatorId = uid)
+
+        // El creador se agrega automáticamente como participante
+        val conMetadata = partido.copy(
+            id = id,
+            creatorId = uid,
+            participantesIds = listOf(uid),
+            jugadoresActuales = 1
+        )
 
         partidosCol.document(id).set(conMetadata.toFirestoreMap()).await()
     }
 
     override suspend fun unirseAPartido(partidoId: String): Boolean {
+        // Mantenemos por compatibilidad, pero ahora redirige a enviarSolicitud o lanza error si prefieres
+        return enviarSolicitud(partidoId)
+    }
+
+    override suspend fun enviarSolicitud(partidoId: String): Boolean {
+        val uid = auth.currentUser?.uid ?: return false
         val ref = partidosCol.document(partidoId)
+
         return firestore.runTransaction { tx ->
             val snap = tx.get(ref)
             val actuales = (snap.getLong("jugadoresActuales") ?: 0L).toInt()
             val maximos = (snap.getLong("jugadoresMaximos") ?: 0L).toInt()
-            if (actuales >= maximos) return@runTransaction false
+            val participantes = snap.get("participantesIds") as? List<*> ?: emptyList<String>()
+            val solicitudes = snap.get("solicitudesIds") as? List<*> ?: emptyList<String>()
 
-            val nuevos = actuales + 1
-            val nuevoEstado = if (nuevos >= maximos) {
-                EstadoPartido.LLENO.name
-            } else {
-                snap.getString("estado") ?: EstadoPartido.ABIERTO.name
-            }
-            tx.update(
-                ref,
-                mapOf(
+            if (actuales >= maximos) return@runTransaction false
+            if (participantes.contains(uid)) return@runTransaction false
+            if (solicitudes.contains(uid)) return@runTransaction false
+
+            tx.update(ref, "solicitudesIds", FieldValue.arrayUnion(uid))
+            true
+        }.await()
+    }
+
+    override suspend fun gestionarSolicitud(partidoId: String, applicantId: String, aceptar: Boolean): Boolean {
+        val ref = partidosCol.document(partidoId)
+
+        return firestore.runTransaction { tx ->
+            val snap = tx.get(ref)
+            val actuales = (snap.getLong("jugadoresActuales") ?: 0L).toInt()
+            val maximos = (snap.getLong("jugadoresMaximos") ?: 0L).toInt()
+
+            // Primero removemos de la lista de solicitudes
+            tx.update(ref, "solicitudesIds", FieldValue.arrayRemove(applicantId))
+
+            if (aceptar) {
+                if (actuales >= maximos) return@runTransaction false
+
+                val nuevos = actuales + 1
+                val nuevoEstado = if (nuevos >= maximos) EstadoPartido.LLENO.name else snap.getString("estado")
+
+                tx.update(ref, mapOf(
+                    "participantesIds" to FieldValue.arrayUnion(applicantId),
                     "jugadoresActuales" to nuevos,
-                    "estado" to nuevoEstado,
-                )
-            )
+                    "estado" to nuevoEstado
+                ))
+            }
             true
         }.await()
     }
@@ -102,15 +130,6 @@ class PartidoRepository(
         const val COLLECTION = "partidos"
     }
 }
-
-// ---------------------------------------------------------------------------
-// Mappers Partido <-> Firestore.
-//
-// Hacemos el mapeo a mano (en vez de usar .toObject<Partido>()) por:
-// - LocalDateTime no es serializable nativo de Firestore (necesita Timestamp).
-// - La cancha embebida tiene LocalTime en disponibilidad, que tampoco serializa.
-// - Mantenemos control sobre defaults y deserializacion defensiva.
-// ---------------------------------------------------------------------------
 
 private fun Partido.toFirestoreMap(): Map<String, Any?> = mapOf(
     "id" to id,
@@ -135,6 +154,8 @@ private fun Partido.toFirestoreMap(): Map<String, Any?> = mapOf(
     "nombreOrganizador" to nombreOrganizador,
     "reservaId" to reservaId,
     "creatorId" to creatorId,
+    "participantesIds" to participantesIds,
+    "solicitudesIds" to solicitudesIds
 )
 
 @Suppress("UNCHECKED_CAST")
@@ -168,6 +189,8 @@ private fun DocumentSnapshot.toPartidoOrNull(): Partido? {
             nombreOrganizador = getString("nombreOrganizador").orEmpty(),
             reservaId = getString("reservaId"),
             creatorId = getString("creatorId").orEmpty(),
+            participantesIds = get("participantesIds") as? List<String> ?: emptyList(),
+            solicitudesIds = get("solicitudesIds") as? List<String> ?: emptyList()
         )
     }.getOrNull()
 }
