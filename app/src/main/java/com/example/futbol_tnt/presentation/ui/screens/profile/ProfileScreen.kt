@@ -214,6 +214,33 @@ fun ReadOnlyProfileContent(
                         )
                     }
                 }
+
+                // Sección de Valoración
+                Spacer(modifier = Modifier.height(24.dp))
+                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Valoración de jugador: ",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = String.format("%.1f", user.valoracionPromedio),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
@@ -561,6 +588,8 @@ fun <T> EnumDropdown(
     }
 }
 
+private fun String.capitalize() = this.replaceFirstChar { it.uppercase() }
+
 private fun calculateAge(birthDate: String?): String {
     if (birthDate.isNullOrBlank()) return "No definida"
     return try {
@@ -572,5 +601,3 @@ private fun calculateAge(birthDate: String?): String {
         "Fecha inválida"
     }
 }
-
-private fun String.capitalize() = this.replaceFirstChar { it.uppercase() }

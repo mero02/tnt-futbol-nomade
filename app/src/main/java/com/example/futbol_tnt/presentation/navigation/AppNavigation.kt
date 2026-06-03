@@ -84,7 +84,7 @@ fun AppNavigation() {
     val profileViewModel: ProfileViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ProfileViewModel(userRepository) as T
+                ProfileViewModel(userRepository, com.example.futbol_tnt.data.repository.CalificacionRepository()) as T
         }
     )
     val checkoutViewModel: CheckoutViewModel = viewModel(

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.futbol_tnt.data.model.*
 import com.example.futbol_tnt.data.repository.IUserRepository
 import com.example.futbol_tnt.data.repository.UserRepository
+import com.example.futbol_tnt.data.repository.CalificacionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +19,7 @@ sealed class ProfileUiState {
 
 class ProfileViewModel(
     private val userRepository: IUserRepository = UserRepository(),
+    private val califRepository: CalificacionRepository = CalificacionRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -29,7 +31,9 @@ class ProfileViewModel(
             try {
                 val user = userRepository.getUser(uid)
                 if (user != null) {
-                    _uiState.value = ProfileUiState.Success(user)
+                    // Cargamos el promedio real desde las calificaciones
+                    val promedio = califRepository.getPromedioUsuario(uid)
+                    _uiState.value = ProfileUiState.Success(user.copy(valoracionPromedio = promedio))
                 } else {
                     _uiState.value = ProfileUiState.Error("Usuario no encontrado")
                 }

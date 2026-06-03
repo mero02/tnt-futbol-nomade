@@ -12,23 +12,16 @@ class CalificacionRepository(
     private val califCol = firestore.collection("calificaciones")
 
     suspend fun calificarJugador(calificacion: Calificacion) {
-        // Usamos un ID compuesto para evitar que un mismo jugador califique dos veces al mismo en un partido
         val id = "${calificacion.partidoId}_${calificacion.calificadorId}_${calificacion.calificadoId}"
         califCol.document(id).set(calificacion.toFirestoreMap()).await()
-
-        // Aquí podríamos disparar una Cloud Function para recalcular el promedio del usuario calificado
-        // O hacerlo manualmente actualizando el documento del usuario (menos escalable pero funciona para MVP)
-        actualizarPromedioUsuario(calificacion.calificadoId)
     }
 
-    private suspend fun actualizarPromedioUsuario(userId: String) {
-        val calificaciones = califCol.whereEqualTo("calificadoId", userId).get().await()
-        if (calificaciones.isEmpty) return
+    suspend fun getPromedioUsuario(userId: String): Double {
+        val snapshot = califCol.whereEqualTo("calificadoId", userId).get().await()
+        if (snapshot.isEmpty) return 0.0
 
-        val totalEstrellas = calificaciones.documents.sumOf { it.getLong("estrellas") ?: 0L }
-        val promedio = totalEstrellas.toDouble() / calificaciones.size()
-
-        firestore.collection("users").document(userId).update("valoracionPromedio", promedio).await()
+        val totalEstrellas = snapshot.documents.sumOf { it.getLong("estrellas") ?: 0L }
+        return totalEstrellas.toDouble() / snapshot.size()
     }
 
     suspend fun getCalificacionesPorPartido(partidoId: String, calificadorId: String): List<String> {

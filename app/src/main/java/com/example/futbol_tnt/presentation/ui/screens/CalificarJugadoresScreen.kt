@@ -7,9 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarOutline
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.futbol_tnt.data.model.Partido
@@ -89,7 +88,9 @@ fun JugadorRatingItem(
     var user by remember { mutableStateOf<User?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var rating by remember { mutableIntStateOf(0) }
+    var comentario by remember { mutableStateOf("") }
     var isRatedLocal by remember { mutableStateOf(yaCalificado) }
+    var showCommentField by remember { mutableStateOf(false) }
 
     LaunchedEffect(uid) {
         user = userRepository.getUser(uid)
@@ -100,45 +101,61 @@ fun JugadorRatingItem(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(40.dp))
-            } else {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(user?.photoUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier.size(50.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(40.dp))
+                } else {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(user?.photoUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier.size(50.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = user?.apodo ?: user?.displayName ?: "Jugador", fontWeight = FontWeight.Bold)
+
+                        if (isRatedLocal) {
+                            Text("¡Ya calificado!", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
+                        } else {
+                            StarRatingBar(
+                                rating = rating,
+                                onRatingChanged = {
+                                    rating = it
+                                    showCommentField = true
+                                }
+                            )
+                        }
+                    }
+
+                    if (!isRatedLocal && rating > 0) {
+                        IconButton(onClick = {
+                            viewModel.calificarJugador(partidoId, uid, rating, comentario.ifBlank { null })
+                            isRatedLocal = true
+                        }) {
+                            Icon(Icons.Default.Send, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+
+            if (!isRatedLocal && showCommentField) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = comentario,
+                    onValueChange = { comentario = it },
+                    label = { Text("Comentario (opcional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    maxLines = 2
                 )
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = user?.apodo ?: user?.displayName ?: "Jugador", fontWeight = FontWeight.Bold)
-
-                    if (isRatedLocal) {
-                        Text("¡Ya calificado!", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
-                    } else {
-                        StarRatingBar(
-                            rating = rating,
-                            onRatingChanged = { rating = it }
-                        )
-                    }
-                }
-
-                if (!isRatedLocal && rating > 0) {
-                    IconButton(onClick = {
-                        viewModel.calificarJugador(partidoId, uid, rating, null)
-                        isRatedLocal = true
-                    }) {
-                        Icon(Icons.Default.Star, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
             }
         }
     }

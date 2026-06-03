@@ -240,6 +240,9 @@ private fun InfoCard(user: User, onEdit: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Sección de Valoración
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(16.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
