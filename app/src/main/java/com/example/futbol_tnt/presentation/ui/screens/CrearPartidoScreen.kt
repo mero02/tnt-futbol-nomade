@@ -37,6 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -145,6 +146,16 @@ fun CrearPartidoScreen(
     var existingMatchId by rememberSaveable { mutableStateOf<String?>(null) }
     var jugadoresActuales by rememberSaveable { mutableIntStateOf(1) }
     var isInitialized by rememberSaveable { mutableStateOf(false) }
+
+    var canchasDisponibles by remember { mutableStateOf<List<Cancha>>(emptyList()) }
+    val repositoryCanchas = remember { com.example.futbol_tnt.data.repository.CanchaRepository() }
+
+    // Carga de canchas si no viene de reserva
+    LaunchedEffect(isFromReserva) {
+        if (!isFromReserva) {
+            canchasDisponibles = repositoryCanchas.getCanchas()
+        }
+    }
 
     // Carga de datos de reserva si existe
     LaunchedEffect(reservaId) {
@@ -286,7 +297,7 @@ fun CrearPartidoScreen(
                             expanded = showCanchaMenu,
                             onDismissRequest = { showCanchaMenu = false }
                         ) {
-                            MockData.canchas.forEach { cancha ->
+                            canchasDisponibles.forEach { cancha ->
                                 DropdownMenuItem(
                                     text = { Text("${cancha.nombre} — ${cancha.tipo.name.replace("_", " ")}") },
                                     onClick = {

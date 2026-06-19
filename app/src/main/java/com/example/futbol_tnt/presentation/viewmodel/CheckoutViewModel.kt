@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.futbol_tnt.data.model.Cancha
 import com.example.futbol_tnt.data.model.EstadoReserva
-import com.example.futbol_tnt.data.model.MockData
 import com.example.futbol_tnt.data.model.Reserva
+import com.example.futbol_tnt.data.repository.CanchaRepository
 import com.example.futbol_tnt.data.repository.IReservaRepository
 import com.example.futbol_tnt.data.repository.ReservaRepository
 import kotlinx.coroutines.delay
@@ -22,7 +22,8 @@ sealed class CheckoutEvento {
 }
 
 class CheckoutViewModel(
-    private val repository: IReservaRepository = ReservaRepository()
+    private val reservaRepository: IReservaRepository = ReservaRepository(),
+    private val canchaRepository: CanchaRepository = CanchaRepository(),
 ) : ViewModel() {
 
     private val _cancha = MutableStateFlow<Cancha?>(null)
@@ -35,7 +36,16 @@ class CheckoutViewModel(
     val evento: StateFlow<CheckoutEvento> = _evento.asStateFlow()
 
     fun cargarCancha(canchaId: String) {
-        _cancha.value = MockData.canchas.find { it.id == canchaId }
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                _cancha.value = canchaRepository.getCanchaById(canchaId)
+            } catch (_: Exception) {
+                // Manejar error
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun confirmarReserva(
@@ -64,7 +74,7 @@ class CheckoutViewModel(
                     estado = if (esTotal) EstadoReserva.CONFIRMADA else EstadoReserva.PENDIENTE
                 )
 
-                val id = repository.crearReserva(reserva)
+                val id = reservaRepository.crearReserva(reserva)
                 _evento.value = CheckoutEvento.PagoExitoso(id)
             } catch (e: Exception) {
                 _evento.value = CheckoutEvento.Error(e.message ?: "Error al procesar la reserva")

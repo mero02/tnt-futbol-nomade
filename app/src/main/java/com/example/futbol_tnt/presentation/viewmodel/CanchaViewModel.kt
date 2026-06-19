@@ -3,9 +3,10 @@ package com.example.futbol_tnt.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.futbol_tnt.data.model.Cancha
-import com.example.futbol_tnt.data.model.MockData
+import com.example.futbol_tnt.data.model.Horario
 import com.example.futbol_tnt.data.model.Reserva
 import com.example.futbol_tnt.data.model.EstadoReserva
+import com.example.futbol_tnt.data.repository.CanchaRepository
 import com.example.futbol_tnt.data.repository.IReservaRepository
 import com.example.futbol_tnt.data.repository.ReservaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +24,8 @@ sealed class ReservaEvento {
 }
 
 class CanchaViewModel(
-    private val repository: IReservaRepository = ReservaRepository(),
+    private val reservaRepository: IReservaRepository = ReservaRepository(),
+    private val canchaRepository: CanchaRepository = CanchaRepository(),
 ) : ViewModel() {
 
     private val _cancha = MutableStateFlow<Cancha?>(null)
@@ -39,7 +41,16 @@ class CanchaViewModel(
     val evento: StateFlow<ReservaEvento> = _evento.asStateFlow()
 
     fun cargarCancha(canchaId: String) {
-        _cancha.value = MockData.canchas.find { it.id == canchaId }
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                _cancha.value = canchaRepository.getCanchaById(canchaId)
+            } catch (_: Exception) {
+                // Manejar error
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun cargarDisponibilidad(fecha: LocalDate) {
@@ -48,7 +59,7 @@ class CanchaViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                _reservasDelDia.value = repository.getReservasPorCanchaYFecha(id, fecha)
+                _reservasDelDia.value = reservaRepository.getReservasPorCanchaYFecha(id, fecha)
             } catch (_: Exception) {
                 // Manejar error
             } finally {
@@ -73,7 +84,7 @@ class CanchaViewModel(
                     estado = EstadoReserva.CONFIRMADA,
                 )
 
-                val id = repository.crearReserva(nuevaReserva)
+                val id = reservaRepository.crearReserva(nuevaReserva)
                 _evento.value = ReservaEvento.ReservaExitosa(nuevaReserva.copy(id = id))
             } catch (e: Exception) {
                 _evento.value = ReservaEvento.Error(e.message ?: "Error al realizar la reserva")

@@ -61,6 +61,7 @@ fun AppNavigation() {
     val googleAuthClient = remember { GoogleAuthClient(context) }
     val userRepository = remember { UserRepository() }
     val reservaRepository = remember { ReservaRepository() }
+    val canchaRepository = remember { com.example.futbol_tnt.data.repository.CanchaRepository() }
 
     val authViewModel: AuthViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -74,7 +75,7 @@ fun AppNavigation() {
         factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                CanchaViewModel(reservaRepository) as T
+                CanchaViewModel(reservaRepository, canchaRepository) as T
         },
     )
     val reservaViewModel: ReservaViewModel = viewModel(
@@ -95,7 +96,7 @@ fun AppNavigation() {
         factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                CheckoutViewModel(reservaRepository) as T
+                CheckoutViewModel(reservaRepository, canchaRepository) as T
         },
     )
     val reporteViewModel: ReporteViewModel = viewModel()

@@ -9,7 +9,10 @@ object MockData {
         Cancha(
             id = "1",
             nombre = "Quincho La Palmera",
-            direccion = "Av. Santa Fe 1234, Palermo",
+            direccion = "Av. Santa Fe 1234",
+            ciudad = "Buenos Aires",
+            lat = -34.5889,
+            lng = -58.4306,
             precioPorHora = 15000.0,
             tipo = TipoCancha.FUTBOL_5,
             disponibilidad = generarHorarios()
@@ -17,7 +20,10 @@ object MockData {
         Cancha(
             id = "2",
             nombre = "Club Deportivo Norte",
-            direccion = "Av. Córdoba 5678, Núñez",
+            direccion = "Av. Córdoba 5678",
+            ciudad = "Buenos Aires",
+            lat = -34.5453,
+            lng = -58.4504,
             precioPorHora = 18000.0,
             tipo = TipoCancha.FUTBOL_7,
             disponibilidad = generarHorarios()
@@ -25,7 +31,10 @@ object MockData {
         Cancha(
             id = "3",
             nombre = "Estadio Verde",
-            direccion = "Av. del Libertador 900, Vicente López",
+            direccion = "Av. del Libertador 900",
+            ciudad = "Vicente López",
+            lat = -34.5333,
+            lng = -58.4667,
             precioPorHora = 25000.0,
             tipo = TipoCancha.FUTBOL_11,
             disponibilidad = generarHorarios()
@@ -33,7 +42,10 @@ object MockData {
         Cancha(
             id = "4",
             nombre = "Paddel Arena",
-            direccion = "Av. Rivadavia 4321, Caballito",
+            direccion = "Av. Rivadavia 4321",
+            ciudad = "Buenos Aires",
+            lat = -34.6186,
+            lng = -58.4411,
             precioPorHora = 8000.0,
             tipo = TipoCancha.PADDEL,
             disponibilidad = generarHorarios()
@@ -41,7 +53,10 @@ object MockData {
         Cancha(
             id = "5",
             nombre = "Mini Fútbol Villa",
-            direccion = "Av. Juan B. Justo 2345, Flores",
+            direccion = "Av. Pellegrini 1500",
+            ciudad = "Rosario",
+            lat = -32.9562,
+            lng = -60.6554,
             precioPorHora = 12000.0,
             tipo = TipoCancha.FUTBOL_5,
             disponibilidad = generarHorarios()
