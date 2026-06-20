@@ -1,5 +1,6 @@
 package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 
+import android.Manifest
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -26,11 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.futbol_tnt.core.util.LocationHelper
 import com.example.futbol_tnt.data.model.*
 import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.ui.screens.home.components.EstadoPartidoBadge
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.firebase.auth.FirebaseAuth
 import java.time.Duration
 import java.time.LocalDate
@@ -39,6 +44,7 @@ import java.time.format.DateTimeFormatter
 
 private val partidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun PartidosTab(
     viewModel: PartidoViewModel,
@@ -71,6 +77,20 @@ internal fun PartidosTab(
     val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     val todosLosPartidos by viewModel.partidos.collectAsState()
     val evento by viewModel.evento.collectAsState()
+    val userLocation by viewModel.userLocation.collectAsState()
+
+    val context = LocalContext.current
+    val locationHelper = remember { LocationHelper(context) }
+    val locationPermissionState = rememberPermissionState(
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    LaunchedEffect(locationPermissionState.status.isGranted) {
+        if (locationPermissionState.status.isGranted) {
+            val location = locationHelper.getCurrentLocation()
+            viewModel.setUserLocation(location)
+        }
+    }
 
     val partidosFiltrados = remember(filtros, todosLosPartidos, internalSelectedTab, currentUid) {
         val ahora = LocalDateTime.now()
@@ -83,19 +103,14 @@ internal fun PartidosTab(
             }
             partido.copy(estado = nuevoEstado)
         }.filter { partido ->
-            // Primero filtramos por pestaña interna
             val perteneceAMisPartidos = if (internalSelectedTab == 1) {
                 partido.creatorId == currentUid || partido.participantesIds.contains(currentUid)
             } else true
 
-            // Luego aplicamos los filtros de búsqueda
             val filtroEstadoOk = when (filtros.estado) {
                 FiltroEstado.ABIERTOS -> partido.estado == EstadoPartido.ABIERTO
                 FiltroEstado.LLENOS -> partido.estado == EstadoPartido.LLENO
-                FiltroEstado.TODOS -> {
-                    // En "Mis Partidos" mostramos incluso los finalizados, en "Todos" los ocultamos.
-                    if (internalSelectedTab == 1) true else partido.estado != EstadoPartido.FINALIZADO
-                }
+                FiltroEstado.TODOS -> if (internalSelectedTab == 1) true else partido.estado != EstadoPartido.FINALIZADO
             }
 
             val filtroFechaOk = when (filtros.fecha) {
@@ -203,6 +218,17 @@ internal fun PartidosTab(
                             .padding(bottom = 8.dp),
                         placeholder = { Text("Buscar partidos por ciudad...") },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (userLocation == null) {
+                                IconButton(onClick = { locationPermissionState.launchPermissionRequest() }) {
+                                    Icon(
+                                        imageVector = Icons.Default.MyLocation,
+                                        contentDescription = "Mi ubicación",
+                                        tint = if (locationPermissionState.status.isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            }
+                        },
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -232,6 +258,7 @@ internal fun PartidosTab(
                     PartidoCard(
                         partido = partido,
                         currentUid = currentUid,
+                        userLocation = userLocation,
                         onUnirse = { showUnirseDialog = partido },
                         onGestionar = { showGestionarDialog = partido },
                         onAbandonar = { showAbandonarDialog = partido },
@@ -317,12 +344,26 @@ private fun FiltrosPartidos(
 private fun PartidoCard(
     partido: Partido,
     currentUid: String?,
+    userLocation: android.location.Location?,
     onUnirse: () -> Unit,
     onGestionar: () -> Unit,
     onAbandonar: () -> Unit,
     onVerParticipantes: () -> Unit,
     onCalificar: () -> Unit
 ) {
+    val distanceText = remember(userLocation, partido.cancha) {
+        if (userLocation != null) {
+            val results = FloatArray(1)
+            android.location.Location.distanceBetween(
+                userLocation.latitude, userLocation.longitude,
+                partido.cancha.lat, partido.cancha.lng,
+                results
+            )
+            val distanceKm = results[0] / 1000
+            "a ${String.format("%.1f", distanceKm)} km"
+        } else null
+    }
+
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -340,7 +381,7 @@ private fun PartidoCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${partido.cancha.direccion}, ${partido.cancha.ciudad}",
+                        text = "${partido.cancha.direccion}, ${partido.cancha.ciudad}${if (distanceText != null) " ($distanceText)" else ""}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -463,7 +504,11 @@ private fun PartidoCard(
                                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             ) {
-                                Icon(Icons.Default.ExitToApp, null, modifier = Modifier.size(18.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Abandonar")
                             }

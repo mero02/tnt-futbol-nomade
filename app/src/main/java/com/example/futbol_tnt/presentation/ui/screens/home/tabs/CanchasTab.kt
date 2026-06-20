@@ -1,5 +1,6 @@
 package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 
+import android.Manifest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SportsSoccer
@@ -18,18 +20,25 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.futbol_tnt.core.util.LocationHelper
 import com.example.futbol_tnt.data.model.Cancha
 import com.example.futbol_tnt.presentation.viewmodel.BusquedaCanchasViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun CanchasTab(
     onNavigateToCanchaDetail: (String) -> Unit,
@@ -38,10 +47,26 @@ internal fun CanchasTab(
     val query by viewModel.query.collectAsState()
     val canchas by viewModel.canchasFiltradas.collectAsState()
     val error by viewModel.error.collectAsState()
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) } // 0: Mapa, 1: Lista
+    val userLocation by viewModel.userLocation.collectAsState()
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val locationHelper = remember { LocationHelper(context) }
+
+    val locationPermissionState = rememberPermissionState(
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    // Al iniciar, si tenemos permiso, obtenemos la ubicación
+    LaunchedEffect(locationPermissionState.status.isGranted) {
+        if (locationPermissionState.status.isGranted) {
+            val location = locationHelper.getCurrentLocation()
+            viewModel.setUserLocation(location)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Barra de Búsqueda
         OutlinedTextField(
             value = query,
             onValueChange = { viewModel.onQueryChange(it) },
@@ -51,9 +76,16 @@ internal fun CanchasTab(
             placeholder = { Text("Buscar ciudad (Trelew, Madryn...)") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
-                if (error != null) {
-                    IconButton(onClick = { viewModel.refreshData() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
+                Row {
+                    if (userLocation == null) {
+                        IconButton(onClick = { locationPermissionState.launchPermissionRequest() }) {
+                            Icon(Icons.Default.MyLocation, contentDescription = "Mi ubicación", tint = if (locationPermissionState.status.isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
+                        }
+                    }
+                    if (error != null) {
+                        IconButton(onClick = { viewModel.refreshData() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Reintentar")
+                        }
                     }
                 }
             },
@@ -65,7 +97,6 @@ internal fun CanchasTab(
             )
         )
 
-        // Tabs: Mapa / Lista
         TabRow(
             selectedTabIndex = selectedTab,
             containerColor = Color.Transparent,
@@ -95,11 +126,14 @@ internal fun CanchasTab(
                 if (selectedTab == 0) {
                     CanchasMapView(
                         canchas = canchas,
+                        userLocation = userLocation,
+                        hasLocationPermission = locationPermissionState.status.isGranted,
                         onCanchaClick = onNavigateToCanchaDetail
                     )
                 } else {
                     CanchasListView(
                         canchas = canchas,
+                        userLocation = userLocation,
                         onCanchaClick = onNavigateToCanchaDetail
                     )
                 }
@@ -124,18 +158,30 @@ private fun ErrorView(mensaje: String, onRetry: () -> Unit) {
 @Composable
 private fun CanchasMapView(
     canchas: List<Cancha>,
+    userLocation: android.location.Location?,
+    hasLocationPermission: Boolean,
     onCanchaClick: (String) -> Unit
 ) {
-    val trelew = LatLng(-43.2489, -65.3051)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(trelew, 11f)
+    // Si hay ubicación de usuario, centrar ahí, sino en Trelew
+    val initialPos = remember(userLocation) {
+        if (userLocation != null) LatLng(userLocation.latitude, userLocation.longitude)
+        else LatLng(-43.2489, -65.3051)
     }
 
-    LaunchedEffect(canchas) {
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(initialPos, 12f)
+    }
+
+    // Efecto para mover la cámara cuando se filtran canchas o cambia la ubicación
+    LaunchedEffect(canchas, userLocation) {
         if (canchas.isNotEmpty()) {
             val focus = canchas.first()
             cameraPositionState.animate(
                 CameraUpdateFactory.newLatLngZoom(LatLng(focus.lat, focus.lng), 13f)
+            )
+        } else if (userLocation != null) {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(LatLng(userLocation.latitude, userLocation.longitude), 13f)
             )
         }
     }
@@ -143,7 +189,13 @@ private fun CanchasMapView(
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        uiSettings = MapUiSettings(zoomControlsEnabled = true)
+        properties = MapProperties(
+            isMyLocationEnabled = hasLocationPermission
+        ),
+        uiSettings = MapUiSettings(
+            zoomControlsEnabled = true,
+            myLocationButtonEnabled = hasLocationPermission
+        )
     ) {
         canchas.forEach { cancha ->
             Marker(
@@ -159,6 +211,7 @@ private fun CanchasMapView(
 @Composable
 private fun CanchasListView(
     canchas: List<Cancha>,
+    userLocation: android.location.Location?,
     onCanchaClick: (String) -> Unit
 ) {
     LazyColumn(
@@ -167,7 +220,11 @@ private fun CanchasListView(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(canchas, key = { it.id }) { cancha ->
-            CanchaCard(cancha = cancha, onClick = { onCanchaClick(cancha.id) })
+            CanchaCard(
+                cancha = cancha,
+                userLocation = userLocation,
+                onClick = { onCanchaClick(cancha.id) }
+            )
         }
     }
 }
@@ -186,7 +243,24 @@ private fun NoResultsView() {
 }
 
 @Composable
-private fun CanchaCard(cancha: Cancha, onClick: () -> Unit) {
+private fun CanchaCard(
+    cancha: Cancha,
+    userLocation: android.location.Location?,
+    onClick: () -> Unit
+) {
+    val distanceText = remember(userLocation, cancha) {
+        if (userLocation != null) {
+            val results = FloatArray(1)
+            android.location.Location.distanceBetween(
+                userLocation.latitude, userLocation.longitude,
+                cancha.lat, cancha.lng,
+                results
+            )
+            val distanceKm = results[0] / 1000
+            "a ${String.format("%.1f", distanceKm)} km"
+        } else null
+    }
+
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -202,7 +276,11 @@ private fun CanchaCard(cancha: Cancha, onClick: () -> Unit) {
                         Text(cancha.tipo.name.replace("_", " "), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                     }
                 }
-                Text("${cancha.direccion}, ${cancha.ciudad}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = "${cancha.direccion}, ${cancha.ciudad}${if (distanceText != null) " ($distanceText)" else ""}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                     Text("$${cancha.precioPorHora.toInt()}/hr", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
