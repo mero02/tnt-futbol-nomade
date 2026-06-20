@@ -10,7 +10,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
 import com.example.futbol_tnt.presentation.ui.screens.profile.ReadOnlyProfileContent
 import com.example.futbol_tnt.presentation.ui.screens.profile.ReputacionContent
 import com.example.futbol_tnt.presentation.viewmodel.ProfileUiState
@@ -36,13 +35,6 @@ internal fun PerfilTab(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        HeaderSection(
-            titulo = "Mi Perfil",
-            subtitulo = "Gestiona tu carrera deportiva",
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
         when (val state = uiState) {
             is ProfileUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

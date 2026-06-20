@@ -4,6 +4,7 @@ data class FiltroPartidos(
     val fecha: FiltroFecha = FiltroFecha.TODOS,
     val tipoCancha: TipoCancha? = null,
     val estado: FiltroEstado = FiltroEstado.TODOS,
+    val ciudad: String = ""
 )
 
 enum class FiltroFecha { HOY, ESTA_SEMANA, TODOS }

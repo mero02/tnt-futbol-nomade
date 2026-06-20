@@ -26,7 +26,6 @@ import com.example.futbol_tnt.data.model.FiltroFecha
 import com.example.futbol_tnt.data.model.FiltroReservas
 import com.example.futbol_tnt.data.model.Reserva
 import com.example.futbol_tnt.presentation.ui.screens.home.components.EstadoBadge
-import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
 import com.example.futbol_tnt.presentation.viewmodel.MisReservasEvento
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 import java.time.LocalDate
@@ -185,12 +184,6 @@ internal fun MisReservasTab(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            HeaderSection(
-                titulo = "Mis Reservas",
-                subtitulo = "Gestioná tus turnos y partidos",
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
             // Sub-pestañas: Mis Reservas / Histórico
             TabRow(
                 selectedTabIndex = selectedSubTab,

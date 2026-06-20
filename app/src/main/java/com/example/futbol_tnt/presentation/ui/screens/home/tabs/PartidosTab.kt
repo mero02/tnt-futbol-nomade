@@ -29,7 +29,6 @@ import coil.request.ImageRequest
 import com.example.futbol_tnt.data.model.*
 import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.ui.screens.home.components.EstadoPartidoBadge
-import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSection
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -51,13 +50,14 @@ internal fun PartidosTab(
 
     var filtros by rememberSaveable(
         stateSaver = Saver<FiltroPartidos, Any>(
-            save = { listOf(it.fecha.name, it.tipoCancha?.name, it.estado.name) },
+            save = { listOf(it.fecha.name, it.tipoCancha?.name, it.estado.name, it.ciudad) },
             restore = { values ->
                 val list = values as List<String?>
                 FiltroPartidos(
                     fecha = FiltroFecha.valueOf(list[0] ?: "TODOS"),
                     tipoCancha = list[1]?.let { TipoCancha.valueOf(it) },
-                    estado = FiltroEstado.valueOf(list[2] ?: "TODOS")
+                    estado = FiltroEstado.valueOf(list[2] ?: "TODOS"),
+                    ciudad = list[3] ?: ""
                 )
             }
         )
@@ -107,8 +107,10 @@ internal fun PartidosTab(
                 FiltroFecha.TODOS -> true
             }
             val filtroTipoOk = filtros.tipoCancha == null || partido.cancha.tipo == filtros.tipoCancha
+            val filtroCiudadOk = filtros.ciudad.isBlank() ||
+                                partido.cancha.ciudad.contains(filtros.ciudad, ignoreCase = true)
 
-            perteneceAMisPartidos && filtroFechaOk && filtroTipoOk && filtroEstadoOk
+            perteneceAMisPartidos && filtroFechaOk && filtroTipoOk && filtroEstadoOk && filtroCiudadOk
         }
     }
 
@@ -168,13 +170,6 @@ internal fun PartidosTab(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(16.dp))
-        HeaderSection(
-            titulo = "Partidos",
-            subtitulo = if (internalSelectedTab == 0) "Explorá partidos disponibles" else "Tus compromisos futboleros",
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
         TabRow(
             selectedTabIndex = internalSelectedTab,
             containerColor = Color.Transparent,
@@ -200,6 +195,22 @@ internal fun PartidosTab(
         ) {
             if (internalSelectedTab == 0) {
                 item {
+                    OutlinedTextField(
+                        value = filtros.ciudad,
+                        onValueChange = { filtros = filtros.copy(ciudad = it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        placeholder = { Text("Buscar partidos por ciudad...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        )
+                    )
+
                     FiltrosPartidos(
                         filtros = filtros,
                         onFiltrosChange = { filtros = it }
@@ -322,11 +333,18 @@ private fun PartidoCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = partido.cancha.nombre,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column {
+                    Text(
+                        text = partido.cancha.nombre,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${partido.cancha.direccion}, ${partido.cancha.ciudad}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 EstadoPartidoBadge(estado = partido.estado)
             }
             Spacer(modifier = Modifier.height(12.dp))
