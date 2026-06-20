@@ -30,6 +30,7 @@ import com.example.futbol_tnt.presentation.ui.screens.home.components.HeaderSect
 import com.example.futbol_tnt.presentation.viewmodel.MisReservasEvento
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private val reservaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
@@ -41,6 +42,8 @@ internal fun MisReservasTab(
 ) {
     val reservas by viewModel.reservas.collectAsState()
     val rawEvento by viewModel.evento.collectAsState()
+    var selectedSubTab by rememberSaveable { mutableIntStateOf(0) } // 0: Mis Reservas, 1: Histórico
+
     var filtros by rememberSaveable(
         stateSaver = Saver<FiltroReservas, Any>(
             save = { listOf(it.fecha.name, it.estado.name) },
@@ -151,8 +154,15 @@ internal fun MisReservasTab(
         )
     }
 
-    val reservasFiltradas = remember(reservas, filtros) {
+    val ahora = LocalDateTime.now()
+    val reservasCategorizadas = remember(reservas, selectedSubTab, filtros) {
         reservas.filter { reserva ->
+            val esHistorico = reserva.estado == EstadoReserva.COMPLETADA ||
+                              reserva.estado == EstadoReserva.CANCELADA ||
+                              reserva.fecha.isBefore(ahora.minusHours(2)) // Margen de 2hs para el fin del partido
+
+            val coincideTab = if (selectedSubTab == 0) !esHistorico else esHistorico
+
             val filtroFechaOk = when (filtros.fecha) {
                 FiltroFecha.HOY -> reserva.fecha.toLocalDate() == LocalDate.now()
                 FiltroFecha.ESTA_SEMANA -> {
@@ -161,68 +171,105 @@ internal fun MisReservasTab(
                 }
                 FiltroFecha.TODOS -> true
             }
-            val filtroEstadoOk = when (filtros.estado) {
-                FiltroEstadoReserva.PENDIENTES -> reserva.estado == EstadoReserva.PENDIENTE
-                FiltroEstadoReserva.CONFIRMADAS -> reserva.estado == EstadoReserva.CONFIRMADA
-                FiltroEstadoReserva.COMPLETADAS -> reserva.estado == EstadoReserva.COMPLETADA
-                FiltroEstadoReserva.TODOS -> true
-            }
-            filtroFechaOk && filtroEstadoOk
+            val filtroEstadoOk = coincidenceEstado(reserva.estado, filtros.estado)
+
+            coincideTab && filtroFechaOk && filtroEstadoOk
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(padding)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                HeaderSection(
-                    titulo = "Mis Reservas",
-                    subtitulo = "${reservasFiltradas.size} reservas"
+            HeaderSection(
+                titulo = "Mis Reservas",
+                subtitulo = "Gestioná tus turnos y partidos",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            // Sub-pestañas: Mis Reservas / Histórico
+            TabRow(
+                selectedTabIndex = selectedSubTab,
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = {}
+            ) {
+                Tab(
+                    selected = selectedSubTab == 0,
+                    onClick = { selectedSubTab = 0 },
+                    text = { Text("Activas", style = MaterialTheme.typography.titleSmall) }
+                )
+                Tab(
+                    selected = selectedSubTab == 1,
+                    onClick = { selectedSubTab = 1 },
+                    text = { Text("Histórico", style = MaterialTheme.typography.titleSmall) }
                 )
             }
 
-            item {
-                FiltrosReservas(
-                    filtros = filtros,
-                    onFiltrosChange = { filtros = it }
-                )
-            }
+            // Barra de Filtros (solo visible si hay algo que filtrar o para buscar)
+            FiltrosReservas(
+                filtros = filtros,
+                onFiltrosChange = { filtros = it },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
 
-            if (reservasFiltradas.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (reservas.isEmpty()) "Aún no tenés reservas realizadas." else "No hay reservas que coincidan con los filtros.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (reservasCategorizadas.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 64.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = if (selectedSubTab == 0) Icons.Default.EventBusy else Icons.Default.History,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = if (selectedSubTab == 0) "No tenés reservas activas." else "No hay historial de reservas.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(reservasCategorizadas, key = { it.id }) { reserva ->
+                        ReservaCard(
+                            reserva = reserva,
+                            onCancelar = { reservaParaCancelar = reserva },
+                            onPagar = { reservaParaPagar = reserva },
+                            onOrganizar = { onOrganizarPartido(reserva.id) },
+                            onVerTicket = { reservaParaTicket = reserva },
+                            esHistorico = selectedSubTab == 1
                         )
                     }
                 }
-            } else {
-                items(reservasFiltradas, key = { it.id }) { reserva ->
-                    ReservaCard(
-                        reserva = reserva,
-                        onCancelar = { reservaParaCancelar = reserva },
-                        onPagar = { reservaParaPagar = reserva },
-                        onOrganizar = { onOrganizarPartido(reserva.id) },
-                        onVerTicket = { reservaParaTicket = reserva }
-                    )
-                }
             }
         }
+    }
+}
+
+private fun coincidenceEstado(actual: EstadoReserva, filtro: FiltroEstadoReserva): Boolean {
+    return when (filtro) {
+        FiltroEstadoReserva.PENDIENTES -> actual == EstadoReserva.PENDIENTE
+        FiltroEstadoReserva.CONFIRMADAS -> actual == EstadoReserva.CONFIRMADA
+        FiltroEstadoReserva.COMPLETADAS -> actual == EstadoReserva.COMPLETADA
+        FiltroEstadoReserva.TODOS -> true
     }
 }
 
@@ -243,7 +290,7 @@ private fun TicketDialog(
             }
         },
         text = {
-            if (reserva.estado == EstadoReserva.CONFIRMADA) {
+            if (reserva.estado == EstadoReserva.CONFIRMADA || reserva.estado == EstadoReserva.COMPLETADA) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -284,10 +331,10 @@ private fun TicketDialog(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.QrCode2,
+                                    imageVector = if (reserva.estado == EstadoReserva.COMPLETADA) Icons.Default.CheckCircle else Icons.Default.QrCode2,
                                     contentDescription = null,
                                     modifier = Modifier.fillMaxSize(),
-                                    tint = Color.Black
+                                    tint = if (reserva.estado == EstadoReserva.COMPLETADA) MaterialTheme.colorScheme.primary else Color.Black
                                 )
                             }
 
@@ -296,7 +343,7 @@ private fun TicketDialog(
                         }
                     }
                     Text(
-                        "Mostrá este código al llegar al predio.",
+                        if (reserva.estado == EstadoReserva.COMPLETADA) "Esta reserva ya fue utilizada." else "Mostrá este código al llegar al predio.",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )
@@ -319,7 +366,7 @@ private fun TicketDialog(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Tu reserva aún está pendiente de pago. Debes completar el pago total para obtener tu ticket de acceso.",
+                        "Tu reserva aún está pendiente de pago o fue cancelada. Debes completar el pago total para obtener tu ticket de acceso.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -332,9 +379,10 @@ private fun TicketDialog(
 @Composable
 private fun FiltrosReservas(
     filtros: FiltroReservas,
-    onFiltrosChange: (FiltroReservas) -> Unit
+    onFiltrosChange: (FiltroReservas) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -409,13 +457,15 @@ private fun ReservaCard(
     onCancelar: () -> Unit,
     onPagar: () -> Unit,
     onOrganizar: () -> Unit,
-    onVerTicket: () -> Unit
+    onVerTicket: () -> Unit,
+    esHistorico: Boolean
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = if (esHistorico) CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)) else CardDefaults.elevatedCardColors()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -427,7 +477,8 @@ private fun ReservaCard(
                     Text(
                         text = reserva.cancha.nombre,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = if (esHistorico) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
                     )
                     EstadoBadge(estado = reserva.estado)
                 }
@@ -441,11 +492,13 @@ private fun ReservaCard(
                             onClick = { onVerTicket(); showMenu = false },
                             leadingIcon = { Icon(Icons.Default.ConfirmationNumber, null) }
                         )
-                        DropdownMenuItem(
-                            text = { Text("Cancelar Reserva", color = MaterialTheme.colorScheme.error) },
-                            onClick = { onCancelar(); showMenu = false },
-                            leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
-                        )
+                        if (!esHistorico) {
+                            DropdownMenuItem(
+                                text = { Text("Cancelar Reserva", color = MaterialTheme.colorScheme.error) },
+                                onClick = { onCancelar(); showMenu = false },
+                                leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
+                            )
+                        }
                     }
                 }
             }
@@ -478,7 +531,7 @@ private fun ReservaCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Sección de Pagos
+            // Sección de Pagos y Botones
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -491,21 +544,23 @@ private fun ReservaCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = if (reserva.estado == EstadoReserva.CONFIRMADA) "Pagado" else "Pagado: $${reserva.montoPagado.toInt()}",
+                        text = if (reserva.estado == EstadoReserva.CONFIRMADA || reserva.estado == EstadoReserva.COMPLETADA) "Pagado" else "Pagado: $${reserva.montoPagado.toInt()}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (reserva.estado == EstadoReserva.CONFIRMADA) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        color = if (reserva.estado == EstadoReserva.CONFIRMADA || reserva.estado == EstadoReserva.COMPLETADA) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (reserva.estado == EstadoReserva.PENDIENTE) {
-                        Button(onClick = onPagar, contentPadding = PaddingValues(horizontal = 12.dp)) {
-                            Text("Pagar Saldo", fontSize = 12.sp)
+                if (!esHistorico) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (reserva.estado == EstadoReserva.PENDIENTE) {
+                            Button(onClick = onPagar, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                                Text("Pagar Saldo", fontSize = 12.sp)
+                            }
                         }
-                    }
-                    OutlinedButton(onClick = onOrganizar, contentPadding = PaddingValues(horizontal = 12.dp)) {
-                        Text("Organizar", fontSize = 12.sp)
+                        OutlinedButton(onClick = onOrganizar, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                            Text("Organizar", fontSize = 12.sp)
+                        }
                     }
                 }
             }
