@@ -46,6 +46,10 @@ Thumbs.db
 private/
 privado/
 
+# --- Claude Code ---
+.claude/
+**/.claude/
+
 # --- Admin Web (React/Vite) ---
 admin-web/node_modules/
 admin-web/dist/
