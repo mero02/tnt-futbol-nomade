@@ -128,7 +128,7 @@ fun CrearPartidoScreen(
     // recomposiciones y cambios de configuración (rotación de pantalla).
     var nombreLocal by rememberSaveable { mutableStateOf("") }
     var nombreVisitante by rememberSaveable { mutableStateOf("") }
-    var canchaSeleccionada by rememberSaveable { mutableStateOf<Cancha?>(null) }
+    var canchaSeleccionada by remember { mutableStateOf<Cancha?>(null) }
     var showCanchaMenu by rememberSaveable { mutableStateOf(false) }
     var fecha by rememberSaveable { mutableStateOf("") }
     var hora by rememberSaveable { mutableStateOf("") }

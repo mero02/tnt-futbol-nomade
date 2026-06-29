@@ -1,5 +1,6 @@
 package com.example.futbol_tnt.presentation.navigation
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.ui.screens.AcercaDe
 import com.example.futbol_tnt.presentation.ui.screens.CanchaDetailScreen
 import com.example.futbol_tnt.presentation.ui.screens.CrearPartidoScreen
+import com.example.futbol_tnt.presentation.ui.screens.DetallePartidoScreen
 import com.example.futbol_tnt.presentation.ui.screens.home.HomeScreen
 import com.example.futbol_tnt.presentation.ui.screens.LoginScreen
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
@@ -43,6 +45,9 @@ sealed class Screen(val route: String) {
     data object CrearPartido : Screen("crear_partido?reservaId={reservaId}") {
         fun createRoute(reservaId: String? = null) =
             if (reservaId != null) "crear_partido?reservaId=$reservaId" else "crear_partido"
+    }
+    data object DetallePartido : Screen("partido/{partidoId}") {
+        fun createRoute(partidoId: String) = "partido/$partidoId"
     }
     data object CanchaDetail : Screen("cancha_detail/{canchaId}") {
         fun createRoute(canchaId: String) = "cancha_detail/$canchaId"
@@ -130,18 +135,48 @@ fun AppNavigation() {
         navController = navController,
         startDestination = startDestination,
     ) {
-        composable(Screen.Login.route) {
+        composable(
+            route = Screen.Login.route,
+            deepLinks = listOf(
+                androidx.navigation.navDeepLink { uriPattern = "https://futbol-tnt.example.com/partido/{partidoId}" },
+                androidx.navigation.navDeepLink { uriPattern = "futboltnt://partido/{partidoId}" }
+            )
+        ) { backStackEntry ->
+            // Si viene de un deep link, después del login (o si ya está logueado)
+            // podemos capturar el ID y redirigir.
+            val partidoIdFromDeepLink = backStackEntry.arguments?.getString("partidoId")
+
             LoginScreen(
                 authViewModel = authViewModel,
                 onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                    if (partidoIdFromDeepLink != null) {
+                        navController.navigate(Screen.DetallePartido.createRoute(partidoIdFromDeepLink)) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 },
             )
         }
 
-        composable(Screen.Home.route) {
+        composable(
+            route = Screen.Home.route,
+            deepLinks = listOf(
+                androidx.navigation.navDeepLink { uriPattern = "https://futbol-tnt.example.com/partido/{partidoId}" },
+                androidx.navigation.navDeepLink { uriPattern = "futboltnt://partido/{partidoId}" }
+            )
+        ) { backStackEntry ->
+            val partidoIdFromDeepLink = backStackEntry.arguments?.getString("partidoId")
+
+            LaunchedEffect(partidoIdFromDeepLink) {
+                if (partidoIdFromDeepLink != null) {
+                    navController.navigate(Screen.DetallePartido.createRoute(partidoIdFromDeepLink))
+                }
+            }
+
             HomeScreen(
                 onSignOut = {
                     googleAuthClient.signOut()
@@ -229,6 +264,14 @@ fun AppNavigation() {
         composable(Screen.Notificaciones.route) {
             com.example.futbol_tnt.presentation.ui.screens.NotificacionesScreen(
                 viewModel = notificacionViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.DetallePartido.route) { backStackEntry ->
+            val partidoId = backStackEntry.arguments?.getString("partidoId") ?: return@composable
+            DetallePartidoScreen(
+                partidoId = partidoId,
+                viewModel = partidoViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

@@ -1,5 +1,7 @@
 package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 
+import android.content.Context
+import android.content.Intent
 import android.Manifest
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -43,6 +45,30 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private val partidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
+private fun compartirPartido(context: Context, partido: Partido) {
+    val deepLink = "futboltnt://partido/${partido.id}"
+    val texto = """
+        ⚽ *¡Hay partido en Futbol TNT!*
+
+        🏟️ *Lugar:* ${partido.cancha.nombre} (${partido.cancha.ciudad})
+        📅 *Fecha:* ${partido.fecha.format(DateTimeFormatter.ofPattern("EEEE dd/MM"))}
+        ⏰ *Hora:* ${partido.fecha.format(DateTimeFormatter.ofPattern("HH:mm"))}hs
+        💰 *Precio:* $${partido.precioPorPersona.toInt()} por persona
+        👥 *Faltan:* ${partido.jugadoresMaximos - partido.jugadoresActuales} jugadores
+
+        👇 *Unite al equipo entrando acá:*
+        $deepLink
+    """.trimIndent()
+
+    val sendIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, texto)
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, "Compartir partido via")
+    context.startActivity(shareIntent)
+}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -351,6 +377,7 @@ private fun PartidoCard(
     onVerParticipantes: () -> Unit,
     onCalificar: () -> Unit
 ) {
+    val context = LocalContext.current
     val distanceText = remember(userLocation, partido.cancha) {
         if (userLocation != null) {
             val results = FloatArray(1)
@@ -467,26 +494,32 @@ private fun PartidoCard(
                     }
                     partido.creatorId == currentUid -> {
                         val reqCount = partido.solicitudesIds.size
-                        if (reqCount > 0) {
-                            BadgedBox(
-                                badge = {
-                                    Badge(
-                                        containerColor = MaterialTheme.colorScheme.error,
-                                        contentColor = Color.White
-                                    ) {
-                                        Text(reqCount.toString())
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            IconButton(onClick = { compartirPartido(context, partido) }) {
+                                Icon(Icons.Default.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary)
+                            }
+
+                            if (reqCount > 0) {
+                                BadgedBox(
+                                    badge = {
+                                        Badge(
+                                            containerColor = MaterialTheme.colorScheme.error,
+                                            contentColor = Color.White
+                                        ) {
+                                            Text(reqCount.toString())
+                                        }
+                                    }
+                                ) {
+                                    Button(onClick = onGestionar) {
+                                        Icon(Icons.Default.GroupAdd, null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Solicitudes")
                                     }
                                 }
-                            ) {
-                                Button(onClick = onGestionar) {
-                                    Icon(Icons.Default.GroupAdd, null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Solicitudes")
+                            } else {
+                                OutlinedButton(onClick = {}, enabled = false) {
+                                    Text("Organizador")
                                 }
-                            }
-                        } else {
-                            OutlinedButton(onClick = {}, enabled = false) {
-                                Text("Organizador")
                             }
                         }
                     }

@@ -115,6 +115,14 @@ class PartidoViewModel(
         }
     }
 
+    suspend fun getPartidoById(id: String): Partido? {
+        return try {
+            repository.getPartidoById(id)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun limpiarEvento() {
         _evento.value = PartidoEvento.Idle
     }

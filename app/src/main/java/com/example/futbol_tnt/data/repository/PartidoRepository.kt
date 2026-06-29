@@ -209,6 +209,14 @@ class PartidoRepository(
             ?.toPartidoOrNull()
     }
 
+    override suspend fun getPartidoById(id: String): Partido? {
+        return try {
+            partidosCol.document(id).get().await().toPartidoOrNull()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private companion object {
         const val COLLECTION = "partidos"
     }
