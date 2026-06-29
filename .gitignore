@@ -45,3 +45,12 @@ Thumbs.db
 # --- Private Folders ---
 private/
 privado/
+
+# --- Admin Web (React/Vite) ---
+admin-web/node_modules/
+admin-web/dist/
+admin-web/.env.local
+admin-web/.env.*.local
+admin-web/npm-debug.log*
+admin-web/yarn-debug.log*
+admin-web/yarn-error.log*

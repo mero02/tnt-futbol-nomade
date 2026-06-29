@@ -52,7 +52,6 @@ class BusquedaCanchasViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
-                repository.seedCanchas()
                 val result = repository.getCanchas()
                 if (result.isEmpty()) {
                     _error.value = "No se encontraron canchas en la base de datos."

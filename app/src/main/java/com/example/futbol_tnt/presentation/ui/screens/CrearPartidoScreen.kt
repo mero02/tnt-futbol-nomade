@@ -47,7 +47,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.futbol_tnt.data.model.Cancha
 import com.example.futbol_tnt.data.model.EstadoPartido
-import com.example.futbol_tnt.data.model.MockData
 import com.example.futbol_tnt.data.model.Partido
 import com.example.futbol_tnt.data.repository.IReservaRepository
 import com.example.futbol_tnt.presentation.viewmodel.PartidoEvento
@@ -129,12 +128,7 @@ fun CrearPartidoScreen(
     // recomposiciones y cambios de configuración (rotación de pantalla).
     var nombreLocal by rememberSaveable { mutableStateOf("") }
     var nombreVisitante by rememberSaveable { mutableStateOf("") }
-    var canchaSeleccionada by rememberSaveable(
-        stateSaver = Saver<Cancha?, String>(
-            save = { it?.id ?: "" },
-            restore = { savedId -> if (savedId.isBlank()) null else MockData.canchas.find { it.id == savedId } }
-        )
-    ) { mutableStateOf<Cancha?>(null) }
+    var canchaSeleccionada by rememberSaveable { mutableStateOf<Cancha?>(null) }
     var showCanchaMenu by rememberSaveable { mutableStateOf(false) }
     var fecha by rememberSaveable { mutableStateOf("") }
     var hora by rememberSaveable { mutableStateOf("") }
