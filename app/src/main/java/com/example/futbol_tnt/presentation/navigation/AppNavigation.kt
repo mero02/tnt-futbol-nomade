@@ -138,8 +138,8 @@ fun AppNavigation() {
         composable(
             route = Screen.Login.route,
             deepLinks = listOf(
-                androidx.navigation.navDeepLink { uriPattern = "https://futbol-tnt.example.com/partido/{partidoId}" },
-                androidx.navigation.navDeepLink { uriPattern = "futboltnt://partido/{partidoId}" }
+                androidx.navigation.navDeepLink { uriPattern = "https://futboltnt.app/partido/{partidoId}" },
+                androidx.navigation.navDeepLink { uriPattern = "http://futboltnt.app/partido/{partidoId}" }
             )
         ) { backStackEntry ->
             // Si viene de un deep link, después del login (o si ya está logueado)
@@ -165,8 +165,8 @@ fun AppNavigation() {
         composable(
             route = Screen.Home.route,
             deepLinks = listOf(
-                androidx.navigation.navDeepLink { uriPattern = "https://futbol-tnt.example.com/partido/{partidoId}" },
-                androidx.navigation.navDeepLink { uriPattern = "futboltnt://partido/{partidoId}" }
+                androidx.navigation.navDeepLink { uriPattern = "https://futboltnt.app/partido/{partidoId}" },
+                androidx.navigation.navDeepLink { uriPattern = "http://futboltnt.app/partido/{partidoId}" }
             )
         ) { backStackEntry ->
             val partidoIdFromDeepLink = backStackEntry.arguments?.getString("partidoId")

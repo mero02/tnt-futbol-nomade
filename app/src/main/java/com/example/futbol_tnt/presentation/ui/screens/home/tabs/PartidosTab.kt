@@ -47,7 +47,7 @@ import java.time.format.DateTimeFormatter
 private val partidoFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
 private fun compartirPartido(context: Context, partido: Partido) {
-    val deepLink = "futboltnt://partido/${partido.id}"
+    val deepLink = "https://futboltnt.app/partido/${partido.id}"
     val texto = """
         ⚽ *¡Hay partido en Futbol TNT!*
 

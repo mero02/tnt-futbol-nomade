@@ -19,6 +19,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.FutbolTNT">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,9 +32,11 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="futbol-tnt.example.com" android:pathPrefix="/partido" />
+                <data android:scheme="https" android:host="futboltnt.app" android:pathPrefix="/partido" />
+                <data android:scheme="http" android:host="futboltnt.app" android:pathPrefix="/partido" />
             </intent-filter>
 
+            <!-- Esquema personalizado (Back-up para desarrollo) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
