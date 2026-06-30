@@ -1,4 +1,4 @@
-# Fútbol Nómade — Design System
+# Entra a la cancha — Design System
 
 Tokens visuales extraídos de `docs/boceto/navegacion.png`. Fuente de verdad para colores, tipografía y componentes.
 

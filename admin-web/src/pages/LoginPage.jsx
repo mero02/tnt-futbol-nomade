@@ -29,19 +29,17 @@ export default function LoginPage() {
     <div className="h-screen w-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="bg-white dark:bg-gray-800 p-10 rounded-2xl border border-border dark:border-gray-700 w-full max-w-md shadow-sm">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 dark:bg-primary/15 rounded-2xl mb-4">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-full"></div>
-            </div>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/5 dark:bg-primary/10 rounded-3xl mb-6 overflow-hidden">
+            <img src="/assets/logo.png" alt="Entra a la cancha logo" className="w-16 h-16 object-contain" />
           </div>
-          <h1 className="text-lg font-bold text-dark dark:text-white tracking-tight">Futbol TNT Admin</h1>
-          <p className="text-xs text-secondary mt-1.5">Gestión profesional de complejos</p>
+          <h1 className="text-xl font-bold text-dark dark:text-white tracking-tight">Entra a la cancha</h1>
+          <p className="text-xs text-secondary mt-1.5 font-medium uppercase tracking-wider">Panel Administrativo</p>
         </div>
 
         <button
           onClick={handleLogin}
           disabled={submitting}
-          className="w-full py-4 px-4 bg-primary text-white rounded-lg font-medium text-base hover:bg-primary/90 transition-all shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
+          className="w-full py-4 px-4 bg-primary text-white rounded-lg font-bold text-base hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {submitting && <Loader2 className="animate-spin" size={18} />}
           <span>Continuar con Google</span>

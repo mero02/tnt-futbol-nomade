@@ -7,10 +7,8 @@ export default function Sidebar({ user }) {
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-border dark:border-gray-700 flex flex-col shrink-0 transition-colors">
       <div className="p-8 flex items-center space-x-3">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
-          <div className="w-3.5 h-3.5 bg-white rounded-full"></div>
-        </div>
-        <span className="font-bold text-xl tracking-tight text-dark dark:text-white">Futbol TNT</span>
+        <img src="/assets/logo.png" alt="Logo" className="w-8 h-8 object-contain rounded-lg" />
+        <span className="font-bold text-lg tracking-tight text-dark dark:text-white">Entra a la cancha</span>
       </div>
 
       <nav className="flex-1 px-4 space-y-1">

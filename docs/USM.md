@@ -1,4 +1,4 @@
-# User Story Map — Fútbol Nómade
+# User Story Map — Entra a la cancha
 ## 1. Actividades principales (Backbone)
 
 Estas son las columnas del mapa (lo que hace el usuario de punta a punta):

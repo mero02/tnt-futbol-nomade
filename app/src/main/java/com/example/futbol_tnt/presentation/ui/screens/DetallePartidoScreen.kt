@@ -431,7 +431,7 @@ private fun QRInvitationDialog(url: String, onDismiss: () -> Unit) {
 private fun compartirPartido(context: Context, partido: Partido) {
     val deepLink = "https://futboltnt.app/partido/${partido.id}"
     val texto = """
-        ⚽ *¡Hay partido en Futbol TNT!*
+        ⚽ *¡Hay partido en Entra a la cancha!*
         🏟️ *Lugar:* ${partido.cancha.nombre}
         📅 *Fecha:* ${partido.fecha.format(DateTimeFormatter.ofPattern("EEEE dd/MM HH:mm"))}hs
         👥 *Faltan:* ${partido.jugadoresMaximos - partido.jugadoresActuales} jugadores
