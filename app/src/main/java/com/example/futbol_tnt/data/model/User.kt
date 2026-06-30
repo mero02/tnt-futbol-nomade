@@ -15,7 +15,8 @@ data class User(
     val piernaDominante: PiernaDominante? = null,
     val formatoPreferido: FormatoPreferido? = null,
     val equipo: String? = null,
-    val valoracionPromedio: Double = 0.0
+    val valoracionPromedio: Double = 0.0,
+    val fcmToken: String? = null
 )
 
 interface HasDisplayName {

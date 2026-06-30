@@ -42,6 +42,8 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 
+import coil.request.ImageRequest
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetallePartidoScreen(
@@ -56,6 +58,7 @@ fun DetallePartidoScreen(
     var participantes by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showQR by remember { mutableStateOf(false) }
+    var showGestionarSolicitudes by remember { mutableStateOf(false) }
 
     val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     val userRepository = remember { UserRepository() }
@@ -88,6 +91,11 @@ fun DetallePartidoScreen(
                 refreshData()
                 viewModel.limpiarEvento()
             }
+            is PartidoEvento.SolicitudGestionada -> {
+                snackbarHostState.showSnackbar("Solicitud procesada correctamente")
+                refreshData()
+                viewModel.limpiarEvento()
+            }
             is PartidoEvento.Error -> {
                 snackbarHostState.showSnackbar((evento as PartidoEvento.Error).mensaje)
                 viewModel.limpiarEvento()
@@ -107,6 +115,16 @@ fun DetallePartidoScreen(
                 },
                 actions = {
                     if (partido?.creatorId == currentUid && !currentUid.isNullOrBlank()) {
+                        val requestsCount = partido?.solicitudesIds?.size ?: 0
+                        if (requestsCount > 0) {
+                            IconButton(onClick = { showGestionarSolicitudes = true }) {
+                                BadgedBox(
+                                    badge = { Badge { Text(requestsCount.toString()) } }
+                                ) {
+                                    Icon(Icons.Default.GroupAdd, "Solicitudes")
+                                }
+                            }
+                        }
                         IconButton(onClick = { showQR = true }) {
                             Icon(Icons.Default.QrCode2, "QR")
                         }
@@ -220,6 +238,119 @@ fun DetallePartidoScreen(
 
     if (showQR && partido != null) {
         QRInvitationDialog(url = "https://futboltnt.app/partido/${partido!!.id}", onDismiss = { showQR = false })
+    }
+
+    if (showGestionarSolicitudes && partido != null) {
+        GestionarSolicitudesDialog(
+            partido = partido!!,
+            onDismiss = { showGestionarSolicitudes = false },
+            onAceptar = { applicantId -> viewModel.gestionarSolicitud(partido!!.id, applicantId, true) },
+            onRechazar = { applicantId -> viewModel.gestionarSolicitud(partido!!.id, applicantId, false) },
+            onViewProfile = { uid ->
+                showGestionarSolicitudes = false
+                onViewProfile(uid)
+            }
+        )
+    }
+}
+
+@Composable
+private fun GestionarSolicitudesDialog(
+    partido: Partido,
+    onDismiss: () -> Unit,
+    onAceptar: (String) -> Unit,
+    onRechazar: (String) -> Unit,
+    onViewProfile: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Solicitudes Pendientes") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (partido.solicitudesIds.isEmpty()) {
+                    Text("No hay solicitudes pendientes.")
+                }
+                partido.solicitudesIds.forEach { applicantId ->
+                    SolicitanteItem(
+                        uid = applicantId,
+                        onAceptar = { onAceptar(applicantId) },
+                        onRechazar = { onRechazar(applicantId) },
+                        onViewProfile = { onViewProfile(applicantId) }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        }
+    )
+}
+
+@Composable
+private fun SolicitanteItem(
+    uid: String,
+    onAceptar: () -> Unit,
+    onRechazar: () -> Unit,
+    onViewProfile: () -> Unit
+) {
+    val userRepository = remember { UserRepository() }
+    var user by remember { mutableStateOf<User?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(uid) {
+        user = userRepository.getUser(uid)
+        isLoading = false
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onViewProfile() }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(user?.photoUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user?.apodo ?: user?.displayName ?: "Jugador",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = user?.posicion?.displayName ?: "Posición no definida",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row {
+                IconButton(onClick = onRechazar) {
+                    Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.error)
+                }
+                IconButton(onClick = onAceptar) {
+                    Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
     }
 }
 

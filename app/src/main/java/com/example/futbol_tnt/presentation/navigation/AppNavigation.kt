@@ -265,7 +265,10 @@ fun AppNavigation() {
         composable(Screen.Notificaciones.route) {
             com.example.futbol_tnt.presentation.ui.screens.NotificacionesScreen(
                 viewModel = notificacionViewModel,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onNavigateToMatch = { partidoId ->
+                    navController.navigate(Screen.DetallePartido.createRoute(partidoId))
+                }
             )
         }
         composable(

@@ -9,7 +9,8 @@ data class Notificacion(
     val mensaje: String = "",
     val fecha: Timestamp = Timestamp.now(),
     val leido: Boolean = false,
-    val tipo: TipoNotificacion = TipoNotificacion.INFO
+    val tipo: TipoNotificacion = TipoNotificacion.INFO,
+    val partidoId: String? = null
 )
 
 enum class TipoNotificacion {

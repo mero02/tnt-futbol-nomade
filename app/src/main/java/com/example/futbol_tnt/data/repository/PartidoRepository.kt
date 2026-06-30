@@ -101,7 +101,8 @@ class PartidoRepository(
                     "mensaje" to "Un jugador quiere unirse a tu partido en $nombreCancha.",
                     "fecha" to Timestamp.now(),
                     "leido" to false,
-                    "tipo" to "SOLICITUD_RECIBIDA"
+                    "tipo" to "SOLICITUD_RECIBIDA",
+                    "partidoId" to partidoId
                 ))
             }
             true
@@ -133,7 +134,8 @@ class PartidoRepository(
 
                 // Notificar al jugador que fue aceptado
                 val notifCol = firestore.collection("notificaciones")
-                val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+                val canchaMap = snap.get("cancha") as? Map<*, *>
+                val nombreCancha = canchaMap?.get("nombre") as? String ?: "la cancha"
                 val newNotifRef = notifCol.document()
                 tx.set(newNotifRef, mapOf(
                     "userId" to applicantId,
@@ -141,12 +143,14 @@ class PartidoRepository(
                     "mensaje" to "Has sido aceptado en el partido en $nombreCancha. ¡A jugar!",
                     "fecha" to Timestamp.now(),
                     "leido" to false,
-                    "tipo" to "SOLICITUD_APROBADA"
+                    "tipo" to "SOLICITUD_APROBADA",
+                    "partidoId" to partidoId
                 ))
             } else {
                 // Notificar al jugador que fue rechazado
                 val notifCol = firestore.collection("notificaciones")
-                val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+                val canchaMap = snap.get("cancha") as? Map<*, *>
+                val nombreCancha = canchaMap?.get("nombre") as? String ?: "la cancha"
                 val newNotifRef = notifCol.document()
                 tx.set(newNotifRef, mapOf(
                     "userId" to applicantId,
@@ -154,7 +158,8 @@ class PartidoRepository(
                     "mensaje" to "Tu solicitud para el partido en $nombreCancha no ha sido aprobada.",
                     "fecha" to Timestamp.now(),
                     "leido" to false,
-                    "tipo" to "SOLICITUD_RECHAZADA"
+                    "tipo" to "SOLICITUD_RECHAZADA",
+                    "partidoId" to partidoId
                 ))
             }
             true
@@ -185,7 +190,8 @@ class PartidoRepository(
 
             // Notificar al organizador
             val notifCol = firestore.collection("notificaciones")
-            val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+            val canchaMap = snap.get("cancha") as? Map<*, *>
+            val nombreCancha = canchaMap?.get("nombre") as? String ?: "la cancha"
 
             val notifData = mapOf(
                 "userId" to creatorId,
@@ -193,7 +199,8 @@ class PartidoRepository(
                 "mensaje" to "Un jugador ha salido del partido en $nombreCancha. Hay un nuevo lugar disponible.",
                 "fecha" to Timestamp.now(),
                 "leido" to false,
-                "tipo" to "INFO"
+                "tipo" to "INFO",
+                "partidoId" to partidoId
             )
             val newNotifRef = notifCol.document()
             tx.set(newNotifRef, notifData)

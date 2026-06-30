@@ -46,7 +46,8 @@ class NotificacionRepository(
         "mensaje" to mensaje,
         "fecha" to fecha,
         "leido" to leido,
-        "tipo" to tipo.name
+        "tipo" to tipo.name,
+        "partidoId" to partidoId
     )
 
     private fun com.google.firebase.firestore.DocumentSnapshot.toNotificacion(): Notificacion? {
@@ -58,7 +59,8 @@ class NotificacionRepository(
                 mensaje = getString("mensaje") ?: "",
                 fecha = getTimestamp("fecha") ?: com.google.firebase.Timestamp.now(),
                 leido = getBoolean("leido") ?: false,
-                tipo = getString("tipo")?.let { runCatching { TipoNotificacion.valueOf(it) }.getOrNull() } ?: TipoNotificacion.INFO
+                tipo = getString("tipo")?.let { runCatching { TipoNotificacion.valueOf(it) }.getOrNull() } ?: TipoNotificacion.INFO,
+                partidoId = getString("partidoId")
             )
         } else null
     }

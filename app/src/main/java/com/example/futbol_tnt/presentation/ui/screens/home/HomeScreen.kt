@@ -21,6 +21,10 @@ import com.example.futbol_tnt.presentation.viewmodel.NotificacionViewModel
 import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ProfileViewModel
 import com.example.futbol_tnt.presentation.viewmodel.ReservaViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import android.os.Build
 import kotlinx.coroutines.launch
 
 private fun shareApp(context: Context) {
@@ -38,7 +42,7 @@ private fun shareApp(context: Context) {
 
 private data class BottomNavItem(val title: String, val icon: ImageVector)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
     onSignOut: () -> Unit,
@@ -69,6 +73,17 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val unreadNotifs by notificacionViewModel.unreadCount.collectAsState()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val notificationPermissionState = rememberPermissionState(
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+        LaunchedEffect(Unit) {
+            if (!notificationPermissionState.status.isGranted) {
+                notificationPermissionState.launchPermissionRequest()
+            }
+        }
+    }
 
     BackHandler(enabled = selectedIndex != 0) {
         selectedIndex = 0

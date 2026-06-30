@@ -24,7 +24,8 @@ class UserRepository(
                 mapOf(
                     "displayName" to user.displayName,
                     "photoUrl" to user.photoUrl,
-                    "email" to user.email
+                    "email" to user.email,
+                    "fcmToken" to user.fcmToken
                 )
             ).await()
         }
@@ -54,7 +55,8 @@ private fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "piernaDominante" to piernaDominante?.name,
     "formatoPreferido" to formatoPreferido?.name,
     "equipo" to equipo,
-    "valoracionPromedio" to valoracionPromedio
+    "valoracionPromedio" to valoracionPromedio,
+    "fcmToken" to fcmToken
 )
 
 private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
@@ -74,7 +76,8 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?
             piernaDominante = getString("piernaDominante")?.let { runCatching { PiernaDominante.valueOf(it) }.getOrNull() },
             formatoPreferido = getString("formatoPreferido")?.let { runCatching { FormatoPreferido.valueOf(it) }.getOrNull() },
             equipo = getString("equipo"),
-            valoracionPromedio = getDouble("valoracionPromedio") ?: 0.0
+            valoracionPromedio = getDouble("valoracionPromedio") ?: 0.0,
+            fcmToken = getString("fcmToken")
         )
     } else null
 }

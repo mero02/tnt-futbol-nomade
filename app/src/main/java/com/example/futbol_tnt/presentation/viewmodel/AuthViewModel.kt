@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.tasks.await
+
 sealed class AuthUiState {
     data object Loading : AuthUiState()
     data object Idle : AuthUiState()
@@ -60,19 +63,27 @@ class AuthViewModel(
             _uiState.value = AuthUiState.Loading
             when (val result = googleAuthClient.handleSignInResult(intent)) {
                 is AuthResult.Success -> {
+                    // Obtenemos el token de FCM para notificaciones push
+                    val fcmToken = try {
+                        FirebaseMessaging.getInstance().token.await()
+                    } catch (e: Exception) {
+                        null
+                    }
+
                     // Sincronizamos los datos del usuario con Firestore
                     val user = User(
                         uid = result.userId,
                         email = result.email,
                         displayName = result.displayName,
                         photoUrl = result.photoUrl,
+                        fcmToken = fcmToken
                     )
 
                     try {
                         userRepository.syncUser(user)
-                    } catch (e: Exception) {
+                    } catch (error: Exception) {
                         // Loguear error o manejarlo si falla la sincronización
-                        println("Error sincronizando usuario: ${e.message}")
+                        println("Error sincronizando usuario: ${error.message}")
                     }
 
                     _uiState.value = AuthUiState.Success(
