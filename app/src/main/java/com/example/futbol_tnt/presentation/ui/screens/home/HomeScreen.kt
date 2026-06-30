@@ -50,6 +50,7 @@ fun HomeScreen(
     onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
     onNavigateToProfile: (String?) -> Unit,
+    onNavigateToDetallePartido: (String) -> Unit,
     partidoViewModel: PartidoViewModel,
     reservaViewModel: ReservaViewModel,
     profileViewModel: ProfileViewModel,
@@ -282,6 +283,7 @@ fun HomeScreen(
                     2 -> PartidosTab(
                         viewModel = partidoViewModel,
                         onCrearPartido = { onCrearPartido(null) },
+                        onVerDetalle = onNavigateToDetallePartido,
                         onNavigateToProfile = { uid -> onNavigateToProfile(uid) },
                         onNavigateToCalificar = onNavigateToCalificar
                     )

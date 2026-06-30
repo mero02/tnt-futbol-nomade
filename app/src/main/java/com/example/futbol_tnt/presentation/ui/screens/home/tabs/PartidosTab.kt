@@ -3,6 +3,8 @@ package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 import android.content.Context
 import android.content.Intent
 import android.Manifest
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -22,14 +24,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.futbol_tnt.core.util.LocationHelper
+import com.example.futbol_tnt.core.util.QRHelper
 import com.example.futbol_tnt.data.model.*
 import com.example.futbol_tnt.data.repository.UserRepository
 import com.example.futbol_tnt.presentation.ui.screens.home.components.EstadoPartidoBadge
@@ -70,15 +76,74 @@ private fun compartirPartido(context: Context, partido: Partido) {
     context.startActivity(shareIntent)
 }
 
+@Composable
+private fun QRInvitationDialog(url: String, onDismiss: () -> Unit) {
+    val qrBitmap = remember(url) { QRHelper.generateQRCode(url) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.padding(16.dp).fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Invitación QR",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Tus amigos pueden escanear este código para unirse al partido.",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(260.dp)
+                        .background(Color.White, RoundedCornerShape(12.dp))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (qrBitmap != null) {
+                        Image(
+                            bitmap = qrBitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cerrar")
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun PartidosTab(
     viewModel: PartidoViewModel,
     onCrearPartido: () -> Unit,
+    onVerDetalle: (String) -> Unit,
     onNavigateToProfile: (String) -> Unit = {},
     onNavigateToCalificar: (String) -> Unit = {}
 ) {
     var internalSelectedTab by rememberSaveable { mutableIntStateOf(0) } // 0: Todos, 1: Mis Partidos
+    var qrUrlToShow by remember { mutableStateOf<String?>(null) }
 
     var filtros by rememberSaveable(
         stateSaver = Saver<FiltroPartidos, Any>(
@@ -210,6 +275,10 @@ internal fun PartidosTab(
         )
     }
 
+    if (qrUrlToShow != null) {
+        QRInvitationDialog(url = qrUrlToShow!!, onDismiss = { qrUrlToShow = null })
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         TabRow(
             selectedTabIndex = internalSelectedTab,
@@ -289,7 +358,9 @@ internal fun PartidosTab(
                         onGestionar = { showGestionarDialog = partido },
                         onAbandonar = { showAbandonarDialog = partido },
                         onVerParticipantes = { showParticipantesDialog = partido },
-                        onCalificar = { onNavigateToCalificar(partido.id) }
+                        onCalificar = { onNavigateToCalificar(partido.id) },
+                        onShowQR = { qrUrlToShow = "https://futboltnt.app/partido/${partido.id}" },
+                        onVerDetalle = { onVerDetalle(partido.id) }
                     )
                 }
             }
@@ -375,7 +446,9 @@ private fun PartidoCard(
     onGestionar: () -> Unit,
     onAbandonar: () -> Unit,
     onVerParticipantes: () -> Unit,
-    onCalificar: () -> Unit
+    onCalificar: () -> Unit,
+    onShowQR: () -> Unit,
+    onVerDetalle: () -> Unit
 ) {
     val context = LocalContext.current
     val distanceText = remember(userLocation, partido.cancha) {
@@ -392,7 +465,7 @@ private fun PartidoCard(
     }
 
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onVerDetalle() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -492,34 +565,28 @@ private fun PartidoCard(
                             Text("En juego")
                         }
                     }
-                    partido.creatorId == currentUid -> {
+                    partido.creatorId == currentUid && !currentUid.isNullOrBlank() -> {
                         val reqCount = partido.solicitudesIds.size
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            IconButton(onClick = { compartirPartido(context, partido) }) {
-                                Icon(Icons.Default.Share, contentDescription = "Compartir", tint = MaterialTheme.colorScheme.primary)
+                        if (reqCount > 0) {
+                            BadgedBox(
+                                badge = {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = Color.White
+                                    ) {
+                                        Text(reqCount.toString())
+                                    }
+                                }
+                            ) {
+                                Button(onClick = onGestionar) {
+                                    Icon(Icons.Default.GroupAdd, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Solicitudes")
+                                }
                             }
-
-                            if (reqCount > 0) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(
-                                            containerColor = MaterialTheme.colorScheme.error,
-                                            contentColor = Color.White
-                                        ) {
-                                            Text(reqCount.toString())
-                                        }
-                                    }
-                                ) {
-                                    Button(onClick = onGestionar) {
-                                        Icon(Icons.Default.GroupAdd, null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Solicitudes")
-                                    }
-                                }
-                            } else {
-                                OutlinedButton(onClick = {}, enabled = false) {
-                                    Text("Organizador")
-                                }
+                        } else {
+                            OutlinedButton(onClick = {}, enabled = false) {
+                                Text("Organizador")
                             }
                         }
                     }

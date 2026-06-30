@@ -194,6 +194,7 @@ fun AppNavigation() {
                 onCrearPartido = { reservaId -> navController.navigate(Screen.CrearPartido.createRoute(reservaId)) },
                 onNavigateToCanchaDetail = { canchaId -> navController.navigate(Screen.CanchaDetail.createRoute(canchaId)) },
                 onNavigateToProfile = { uid -> navController.navigate(Screen.Perfil.createRoute(uid)) },
+                onNavigateToDetallePartido = { partidoId -> navController.navigate(Screen.DetallePartido.createRoute(partidoId)) },
                 partidoViewModel = partidoViewModel,
                 reservaViewModel = reservaViewModel,
                 profileViewModel = profileViewModel,
@@ -267,12 +268,21 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Screen.DetallePartido.route) { backStackEntry ->
+        composable(
+            route = Screen.DetallePartido.route,
+            deepLinks = listOf(
+                androidx.navigation.navDeepLink { uriPattern = "https://futboltnt.app/partido/{partidoId}" },
+                androidx.navigation.navDeepLink { uriPattern = "http://futboltnt.app/partido/{partidoId}" }
+            )
+        ) { backStackEntry ->
             val partidoId = backStackEntry.arguments?.getString("partidoId") ?: return@composable
             DetallePartidoScreen(
                 partidoId = partidoId,
                 viewModel = partidoViewModel,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onViewProfile = { uid ->
+                    navController.navigate(Screen.Perfil.createRoute(uid))
+                }
             )
         }
         composable(Screen.CalificarJugadores.route) { backStackEntry ->

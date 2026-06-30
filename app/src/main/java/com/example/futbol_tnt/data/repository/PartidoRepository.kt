@@ -74,6 +74,8 @@ class PartidoRepository(
 
         return firestore.runTransaction { tx ->
             val snap = tx.get(ref)
+            if (!snap.exists()) return@runTransaction false
+
             val actuales = (snap.getLong("jugadoresActuales") ?: 0L).toInt()
             val maximos = (snap.getLong("jugadoresMaximos") ?: 0L).toInt()
             val participantes = snap.get("participantesIds") as? List<*> ?: emptyList<String>()
@@ -89,7 +91,9 @@ class PartidoRepository(
             val creatorId = snap.getString("creatorId") ?: ""
             if (creatorId.isNotBlank()) {
                 val notifCol = firestore.collection("notificaciones")
-                val nombreCancha = (snap.get("cancha") as? Map<*, *>)?.get("nombre") ?: "la cancha"
+                val canchaMap = snap.get("cancha") as? Map<*, *>
+                val nombreCancha = canchaMap?.get("nombre") as? String ?: "la cancha"
+
                 val newNotifRef = notifCol.document()
                 tx.set(newNotifRef, mapOf(
                     "userId" to creatorId,
