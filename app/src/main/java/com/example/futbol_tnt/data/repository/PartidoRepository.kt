@@ -20,6 +20,8 @@ import kotlinx.coroutines.tasks.await
 import java.time.ZoneId
 import java.util.Date
 
+import java.time.format.DateTimeFormatter
+
 /**
  * Repositorio de partidos persistidos en Cloud Firestore (coleccion "partidos").
  */
@@ -28,6 +30,7 @@ class PartidoRepository(
     private val auth: FirebaseAuth = Firebase.auth,
 ) : IPartidoRepository {
 
+    private val notifFormatter = DateTimeFormatter.ofPattern("dd/MM HH:mm")
     private val partidosCol get() = firestore.collection(COLLECTION)
 
     override val partidos: Flow<List<Partido>> = callbackFlow {
@@ -136,11 +139,17 @@ class PartidoRepository(
                 val notifCol = firestore.collection("notificaciones")
                 val canchaMap = snap.get("cancha") as? Map<*, *>
                 val nombreCancha = canchaMap?.get("nombre") as? String ?: "la cancha"
+
+                val nombrePartido = "${snap.getString("nombreLocal")} vs ${snap.getString("nombreVisitante")}"
+                val fechaTimestamp = snap.getTimestamp("fecha")
+                val localDateTime = fechaTimestamp?.toDate()?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDateTime()
+                val fechaStr = localDateTime?.format(notifFormatter) ?: ""
+
                 val newNotifRef = notifCol.document()
                 tx.set(newNotifRef, mapOf(
                     "userId" to applicantId,
                     "titulo" to "¡Solicitud Aprobada!",
-                    "mensaje" to "Has sido aceptado en el partido en $nombreCancha. ¡A jugar!",
+                    "mensaje" to "Has sido aceptado en $nombrePartido ($nombreCancha) para el $fechaStr. ¡A jugar!",
                     "fecha" to Timestamp.now(),
                     "leido" to false,
                     "tipo" to "SOLICITUD_APROBADA",
@@ -151,11 +160,14 @@ class PartidoRepository(
                 val notifCol = firestore.collection("notificaciones")
                 val canchaMap = snap.get("cancha") as? Map<*, *>
                 val nombreCancha = canchaMap?.get("nombre") as? String ?: "la cancha"
+
+                val nombrePartido = "${snap.getString("nombreLocal")} vs ${snap.getString("nombreVisitante")}"
+
                 val newNotifRef = notifCol.document()
                 tx.set(newNotifRef, mapOf(
                     "userId" to applicantId,
                     "titulo" to "Solicitud Rechazada",
-                    "mensaje" to "Tu solicitud para el partido en $nombreCancha no ha sido aprobada.",
+                    "mensaje" to "Tu solicitud para el partido $nombrePartido en $nombreCancha no ha sido aprobada.",
                     "fecha" to Timestamp.now(),
                     "leido" to false,
                     "tipo" to "SOLICITUD_RECHAZADA",

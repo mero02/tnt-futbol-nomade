@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (29)
+## Hechas (30)
 
 
 ### Sprint 1
@@ -387,6 +387,18 @@ Como jugador, quiero recibir notificaciones de partidos cercanos, para no perder
 - [x] Se puede acceder al detalle desde la notificación
 
 
+#### HU-26 — Notificación de aceptación
+
+Como jugador, quiero recibir una notificación cuando me aceptan en un partido, para poder organizar mi tiempo.
+
+**Criterios de aceptacion:**
+
+- [x] El sistema envía una notificación al ser aceptado
+- [x] La notificación incluye: Nombre del partido
+- [x] La notificación incluye: Fecha y hora
+- [x] El usuario puede acceder al detalle desde la notificación
+- [x] La notificación se guarda en el historial de la app
+
 #### HU-27 — Detección automática de ubicación
 
 Como jugador, quiero que la app detecte mi ubicación automáticamente, para ver partidos cercanos sin configuraciones manuales.
@@ -399,23 +411,10 @@ Como jugador, quiero que la app detecte mi ubicación automáticamente, para ver
 - [x] Si se rechaza el permiso, se ofrece alternativa manual
 
 
-## Sprint Backlog (4)
+## Sprint Backlog (3)
 
 
 ### Sprint 4
-
-
-#### HU-26 — Notificación de aceptación
-
-Como jugador, quiero recibir una notificación cuando me aceptan en un partido, para poder organizar mi tiempo.
-
-**Criterios de aceptacion:**
-
-- [ ] El sistema envía una notificación al ser aceptado
-- [ ] La notificación incluye: Nombre del partido
-- [ ] La notificación incluye: Fecha y hora
-- [ ] El usuario puede acceder al detalle desde la notificación
-- [ ] La notificación se guarda en el historial de la app
 
 
 #### HU-30 — Solicitar jugadores urgentemente

@@ -58,6 +58,7 @@ private fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "valoracionPromedio" to valoracionPromedio,
     "fcmToken" to fcmToken,
     "notificacionesCercania" to notificacionesCercania,
+    "notificacionesAceptacion" to notificacionesAceptacion,
     "lastLat" to lastLat,
     "lastLng" to lastLng
 )
@@ -82,6 +83,7 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?
             valoracionPromedio = getDouble("valoracionPromedio") ?: 0.0,
             fcmToken = getString("fcmToken"),
             notificacionesCercania = getBoolean("notificacionesCercania") ?: true,
+            notificacionesAceptacion = getBoolean("notificacionesAceptacion") ?: true,
             lastLat = getDouble("lastLat"),
             lastLng = getDouble("lastLng")
         )

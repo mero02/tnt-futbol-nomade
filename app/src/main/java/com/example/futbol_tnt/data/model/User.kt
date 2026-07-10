@@ -18,6 +18,7 @@ data class User(
     val valoracionPromedio: Double = 0.0,
     val fcmToken: String? = null,
     val notificacionesCercania: Boolean = true,
+    val notificacionesAceptacion: Boolean = true,
     val lastLat: Double? = null,
     val lastLng: Double? = null
 )
