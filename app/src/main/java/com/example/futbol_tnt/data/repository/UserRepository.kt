@@ -56,7 +56,10 @@ private fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "formatoPreferido" to formatoPreferido?.name,
     "equipo" to equipo,
     "valoracionPromedio" to valoracionPromedio,
-    "fcmToken" to fcmToken
+    "fcmToken" to fcmToken,
+    "notificacionesCercania" to notificacionesCercania,
+    "lastLat" to lastLat,
+    "lastLng" to lastLng
 )
 
 private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
@@ -77,7 +80,10 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?
             formatoPreferido = getString("formatoPreferido")?.let { runCatching { FormatoPreferido.valueOf(it) }.getOrNull() },
             equipo = getString("equipo"),
             valoracionPromedio = getDouble("valoracionPromedio") ?: 0.0,
-            fcmToken = getString("fcmToken")
+            fcmToken = getString("fcmToken"),
+            notificacionesCercania = getBoolean("notificacionesCercania") ?: true,
+            lastLat = getDouble("lastLat"),
+            lastLng = getDouble("lastLng")
         )
     } else null
 }

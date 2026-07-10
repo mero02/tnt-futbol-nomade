@@ -87,6 +87,7 @@ fun NotificacionItem(notif: Notificacion, onClick: () -> Unit) {
         TipoNotificacion.SOLICITUD_APROBADA -> Icons.Default.CheckCircle to Color(0xFF22C55E)
         TipoNotificacion.SOLICITUD_RECHAZADA -> Icons.Default.Cancel to MaterialTheme.colorScheme.error
         TipoNotificacion.CANCELACION -> Icons.Default.EventBusy to MaterialTheme.colorScheme.error
+        TipoNotificacion.PARTIDO_CERCANO -> Icons.Default.LocationOn to MaterialTheme.colorScheme.tertiary
         TipoNotificacion.INFO -> Icons.Default.Info to MaterialTheme.colorScheme.secondary
     }
 

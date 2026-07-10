@@ -16,7 +16,10 @@ data class User(
     val formatoPreferido: FormatoPreferido? = null,
     val equipo: String? = null,
     val valoracionPromedio: Double = 0.0,
-    val fcmToken: String? = null
+    val fcmToken: String? = null,
+    val notificacionesCercania: Boolean = true,
+    val lastLat: Double? = null,
+    val lastLng: Double? = null
 )
 
 interface HasDisplayName {

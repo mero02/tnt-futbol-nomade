@@ -39,6 +39,7 @@ sealed class Screen(val route: String) {
     data object Reporte : Screen("reporte")
     data object Tarjetas : Screen("tarjetas")
     data object Notificaciones : Screen("notificaciones")
+    data object Ajustes : Screen("ajustes")
     data object CalificarJugadores : Screen("calificar_jugadores/{partidoId}") {
         fun createRoute(partidoId: String) = "calificar_jugadores/$partidoId"
     }
@@ -194,6 +195,7 @@ fun AppNavigation() {
                 onCrearPartido = { reservaId -> navController.navigate(Screen.CrearPartido.createRoute(reservaId)) },
                 onNavigateToCanchaDetail = { canchaId -> navController.navigate(Screen.CanchaDetail.createRoute(canchaId)) },
                 onNavigateToProfile = { uid -> navController.navigate(Screen.Perfil.createRoute(uid)) },
+                onNavigateToAjustes = { navController.navigate(Screen.Ajustes.route) },
                 onNavigateToDetallePartido = { partidoId -> navController.navigate(Screen.DetallePartido.createRoute(partidoId)) },
                 partidoViewModel = partidoViewModel,
                 reservaViewModel = reservaViewModel,
@@ -249,6 +251,12 @@ fun AppNavigation() {
                 reservaId = reservaId,
                 reservaRepository = reservaRepository,
             ) { navController.popBackStack() }
+        }
+        composable(Screen.Ajustes.route) {
+            com.example.futbol_tnt.presentation.ui.screens.AjustesScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.Reporte.route) {
             com.example.futbol_tnt.presentation.ui.screens.ReporteScreen(

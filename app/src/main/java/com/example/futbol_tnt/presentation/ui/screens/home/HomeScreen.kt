@@ -50,6 +50,7 @@ fun HomeScreen(
     onNavigateToReporte: () -> Unit,
     onNavigateToTarjetas: () -> Unit,
     onNavigateToNotificaciones: () -> Unit,
+    onNavigateToAjustes: () -> Unit,
     onNavigateToCalificar: (String) -> Unit,
     onCrearPartido: (String?) -> Unit,
     onNavigateToCanchaDetail: (String) -> Unit,
@@ -164,6 +165,16 @@ fun HomeScreen(
                         onNavigateToTarjetas()
                     },
                     icon = { Icon(Icons.Default.CreditCard, null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Ajustes") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToAjustes()
+                    },
+                    icon = { Icon(Icons.Default.Settings, null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
 

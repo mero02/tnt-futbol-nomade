@@ -25,15 +25,19 @@ class FutbolTntMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
 
-        val title = message.notification?.title ?: message.data["titulo"] ?: "Futbol TNT"
+        val title = message.notification?.title ?: message.data["titulo"] ?: "Entra a la cancha"
         val body = message.notification?.body ?: message.data["mensaje"] ?: ""
+        val partidoId = message.data["partidoId"]
 
-        sendNotification(title, body)
+        sendNotification(title, body, partidoId)
     }
 
-    private fun sendNotification(title: String, messageBody: String) {
+    private fun sendNotification(title: String, messageBody: String, partidoId: String? = null) {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            if (partidoId != null) {
+                data = android.net.Uri.parse("https://futboltnt.app/partido/$partidoId")
+            }
         }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,

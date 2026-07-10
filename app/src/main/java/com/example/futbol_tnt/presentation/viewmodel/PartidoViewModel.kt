@@ -21,10 +21,31 @@ sealed class PartidoEvento {
 
 class PartidoViewModel(
     private val repository: IPartidoRepository = PartidoRepository(),
+    private val userRepository: com.example.futbol_tnt.data.repository.IUserRepository = com.example.futbol_tnt.data.repository.UserRepository(),
 ) : ViewModel() {
 
     private val _userLocation = MutableStateFlow<Location?>(null)
     val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
+
+    init {
+        // Cada vez que cambia la ubicación, la guardamos en el perfil del usuario en Firestore
+        // para habilitar las notificaciones de cercanía desde el backend.
+        userLocation
+            .filterNotNull()
+            .onEach { location ->
+                val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                if (uid != null) {
+                    val user = userRepository.getUser(uid)
+                    user?.let {
+                        userRepository.updateUser(it.copy(
+                            lastLat = location.latitude,
+                            lastLng = location.longitude
+                        ))
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
 
     val partidos: StateFlow<List<Partido>> = repository.partidos
         .catch { error ->

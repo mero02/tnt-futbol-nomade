@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (28)
+## Hechas (29)
 
 
 ### Sprint 1
@@ -375,6 +375,18 @@ Como jugador, quiero ver los partidos en un mapa, para ubicarme visualmente.
 - [x] Se puede acceder al detalle desde el mapa
 
 
+#### HU-25 — Notificación de partidos cercanos
+
+Como jugador, quiero recibir notificaciones de partidos cercanos, para no perder oportunidades.
+
+**Criterios de aceptacion:**
+
+- [x] El sistema envía notificaciones según ubicación
+- [x] Incluye información básica del partido
+- [x] El usuario puede desactivarlas
+- [x] Se puede acceder al detalle desde la notificación
+
+
 #### HU-27 — Detección automática de ubicación
 
 Como jugador, quiero que la app detecte mi ubicación automáticamente, para ver partidos cercanos sin configuraciones manuales.
@@ -387,22 +399,10 @@ Como jugador, quiero que la app detecte mi ubicación automáticamente, para ver
 - [x] Si se rechaza el permiso, se ofrece alternativa manual
 
 
-## Sprint Backlog (5)
+## Sprint Backlog (4)
 
 
 ### Sprint 4
-
-
-#### HU-25 — Notificación de partidos cercanos
-
-Como jugador, quiero recibir notificaciones de partidos cercanos, para no perder oportunidades.
-
-**Criterios de aceptacion:**
-
-- [ ] El sistema envía notificaciones según ubicación
-- [ ] Incluye información básica del partido
-- [ ] El usuario puede desactivarlas
-- [ ] Se puede acceder al detalle desde la notificación
 
 
 #### HU-26 — Notificación de aceptación
