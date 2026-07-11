@@ -60,7 +60,8 @@ private fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "notificacionesCercania" to notificacionesCercania,
     "notificacionesAceptacion" to notificacionesAceptacion,
     "lastLat" to lastLat,
-    "lastLng" to lastLng
+    "lastLng" to lastLng,
+    "isBanned" to isBanned
 )
 
 private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User? {
@@ -85,7 +86,8 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toUserOrNull(): User?
             notificacionesCercania = getBoolean("notificacionesCercania") ?: true,
             notificacionesAceptacion = getBoolean("notificacionesAceptacion") ?: true,
             lastLat = getDouble("lastLat"),
-            lastLng = getDouble("lastLng")
+            lastLng = getDouble("lastLng"),
+            isBanned = getBoolean("isBanned") ?: false
         )
     } else null
 }

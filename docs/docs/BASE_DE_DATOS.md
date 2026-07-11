@@ -22,6 +22,12 @@ Almacena la información de perfil de los jugadores y organizadores.
 | `fcmToken` | String | Token para notificaciones push (Firebase Cloud Messaging). |
 | `sexo` | String | Enum: `HOMBRE`, `MUJER`, `OTRO`. |
 | `piernaDominante` | String | Enum: `DIESTRO`, `ZURDO`, `AMBIDIESTRO`. |
+| `fcmToken` | String | Token para notificaciones push. |
+| `notificacionesCercania` | Boolean | Preferencia de alertas geográficas. |
+| `notificacionesAceptacion` | Boolean | Preferencia de alertas de equipo. |
+| `lastLat` / `lastLng` | Double | Última ubicación conocida. |
+| `isBanned` | Boolean | Estado de suspensión de cuenta. |
+| `role` | String | Rol: `USER` o `ADMIN`. |
 
 ---
 

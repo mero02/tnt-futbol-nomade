@@ -6,6 +6,8 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CanchasPage from './pages/CanchasPage'
 import ReservasPage from './pages/ReservasPage'
+import PartidosPage from './pages/PartidosPage'
+import UsuariosPage from './pages/UsuariosPage'
 
 function ProtectedRoute() {
   const { user, loading } = useAuth()
@@ -31,6 +33,8 @@ export default function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="canchas" element={<CanchasPage />} />
           <Route path="reservas" element={<ReservasPage />} />
+          <Route path="partidos" element={<PartidosPage />} />
+          <Route path="usuarios" element={<UsuariosPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

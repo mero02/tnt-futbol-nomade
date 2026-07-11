@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- FUNCIÓN PARA IDENTIFICAR ADMINISTRADORES ---
+    // Busca en el documento del usuario logueado el campo "role"
+    function isAdmin() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+    }
+
+    // Reglas para Reservas
+    match /reservas/{reservaId} {
+      // Cualquier usuario logueado puede LEER (para ver disponibilidad)
+      allow read: if request.auth != null;
+
+      // Solo podés CREAR una reserva si vos sos el usuarioId
+      allow create: if request.auth != null
+                    && request.resource.data.usuarioId == request.auth.uid;
+
+      // Solo el DUEÑO o un ADMIN puede modificar o borrar su reserva
+      allow update, delete: if (request.auth != null && resource.data.usuarioId == request.auth.uid)
+                            || isAdmin();
+    }
+
+    // Reglas para Partidos
+    match /partidos/{partidoId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.creatorId == request.auth.uid;
+      // Permitimos update para que otros se unan, y ahora también para el Admin
+      allow update: if request.auth != null;
+      allow delete: if (request.auth != null && resource.data.creatorId == request.auth.uid)
+                    || isAdmin();
+    }
+
+    // Reglas para Usuarios
+    match /users/{userId} {
+      // Cualquier usuario logueado puede ver perfiles (para ver con quién juega)
+      allow read: if request.auth != null;
+      // Solo el dueño del perfil o un ADMIN puede crear o editar sus datos (como banear)
+      allow create, update: if (request.auth != null && request.auth.uid == userId)
+                            || isAdmin();
+    }
+
+    // Reglas para Reportes
+    match /reportes/{reporteId} {
+      // Solo usuarios autenticados pueden enviar reportes
+      // Validamos que el userId del reporte coincida con el que envía
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      // Por seguridad, solo el Admin puede leer los reportes
+      allow read: if isAdmin();
+    }
+
+    // Reglas para Tarjetas (Sub-colección de Usuarios)
+    match /users/{userId}/tarjetas/{tarjetaId} {
+      // Solo el dueño puede ver, agregar o borrar sus propias tarjetas
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Reglas para Notificaciones
+    match /notificaciones/{notifId} {
+      // Solo el destinatario puede leer y marcar como leída su propia notificación
+      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Cualquier usuario logueado puede crear una notificación (necesario para avisar cancelaciones a otros)
+      allow create: if request.auth != null;
+      // El admin puede limpiar notificaciones
+      allow delete: if isAdmin();
+    }
+
+    // Reglas para Calificaciones
+    match /calificaciones/{califId} {
+      // Todos pueden leer para calcular promedios
+      allow read: if request.auth != null;
+      // Solo puedes crear o editar una calificacion si vos sos el calificador
+      allow create, update: if request.auth != null
+                            && request.resource.data.calificadorId == request.auth.uid;
+      // El admin puede borrar calificaciones inapropiadas
+      allow delete: if isAdmin();
+    }
+
+    // Reglas para Canchas
+    match /canchas/{canchaId} {
+      // Cualquier usuario logueado puede leer y escribir (crear/actualizar)
+      allow read, create, update: if request.auth != null;
+
+      // Solo el ADMIN puede borrar canchas físicamente
+      allow delete: if isAdmin();
+    }
+  }
+}

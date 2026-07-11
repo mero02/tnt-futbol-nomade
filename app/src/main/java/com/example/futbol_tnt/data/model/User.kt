@@ -20,7 +20,8 @@ data class User(
     val notificacionesCercania: Boolean = true,
     val notificacionesAceptacion: Boolean = true,
     val lastLat: Double? = null,
-    val lastLng: Double? = null
+    val lastLng: Double? = null,
+    val isBanned: Boolean = false
 )
 
 interface HasDisplayName {

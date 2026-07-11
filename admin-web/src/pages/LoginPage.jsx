@@ -17,7 +17,10 @@ export default function LoginPage() {
   const handleLogin = async () => {
     try {
       setSubmitting(true)
-      await signInWithPopup(auth, new GoogleAuthProvider())
+      const provider = new GoogleAuthProvider()
+      // Forzamos el selector de cuenta para evitar bucles si intentan con una cuenta no admin
+      provider.setCustomParameters({ prompt: 'select_account' })
+      await signInWithPopup(auth, provider)
     } catch (error) {
       console.error('Login error:', error)
     } finally {

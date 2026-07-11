@@ -80,6 +80,12 @@ class AuthViewModel(
                     )
 
                     try {
+                        val existingUser = userRepository.getUser(result.userId)
+                        if (existingUser?.isBanned == true) {
+                            googleAuthClient.signOut()
+                            _uiState.value = AuthUiState.Error("Tu cuenta ha sido suspendida. Contacta a soporte.")
+                            return@launch
+                        }
                         userRepository.syncUser(user)
                     } catch (error: Exception) {
                         // Loguear error o manejarlo si falla la sincronización

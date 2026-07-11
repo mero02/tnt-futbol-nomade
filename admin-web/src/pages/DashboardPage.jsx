@@ -5,6 +5,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import { useCanchas }  from '../hooks/useCanchas'
 import { useReservas } from '../hooks/useReservas'
+import { useCollection } from '../hooks/useCollection'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,8 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { canchas }  = useCanchas()
   const { reservas } = useReservas()
+  const { items: partidos } = useCollection('partidos')
+  const { items: usuarios } = useCollection('users')
 
   const hoy = useMemo(() => today, [])
 
@@ -172,11 +175,19 @@ export default function DashboardPage() {
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 space-y-1">
-              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Total canchas</p>
+              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Canchas</p>
               <p className="text-lg font-bold text-dark dark:text-white">{canchas.length}</p>
             </div>
             <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 space-y-1">
-              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Total reservas</p>
+              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Usuarios</p>
+              <p className="text-lg font-bold text-dark dark:text-white">{usuarios.length}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 space-y-1">
+              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Partidos</p>
+              <p className="text-lg font-bold text-dark dark:text-white">{partidos.length}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 space-y-1">
+              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Reservas</p>
               <p className="text-lg font-bold text-dark dark:text-white">{reservas.length}</p>
             </div>
           </div>

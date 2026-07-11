@@ -6,7 +6,9 @@ import {
 } from 'firebase/firestore'
 
 export function subscribeCollection(col, callback) {
-  const q = query(collection(db, col), orderBy('createdAt', 'desc'))
+  // Quitamos el orderBy por defecto ya que no todas las colecciones tienen 'createdAt'
+  // Esto evita que la consulta falle y devuelva una lista vacía si el campo no existe.
+  const q = query(collection(db, col))
   return onSnapshot(q, snap =>
     callback(snap.docs.map(d => ({ id: d.id, ...d.data() })))
   )

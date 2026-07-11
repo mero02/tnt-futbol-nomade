@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (30)
+## Hechas (31)
 
 
 ### Sprint 1
@@ -410,26 +410,6 @@ Como jugador, quiero que la app detecte mi ubicación automáticamente, para ver
 - [x] Los partidos se ordenan por cercanía
 - [x] Si se rechaza el permiso, se ofrece alternativa manual
 
-
-## Sprint Backlog (3)
-
-
-### Sprint 4
-
-
-#### HU-30 — Solicitar jugadores urgentemente
-
-Como organizador, quiero solicitar jugadores urgentemente, para cubrir vacantes cuando se acerque la hora del partido.
-
-**Criterios de aceptacion:**
-
-- [ ] El organizador puede marcar un partido como "urgente"
-- [ ] El sistema envía notificaciones push a jugadores cercanos
-- [ ] La notificación indica claramente que es una solicitud urgente
-- [ ] Los jugadores reciben la notificación en tiempo real
-- [ ] El usuario puede desactivar este tipo de notificaciones
-
-
 #### HU-31 — Acceder al panel administrativo
 
 Como administrador, quiero acceder a un panel web, para gestionar usuarios y partidos.
@@ -447,6 +427,24 @@ Como administrador, quiero acceder a un panel web, para gestionar usuarios y par
 - [ ] El admin puede banear usuarios problemáticos
 - [x] El admin puede cancelar partidos problemáticos
 
+
+## Sprint Backlog (2)
+
+
+### Sprint 4
+
+
+#### HU-30 — Solicitar jugadores urgentemente
+
+Como organizador, quiero solicitar jugadores urgentemente, para cubrir vacantes cuando se acerque la hora del partido.
+
+**Criterios de aceptacion:**
+
+- [ ] El organizador puede marcar un partido como "urgente"
+- [ ] El sistema envía notificaciones push a jugadores cercanos
+- [ ] La notificación indica claramente que es una solicitud urgente
+- [ ] Los jugadores reciben la notificación en tiempo real
+- [ ] El usuario puede desactivar este tipo de notificaciones
 
 #### HU-33 — Verificar asistencia al partido
 

@@ -34,6 +34,11 @@ import androidx.compose.ui.unit.sp
 import com.example.futbol_tnt.presentation.viewmodel.AuthUiState
 import com.example.futbol_tnt.presentation.viewmodel.AuthViewModel
 
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.CardDefaults
+import android.content.Intent
+import android.net.Uri
+
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
@@ -43,6 +48,7 @@ fun LoginScreen(
     // Observa el estado del ViewModel como State para que Compose recomponga
     // automáticamente cuando cambie (Loading, Success, Error, Idle).
     val uiState by authViewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     // pendingSignInIntent es el Intent de Google que hay que lanzar como Activity.
     // El ViewModel lo emite cuando Google responde con el selector de cuentas.
@@ -128,15 +134,51 @@ fun LoginScreen(
                     CircularProgressIndicator()
                 }
                 is AuthUiState.Error -> {
-                    Text(
-                        text = state.message,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    GoogleSignInButton(
-                        onClick = { authViewModel.onGoogleSignInClick() }
-                    )
+                    if (state.message.contains("suspendida", ignoreCase = true)) {
+                        androidx.compose.material3.Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = state.message,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                            data = Uri.parse("mailto:soporte@entraalacancha.app")
+                                            putExtra(Intent.EXTRA_SUBJECT, "Descargo por cuenta suspendida")
+                                        }
+                                        context.startActivity(intent)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) {
+                                    Text("Realizar descargo", fontWeight = FontWeight.Bold)
+                                }
+
+                                TextButton(
+                                    onClick = { authViewModel.clearError() },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("Intentar con otra cuenta", color = MaterialTheme.colorScheme.onErrorContainer)
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        GoogleSignInButton(
+                            onClick = { authViewModel.onGoogleSignInClick() }
+                        )
+                    }
                 }
                 else -> {
                     GoogleSignInButton(

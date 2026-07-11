@@ -1,4 +1,4 @@
-import { LayoutDashboard, MapPin, Calendar, LogOut } from 'lucide-react'
+import { LayoutDashboard, MapPin, Calendar, Users, Trophy, LogOut } from 'lucide-react'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../lib/firebase'
 import NavItem from '../ui/NavItem'
@@ -15,6 +15,8 @@ export default function Sidebar({ user }) {
         <NavItem to="/dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
         <NavItem to="/canchas" icon={<MapPin size={18} />} label="Canchas" />
         <NavItem to="/reservas" icon={<Calendar size={18} />} label="Reservas" />
+        <NavItem to="/partidos" icon={<Trophy size={18} />} label="Partidos" />
+        <NavItem to="/usuarios" icon={<Users size={18} />} label="Usuarios" />
       </nav>
 
       <div className="p-4 border-t border-border dark:border-gray-700">
