@@ -23,5 +23,7 @@ data class Partido(
     val participantesIds: List<String> = emptyList(),
     // Lista de UIDs de los jugadores que enviaron solicitud y esperan aprobación
     val solicitudesIds: List<String> = emptyList(),
-    val esUrgente: Boolean = false
+    val esUrgente: Boolean = false,
+    val asistentesIds: List<String> = emptyList(),
+    val asistenciaVerificada: Boolean = false
 )

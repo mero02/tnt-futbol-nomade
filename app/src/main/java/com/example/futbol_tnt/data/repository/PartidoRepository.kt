@@ -44,6 +44,16 @@ class PartidoRepository(
                 val lista = snapshot?.documents
                     ?.mapNotNull { it.toPartidoOrNull() }
                     .orEmpty()
+
+                // Verificamos si hay partidos que deberían haber finalizado pero aún no tienen ese estado
+                val ahora = java.time.LocalDateTime.now()
+                lista.forEach { partido ->
+                    if (partido.estado != EstadoPartido.FINALIZADO && partido.fecha.isBefore(ahora.minusHours(partido.duracionHoras.toLong()))) {
+                        // Actualización silenciosa en Firestore
+                        partidosCol.document(partido.id).update("estado", EstadoPartido.FINALIZADO.name)
+                    }
+                }
+
                 trySend(lista)
             }
         awaitClose { listener.remove() }
@@ -234,7 +244,18 @@ class PartidoRepository(
 
     override suspend fun getPartidoById(id: String): Partido? {
         return try {
-            partidosCol.document(id).get().await().toPartidoOrNull()
+            val doc = partidosCol.document(id).get().await()
+            val partido = doc.toPartidoOrNull()
+
+            // Verificación adicional al cargar un partido individual
+            if (partido != null && partido.estado != EstadoPartido.FINALIZADO) {
+                val ahora = java.time.LocalDateTime.now()
+                if (partido.fecha.isBefore(ahora.minusHours(partido.duracionHoras.toLong()))) {
+                    partidosCol.document(id).update("estado", EstadoPartido.FINALIZADO.name)
+                    return partido.copy(estado = EstadoPartido.FINALIZADO)
+                }
+            }
+            partido
         } catch (e: Exception) {
             null
         }
@@ -297,6 +318,43 @@ class PartidoRepository(
         }
     }
 
+    override suspend fun confirmarAsistencia(partidoId: String, asistentesIds: List<String>): Boolean {
+        return try {
+            val partidoRef = partidosCol.document(partidoId)
+            val partidoSnap = partidoRef.get().await()
+            val partido = partidoSnap.toPartidoOrNull() ?: return false
+
+            val totalParticipantes = partido.participantesIds
+            val noAsistentes = totalParticipantes.filter { !asistentesIds.contains(it) }
+
+            firestore.runTransaction { transaction ->
+                // 1. Marcar el partido como verificado
+                transaction.update(partidoRef, mapOf(
+                    "asistentesIds" to asistentesIds,
+                    "asistenciaVerificada" to true
+                ))
+
+                // 2. Penalizar a los que no asistieron (1 estrella automática)
+                val califCol = firestore.collection("calificaciones")
+                noAsistentes.forEach { userId ->
+                    val califId = "${partidoId}_SYSTEM_$userId"
+                    val califData = mapOf(
+                        "partidoId" to partidoId,
+                        "calificadorId" to "SYSTEM",
+                        "calificadoId" to userId,
+                        "estrellas" to 1L,
+                        "comentario" to "Inasistencia automática",
+                        "fecha" to Timestamp.now()
+                    )
+                    transaction.set(califCol.document(califId), califData)
+                }
+            }.await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private companion object {
         const val COLLECTION = "partidos"
     }
@@ -330,7 +388,9 @@ private fun Partido.toFirestoreMap(): Map<String, Any?> = mapOf(
     "creatorId" to creatorId,
     "participantesIds" to participantesIds,
     "solicitudesIds" to solicitudesIds,
-    "esUrgente" to esUrgente
+    "esUrgente" to esUrgente,
+    "asistentesIds" to asistentesIds,
+    "asistenciaVerificada" to asistenciaVerificada
 )
 
 @Suppress("UNCHECKED_CAST")
@@ -369,7 +429,9 @@ private fun DocumentSnapshot.toPartidoOrNull(): Partido? {
             creatorId = getString("creatorId").orEmpty(),
             participantesIds = get("participantesIds") as? List<String> ?: emptyList(),
             solicitudesIds = get("solicitudesIds") as? List<String> ?: emptyList(),
-            esUrgente = getBoolean("esUrgente") ?: false
+            esUrgente = getBoolean("esUrgente") ?: false,
+            asistentesIds = get("asistentesIds") as? List<String> ?: emptyList(),
+            asistenciaVerificada = getBoolean("asistenciaVerificada") ?: false
         )
     }.getOrNull()
 }

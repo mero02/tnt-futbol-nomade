@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (32)
+## Hechas (33)
 
 
 ### Sprint 1
@@ -386,20 +386,6 @@ Como jugador, quiero recibir notificaciones de partidos cercanos, para no perder
 - [x] El usuario puede desactivarlas
 - [x] Se puede acceder al detalle desde la notificación
 
-
-#### HU-30 — Solicitar jugadores urgentemente
-
-Como organizador, quiero solicitar jugadores urgentemente, para cubrir vacantes cuando se acerque la hora del partido.
-
-**Criterios de aceptacion:**
-
-- [x] El organizador puede marcar un partido como "urgente"
-- [x] El sistema envía notificaciones push a jugadores cercanos
-- [x] La notificación indica claramente que es una solicitud urgente
-- [x] Los jugadores reciben la notificación en tiempo real
-- [x] El usuario puede desactivar este tipo de notificaciones
-
-
 #### HU-26 — Notificación de aceptación
 
 Como jugador, quiero recibir una notificación cuando me aceptan en un partido, para poder organizar mi tiempo.
@@ -423,6 +409,18 @@ Como jugador, quiero que la app detecte mi ubicación automáticamente, para ver
 - [x] Los partidos se ordenan por cercanía
 - [x] Si se rechaza el permiso, se ofrece alternativa manual
 
+#### HU-30 — Solicitar jugadores urgentemente
+
+Como organizador, quiero solicitar jugadores urgentemente, para cubrir vacantes cuando se acerque la hora del partido.
+
+**Criterios de aceptacion:**
+
+- [x] El organizador puede marcar un partido como "urgente"
+- [x] El sistema envía notificaciones push a jugadores cercanos
+- [x] La notificación indica claramente que es una solicitud urgente
+- [x] Los jugadores reciben la notificación en tiempo real
+- [x] El usuario puede desactivar este tipo de notificaciones
+
 #### HU-31 — Acceder al panel administrativo
 
 Como administrador, quiero acceder a un panel web, para gestionar usuarios y partidos.
@@ -440,27 +438,18 @@ Como administrador, quiero acceder a un panel web, para gestionar usuarios y par
 - [x] El admin puede banear usuarios problemáticos
 - [x] El admin puede cancelar partidos problemáticos
 
-
-## Sprint Backlog (1)
-
-
-### Sprint 4
-
-
 #### HU-33 — Verificar asistencia al partido
 
 Como organizador, quiero confirmar la asistencia de los jugadores, para mejorar la reputación del sistema.
 
 **Criterios de aceptacion:**
 
-- [ ] El organizador puede marcar qué jugadores asistieron
-- [ ] Los jugadores que no asistieron receive downvotes automáticos
-- [ ] Se registra la asistencia para estadísticas futuras
-- [ ] El sistema actualiza la reputación automáticamente
+- [x] El organizador puede marcar qué jugadores asistieron
+- [x] Los jugadores que no asistieron receive downvotes automáticos
+- [x] Se registra la asistencia para estadísticas futuras
+- [x] El sistema actualiza la reputación automáticamente
 
-
-## Backlog (7)
-
+## Sprint Backlog (7)
 
 ### Sprint 5
 
@@ -549,12 +538,9 @@ Como jugador, quiero poder marcar mi asistencia manualmente si el GPS falla, par
 - [ ] Solo disponible cerca del horario del partido
 - [ ] No permite doble check-in del mismo usuario
 
-
-## Sandbox (4)
-
+## Backlog (4)
 
 ### Sprint 6
-
 
 #### HU-41 — Configurar FCM y token
 
@@ -602,3 +588,7 @@ Como usuario, quiero recibir la notificación esté la app abierta o cerrada, pa
 - [ ] Data payload procesado en background (partidoId, tipoEvento)
 - [ ] Tap abre la pantalla correspondiente del partido
 - [ ] Sonido/vibración configurables
+
+
+## Sandbox (0)
+

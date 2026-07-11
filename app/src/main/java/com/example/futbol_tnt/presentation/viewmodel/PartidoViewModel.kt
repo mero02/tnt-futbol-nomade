@@ -17,6 +17,7 @@ sealed class PartidoEvento {
     data object PartidoLleno : PartidoEvento()
     data object PartidoCreadoExito : PartidoEvento()
     data object UrgenciaActualizada : PartidoEvento()
+    data object AsistenciaConfirmada : PartidoEvento()
     data class Error(val mensaje: String) : PartidoEvento()
 }
 
@@ -136,6 +137,17 @@ class PartidoViewModel(
                 _evento.value = PartidoEvento.UrgenciaActualizada
             } else {
                 _evento.value = PartidoEvento.Error("No se pudo actualizar la urgencia")
+            }
+        }
+    }
+
+    fun confirmarAsistencia(partidoId: String, asistentesIds: List<String>) {
+        viewModelScope.launch {
+            val exito = repository.confirmarAsistencia(partidoId, asistentesIds)
+            if (exito) {
+                _evento.value = PartidoEvento.AsistenciaConfirmada
+            } else {
+                _evento.value = PartidoEvento.Error("No se pudo confirmar la asistencia")
             }
         }
     }

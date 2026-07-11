@@ -58,6 +58,7 @@ fun DetallePartidoScreen(
     var isLoading by remember { mutableStateOf(true) }
     var showQR by remember { mutableStateOf(false) }
     var showGestionarSolicitudes by remember { mutableStateOf(false) }
+    var showConfirmarAsistencia by remember { mutableStateOf(false) }
 
     val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     val userRepository = remember { UserRepository() }
@@ -97,6 +98,11 @@ fun DetallePartidoScreen(
             }
             is PartidoEvento.UrgenciaActualizada -> {
                 snackbarHostState.showSnackbar("Estado de urgencia actualizado")
+                refreshData()
+                viewModel.limpiarEvento()
+            }
+            is PartidoEvento.AsistenciaConfirmada -> {
+                snackbarHostState.showSnackbar("Asistencia verificada correctamente")
                 refreshData()
                 viewModel.limpiarEvento()
             }
@@ -213,7 +219,20 @@ fun DetallePartidoScreen(
                         Text("Jugadores confirmados (${p.jugadoresActuales}/${p.jugadoresMaximos})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
 
                         participantes.forEach { user ->
-                            PlayerRow(user = user, onClick = { onViewProfile(user.uid) })
+                            val vino = p.asistenciaVerificada && p.asistentesIds.contains(user.uid)
+                            val falto = p.asistenciaVerificada && !p.asistentesIds.contains(user.uid)
+
+                            PlayerRow(
+                                user = user,
+                                onClick = { onViewProfile(user.uid) },
+                                badge = {
+                                    if (vino) {
+                                        Text("Asistió", color = Color(0xFF22C55E), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    } else if (falto) {
+                                        Text("Ausente", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            )
                         }
 
                         // Slots libres
@@ -223,7 +242,21 @@ fun DetallePartidoScreen(
                     }
 
                     // Botón de Acción al final del contenido scrollable
-                    if (!esOrganizador) {
+                    if (esOrganizador && p.estado == EstadoPartido.FINALIZADO && !p.asistenciaVerificada) {
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = { showConfirmarAsistencia = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Icon(Icons.Default.Checklist, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Verificar Asistencia", fontWeight = FontWeight.Bold)
+                        }
+                    } else if (!esOrganizador) {
                         Spacer(Modifier.height(8.dp))
                         Button(
                             onClick = { viewModel.enviarSolicitud(p.id) },
@@ -265,6 +298,78 @@ fun DetallePartidoScreen(
             }
         )
     }
+
+    if (showConfirmarAsistencia && partido != null) {
+        ConfirmarAsistenciaDialog(
+            participantes = participantes,
+            onDismiss = { showConfirmarAsistencia = false },
+            onConfirm = { asistentesIds ->
+                viewModel.confirmarAsistencia(partido!!.id, asistentesIds)
+                showConfirmarAsistencia = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun ConfirmarAsistenciaDialog(
+    participantes: List<User>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<String>) -> Unit
+) {
+    val seleccionados = remember { mutableStateListOf<String>().apply {
+        // Por defecto todos marcados como que vinieron
+        addAll(participantes.map { it.uid })
+    } }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Verificar Asistencia") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "Marca los jugadores que asistieron al partido. Quienes no asistieron recibirán una penalización automática.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                participantes.forEach { user ->
+                    val isChecked = seleccionados.contains(user.uid)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (isChecked) seleccionados.remove(user.uid)
+                                else seleccionados.add(user.uid)
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = isChecked,
+                            onCheckedChange = {
+                                if (it) seleccionados.add(user.uid)
+                                else seleccionados.remove(user.uid)
+                            }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(user.displayName ?: "Jugador", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(seleccionados.toList()) }) {
+                Text("Confirmar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }
 
 @Composable
@@ -381,7 +486,11 @@ private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, tit
 }
 
 @Composable
-private fun PlayerRow(user: User, onClick: () -> Unit) {
+private fun PlayerRow(
+    user: User,
+    onClick: () -> Unit,
+    badge: (@Composable () -> Unit)? = null
+) {
     Row(
         modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -394,7 +503,10 @@ private fun PlayerRow(user: User, onClick: () -> Unit) {
             contentScale = ContentScale.Crop
         )
         Column(Modifier.weight(1f)) {
-            Text(user.displayName ?: "Jugador", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(user.displayName ?: "Jugador", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                badge?.invoke()
+            }
             Text(user.posicion?.name ?: "Sin posición", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
         }
         Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.outline)
