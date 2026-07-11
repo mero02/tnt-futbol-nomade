@@ -16,6 +16,7 @@ sealed class PartidoEvento {
     data object AbandonarExito : PartidoEvento()
     data object PartidoLleno : PartidoEvento()
     data object PartidoCreadoExito : PartidoEvento()
+    data object UrgenciaActualizada : PartidoEvento()
     data class Error(val mensaje: String) : PartidoEvento()
 }
 
@@ -124,6 +125,17 @@ class PartidoViewModel(
                 PartidoEvento.PartidoCreadoExito
             }.getOrElse { error ->
                 PartidoEvento.Error(error.message ?: "Error al crear el partido")
+            }
+        }
+    }
+
+    fun toggleUrgencia(partidoId: String, currentUrgencia: Boolean) {
+        viewModelScope.launch {
+            val exito = repository.setUrgencia(partidoId, !currentUrgencia)
+            if (exito) {
+                _evento.value = PartidoEvento.UrgenciaActualizada
+            } else {
+                _evento.value = PartidoEvento.Error("No se pudo actualizar la urgencia")
             }
         }
     }

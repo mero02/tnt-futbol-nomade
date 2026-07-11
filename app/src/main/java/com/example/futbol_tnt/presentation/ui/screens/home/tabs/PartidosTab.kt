@@ -3,6 +3,7 @@ package com.example.futbol_tnt.presentation.ui.screens.home.tabs
 import android.content.Context
 import android.content.Intent
 import android.Manifest
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -464,31 +466,76 @@ private fun PartidoCard(
         } else null
     }
 
+    val borderColor = if (partido.esUrgente) MaterialTheme.colorScheme.error else Color.Transparent
+    val borderStroke = if (partido.esUrgente) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.error) else null
+
+    val borderModifier = if (partido.esUrgente) {
+        Modifier.border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(12.dp))
+    } else Modifier
+
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth().clickable { onVerDetalle() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(borderModifier)
+            .clickable { onVerDetalle() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Fila Superior: Urgencia y Estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = partido.cancha.nombre,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${partido.cancha.direccion}, ${partido.cancha.ciudad}${if (distanceText != null) " ($distanceText)" else ""}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (partido.esUrgente) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FlashOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "URGENTE",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
+
                 EstadoPartidoBadge(estado = partido.estado)
             }
+
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Info de la Cancha (Nombre y Dirección/Distancia)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = partido.cancha.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${partido.cancha.direccion}, ${partido.cancha.ciudad}${if (distanceText != null) " ($distanceText)" else ""}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,

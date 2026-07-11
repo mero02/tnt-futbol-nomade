@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (31)
+## Hechas (32)
 
 
 ### Sprint 1
@@ -387,6 +387,19 @@ Como jugador, quiero recibir notificaciones de partidos cercanos, para no perder
 - [x] Se puede acceder al detalle desde la notificación
 
 
+#### HU-30 — Solicitar jugadores urgentemente
+
+Como organizador, quiero solicitar jugadores urgentemente, para cubrir vacantes cuando se acerque la hora del partido.
+
+**Criterios de aceptacion:**
+
+- [x] El organizador puede marcar un partido como "urgente"
+- [x] El sistema envía notificaciones push a jugadores cercanos
+- [x] La notificación indica claramente que es una solicitud urgente
+- [x] Los jugadores reciben la notificación en tiempo real
+- [x] El usuario puede desactivar este tipo de notificaciones
+
+
 #### HU-26 — Notificación de aceptación
 
 Como jugador, quiero recibir una notificación cuando me aceptan en un partido, para poder organizar mi tiempo.
@@ -424,27 +437,15 @@ Como administrador, quiero acceder a un panel web, para gestionar usuarios y par
 - [x] El sistema proporciona una interfaz web segura
 - [x] El admin puede visualizar todos los partidos
 - [x] El admin puede visualizar usuarios y su reputación
-- [ ] El admin puede banear usuarios problemáticos
+- [x] El admin puede banear usuarios problemáticos
 - [x] El admin puede cancelar partidos problemáticos
 
 
-## Sprint Backlog (2)
+## Sprint Backlog (1)
 
 
 ### Sprint 4
 
-
-#### HU-30 — Solicitar jugadores urgentemente
-
-Como organizador, quiero solicitar jugadores urgentemente, para cubrir vacantes cuando se acerque la hora del partido.
-
-**Criterios de aceptacion:**
-
-- [ ] El organizador puede marcar un partido como "urgente"
-- [ ] El sistema envía notificaciones push a jugadores cercanos
-- [ ] La notificación indica claramente que es una solicitud urgente
-- [ ] Los jugadores reciben la notificación en tiempo real
-- [ ] El usuario puede desactivar este tipo de notificaciones
 
 #### HU-33 — Verificar asistencia al partido
 

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.futbol_tnt.core.util.QRHelper
 import com.example.futbol_tnt.data.model.EstadoPartido
 import com.example.futbol_tnt.data.model.Partido
@@ -41,8 +42,6 @@ import com.example.futbol_tnt.presentation.viewmodel.PartidoViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
-
-import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +95,11 @@ fun DetallePartidoScreen(
                 refreshData()
                 viewModel.limpiarEvento()
             }
+            is PartidoEvento.UrgenciaActualizada -> {
+                snackbarHostState.showSnackbar("Estado de urgencia actualizado")
+                refreshData()
+                viewModel.limpiarEvento()
+            }
             is PartidoEvento.Error -> {
                 snackbarHostState.showSnackbar((evento as PartidoEvento.Error).mensaje)
                 viewModel.limpiarEvento()
@@ -116,6 +120,15 @@ fun DetallePartidoScreen(
                 actions = {
                     if (partido?.creatorId == currentUid && !currentUid.isNullOrBlank()) {
                         val requestsCount = partido?.solicitudesIds?.size ?: 0
+
+                        IconButton(onClick = { partido?.let { viewModel.toggleUrgencia(it.id, it.esUrgente) } }) {
+                            Icon(
+                                imageVector = if (partido?.esUrgente == true) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                                contentDescription = "Urgencia",
+                                tint = if (partido?.esUrgente == true) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+                            )
+                        }
+
                         if (requestsCount > 0) {
                             IconButton(onClick = { showGestionarSolicitudes = true }) {
                                 BadgedBox(

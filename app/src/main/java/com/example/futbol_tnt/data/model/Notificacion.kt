@@ -19,5 +19,6 @@ enum class TipoNotificacion {
     SOLICITUD_APROBADA,
     SOLICITUD_RECHAZADA,
     PARTIDO_CERCANO,
+    SOLICITUD_URGENTE,
     INFO
 }

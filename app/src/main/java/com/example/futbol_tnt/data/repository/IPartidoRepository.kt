@@ -15,4 +15,5 @@ interface IPartidoRepository {
     suspend fun abandonarPartido(partidoId: String): Boolean
     suspend fun getPartidoByReservaId(reservaId: String): Partido?
     suspend fun getPartidoById(id: String): Partido?
+    suspend fun setUrgencia(partidoId: String, esUrgente: Boolean): Boolean
 }

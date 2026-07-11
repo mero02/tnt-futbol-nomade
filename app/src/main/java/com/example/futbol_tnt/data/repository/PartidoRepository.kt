@@ -240,6 +240,63 @@ class PartidoRepository(
         }
     }
 
+    override suspend fun setUrgencia(partidoId: String, esUrgente: Boolean): Boolean {
+        return try {
+            val partidoRef = partidosCol.document(partidoId)
+            partidoRef.update("esUrgente", esUrgente).await()
+
+            if (esUrgente) {
+                // Disparar notificaciones a jugadores cercanos
+                val snap = partidoRef.get().await()
+                val partido = snap.toPartidoOrNull() ?: return true
+
+                // Buscamos usuarios con notificaciones activas
+                val usersSnap = firestore.collection("users")
+                    .whereEqualTo("notificacionesCercania", true)
+                    .get().await()
+
+                val notifCol = firestore.collection("notificaciones")
+                val batch = firestore.batch()
+
+                usersSnap.documents.forEach { userDoc ->
+                    val userId = userDoc.id
+                    // No notificar al propio creador
+                    if (userId == partido.creatorId) return@forEach
+
+                    val userLat = userDoc.getDouble("lastLat")
+                    val userLng = userDoc.getDouble("lastLng")
+
+                    if (userLat != null && userLng != null) {
+                        val results = FloatArray(1)
+                        android.location.Location.distanceBetween(
+                            partido.cancha.lat, partido.cancha.lng,
+                            userLat, userLng,
+                            results
+                        )
+
+                        // Si está a menos de 15km (ajustable)
+                        if (results[0] <= 15000) {
+                            val notifRef = notifCol.document()
+                            batch.set(notifRef, mapOf(
+                                "userId" to userId,
+                                "titulo" to "🚨 ¡PARTIDO URGENTE!",
+                                "mensaje" to "Se necesita un jugador urgente para ${partido.nombreLocal} vs ${partido.nombreVisitante} en ${partido.cancha.nombre}.",
+                                "fecha" to Timestamp.now(),
+                                "leido" to false,
+                                "tipo" to "SOLICITUD_URGENTE",
+                                "partidoId" to partidoId
+                            ))
+                        }
+                    }
+                }
+                batch.commit().await()
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private companion object {
         const val COLLECTION = "partidos"
     }
@@ -272,7 +329,8 @@ private fun Partido.toFirestoreMap(): Map<String, Any?> = mapOf(
     "reservaId" to reservaId,
     "creatorId" to creatorId,
     "participantesIds" to participantesIds,
-    "solicitudesIds" to solicitudesIds
+    "solicitudesIds" to solicitudesIds,
+    "esUrgente" to esUrgente
 )
 
 @Suppress("UNCHECKED_CAST")
@@ -310,7 +368,8 @@ private fun DocumentSnapshot.toPartidoOrNull(): Partido? {
             reservaId = getString("reservaId"),
             creatorId = getString("creatorId").orEmpty(),
             participantesIds = get("participantesIds") as? List<String> ?: emptyList(),
-            solicitudesIds = get("solicitudesIds") as? List<String> ?: emptyList()
+            solicitudesIds = get("solicitudesIds") as? List<String> ?: emptyList(),
+            esUrgente = getBoolean("esUrgente") ?: false
         )
     }.getOrNull()
 }
