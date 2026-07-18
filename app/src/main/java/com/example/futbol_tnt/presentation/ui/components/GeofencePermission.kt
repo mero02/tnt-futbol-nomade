@@ -30,8 +30,13 @@ import com.google.accompanist.permissions.rememberPermissionState
 fun GeofenceSyncEffect() {
     val context = LocalContext.current
     val fineState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    // En Android 10+ el background es un permiso aparte; lo observamos para
+    // re-disparar la sync cuando el usuario lo concede (no cambia el estado de fine).
+    val backgroundState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        rememberPermissionState(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    } else null
 
-    LaunchedEffect(fineState.status.isGranted) {
+    LaunchedEffect(fineState.status.isGranted, backgroundState?.status?.isGranted) {
         if (fineState.status.isGranted && tieneBackgroundLocation(context)) {
             GeofenceManager(context).sincronizarGeocercas()
         }
