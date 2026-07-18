@@ -132,6 +132,12 @@ fun AppNavigation() {
         Screen.Login.route
     }
 
+    // Sincroniza las geocercas de canchas con partidos proximos si hay sesion
+    // y permisos concedidos (HU-36). No-op sin permiso de background.
+    if (googleAuthClient.isLoggedIn()) {
+        com.example.futbol_tnt.presentation.ui.components.GeofenceSyncEffect()
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,

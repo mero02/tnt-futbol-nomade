@@ -107,6 +107,16 @@ private fun AjustesContent(
             onCheckedChange = onToggleAceptacion
         )
 
+        Text(
+            text = "Asistencia",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        // Permiso de ubicación en background para geocercas (HU-37)
+        com.example.futbol_tnt.presentation.ui.components.GeofencePermisoCard()
+
         Spacer(modifier = Modifier.weight(1f))
 
         Text(

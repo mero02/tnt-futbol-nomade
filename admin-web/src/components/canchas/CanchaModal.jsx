@@ -23,6 +23,10 @@ const TIPOS = [
 
 const DEFAULT_CENTER = [-42.766, -65.03]
 
+const RADIO_DEFAULT = 120
+const RADIO_MIN = 100
+const RADIO_MAX = 150
+
 const EMPTY = {
   nombre: '',
   ciudad: '',
@@ -31,6 +35,7 @@ const EMPTY = {
   lng: null,
   tipo: 'FUTBOL_5',
   precioPorHora: '',
+  radioGeofence: RADIO_DEFAULT,
 }
 
 const inputClass = "w-full px-3 py-2 rounded-lg border border-border dark:border-gray-600 bg-white dark:bg-gray-700/50 text-sm text-dark dark:text-gray-200 placeholder:text-secondary focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10 transition-all"
@@ -107,7 +112,9 @@ function MapPanel({ lat, lng, onPick }) {
 export default function CanchaModal({ cancha, onSave, onClose }) {
   const isEdit = !!cancha
   const [form, setForm] = useState(
-    isEdit ? { ...cancha, precioPorHora: String(cancha.precioPorHora) } : EMPTY
+    isEdit
+      ? { ...cancha, precioPorHora: String(cancha.precioPorHora), radioGeofence: cancha.radioGeofence ?? RADIO_DEFAULT }
+      : EMPTY
   )
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
@@ -129,11 +136,13 @@ export default function CanchaModal({ cancha, onSave, onClose }) {
     setError(null)
     setSaving(true)
     try {
+      const radio = Math.min(RADIO_MAX, Math.max(RADIO_MIN, Number(form.radioGeofence) || RADIO_DEFAULT))
       await onSave({
         ...form,
         precioPorHora: Number(form.precioPorHora),
         lat: Number(form.lat),
         lng: Number(form.lng),
+        radioGeofence: radio,
       })
       onClose()
     } catch (err) {
@@ -211,6 +220,19 @@ export default function CanchaModal({ cancha, onSave, onClose }) {
                 />
               </Field>
             </div>
+
+            <Field label={`Radio geocerca (m) · ${RADIO_MIN}-${RADIO_MAX}`}>
+              <input
+                type="number"
+                min={RADIO_MIN}
+                max={RADIO_MAX}
+                step="5"
+                value={form.radioGeofence}
+                onChange={set('radioGeofence')}
+                placeholder={String(RADIO_DEFAULT)}
+                className={inputClass}
+              />
+            </Field>
 
             <Field label="Ciudad">
               <input

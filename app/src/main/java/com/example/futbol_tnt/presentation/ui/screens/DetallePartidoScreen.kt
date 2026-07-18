@@ -106,6 +106,10 @@ fun DetallePartidoScreen(
                 refreshData()
                 viewModel.limpiarEvento()
             }
+            is PartidoEvento.LlegadaRegistrada -> {
+                snackbarHostState.showSnackbar("¡Llegada registrada! Ya quedaste marcado como presente.")
+                viewModel.limpiarEvento()
+            }
             is PartidoEvento.Error -> {
                 snackbarHostState.showSnackbar((evento as PartidoEvento.Error).mensaje)
                 viewModel.limpiarEvento()
@@ -257,6 +261,43 @@ fun DetallePartidoScreen(
                             Text("Verificar Asistencia", fontWeight = FontWeight.Bold)
                         }
                     } else if (!esOrganizador) {
+                        // Check-in manual (HU-40): visible para participantes cerca del horario
+                        // del partido, como fallback si el geofence no detecta la llegada.
+                        val enVentanaCheckIn = esParticipante &&
+                            !p.asistenciaVerificada &&
+                            com.example.futbol_tnt.core.geofence.GeofencePolicy.enVentanaCheckIn(
+                                fechaPartido = p.fecha,
+                                duracionHoras = p.duracionHoras,
+                                ahora = java.time.LocalDateTime.now()
+                            )
+
+                        if (enVentanaCheckIn) {
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        val loc = com.example.futbol_tnt.core.util.LocationHelper(context)
+                                            .getCurrentLocation()
+                                        viewModel.registrarCheckInManual(
+                                            partidoId = p.id,
+                                            canchaId = p.cancha.id,
+                                            lat = loc?.latitude,
+                                            lng = loc?.longitude
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
+                            ) {
+                                Icon(Icons.Default.LocationOn, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Ya llegué", fontWeight = FontWeight.Bold)
+                            }
+                        }
+
                         Spacer(Modifier.height(8.dp))
                         Button(
                             onClick = { viewModel.enviarSolicitud(p.id) },

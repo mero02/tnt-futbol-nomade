@@ -48,7 +48,9 @@ class CanchaRepository(
                     TipoCancha.FUTBOL_5
                 },
                 imagenUrl = getString("imagenUrl"),
-                disponibilidad = generarHorarios()
+                disponibilidad = generarHorarios(),
+                radioGeofence = (get("radioGeofence") as? Number)?.toDouble()
+                    ?: Cancha.RADIO_GEOFENCE_DEFAULT
             )
         } catch (e: Exception) {
             null

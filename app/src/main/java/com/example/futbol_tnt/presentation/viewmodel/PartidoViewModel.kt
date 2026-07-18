@@ -18,12 +18,14 @@ sealed class PartidoEvento {
     data object PartidoCreadoExito : PartidoEvento()
     data object UrgenciaActualizada : PartidoEvento()
     data object AsistenciaConfirmada : PartidoEvento()
+    data object LlegadaRegistrada : PartidoEvento()
     data class Error(val mensaje: String) : PartidoEvento()
 }
 
 class PartidoViewModel(
     private val repository: IPartidoRepository = PartidoRepository(),
     private val userRepository: com.example.futbol_tnt.data.repository.IUserRepository = com.example.futbol_tnt.data.repository.UserRepository(),
+    private val geofenceEventRepository: com.example.futbol_tnt.data.repository.GeofenceEventRepository = com.example.futbol_tnt.data.repository.GeofenceEventRepository(),
 ) : ViewModel() {
 
     private val _userLocation = MutableStateFlow<Location?>(null)
@@ -149,6 +151,20 @@ class PartidoViewModel(
             } else {
                 _evento.value = PartidoEvento.Error("No se pudo confirmar la asistencia")
             }
+        }
+    }
+
+    /**
+     * Check-in manual del jugador (HU-40). Fallback cuando el geofence no
+     * detecta la llegada. El repositorio evita el doble check-in.
+     */
+    fun registrarCheckInManual(partidoId: String, canchaId: String, lat: Double?, lng: Double?) {
+        viewModelScope.launch {
+            val resultado = geofenceEventRepository.registrarCheckInManual(partidoId, canchaId, lat, lng)
+            _evento.value = resultado.fold(
+                onSuccess = { PartidoEvento.LlegadaRegistrada },
+                onFailure = { PartidoEvento.Error(it.message ?: "No se pudo registrar tu llegada") }
+            )
         }
     }
 

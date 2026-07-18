@@ -377,6 +377,7 @@ private fun Partido.toFirestoreMap(): Map<String, Any?> = mapOf(
         "precioPorHora" to cancha.precioPorHora,
         "tipo" to cancha.tipo.name,
         "imagenUrl" to cancha.imagenUrl,
+        "radioGeofence" to cancha.radioGeofence,
     ),
     "duracionHoras" to duracionHoras,
     "precioPorPersona" to precioPorPersona,
@@ -418,6 +419,8 @@ private fun DocumentSnapshot.toPartidoOrNull(): Partido? {
                 precioPorHora = (canchaMap["precioPorHora"] as? Number)?.toDouble() ?: 0.0,
                 tipo = parseTipoCancha(canchaMap["tipo"] as? String),
                 imagenUrl = canchaMap["imagenUrl"] as? String,
+                radioGeofence = (canchaMap["radioGeofence"] as? Number)?.toDouble()
+                    ?: Cancha.RADIO_GEOFENCE_DEFAULT,
             ),
             duracionHoras = (getLong("duracionHoras") ?: 1L).toInt(),
             precioPorPersona = getDouble("precioPorPersona") ?: 0.0,

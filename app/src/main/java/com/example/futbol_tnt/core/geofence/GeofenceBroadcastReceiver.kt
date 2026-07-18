@@ -1,0 +1,109 @@
+package com.example.futbol_tnt.core.geofence
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.example.futbol_tnt.R
+import com.example.futbol_tnt.data.model.TipoEventoGeofence
+import com.example.futbol_tnt.data.repository.GeofenceEventRepository
+import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofencingEvent
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/**
+ * Recibe las transiciones de geocerca del sistema (HU-38).
+ *
+ * Al detectar un ENTER identifica la cancha (requestId) y escribe un evento en
+ * `geofence_events`. Usa goAsync() para tener margen mientras persiste en
+ * Firestore, ya que el broadcast se ejecuta con la app potencialmente cerrada.
+ */
+class GeofenceBroadcastReceiver : BroadcastReceiver() {
+
+    private val eventRepository = GeofenceEventRepository()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
+
+        if (geofencingEvent.hasError()) {
+            Log.e(TAG, "Error en evento de geocerca: ${geofencingEvent.errorCode}")
+            return
+        }
+
+        // Solo nos interesa la entrada a la cancha.
+        if (geofencingEvent.geofenceTransition != Geofence.GEOFENCE_TRANSITION_ENTER) return
+
+        val triggering = geofencingEvent.triggeringGeofences ?: return
+        val uid = Firebase.auth.currentUser?.uid ?: run {
+            Log.w(TAG, "Evento de geocerca sin usuario logueado; se ignora")
+            return
+        }
+
+        val lat = geofencingEvent.triggeringLocation?.latitude
+        val lng = geofencingEvent.triggeringLocation?.longitude
+        val diaKey = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                triggering.forEach { geofence ->
+                    val canchaId = geofence.requestId
+                    // Firestore encola la escritura localmente de inmediato y la
+                    // sincroniza al recuperar la red (cola offline propia del SDK).
+                    runCatching {
+                        eventRepository.registrarEventoAutomatico(
+                            userId = uid,
+                            canchaId = canchaId,
+                            tipo = TipoEventoGeofence.ENTER,
+                            lat = lat,
+                            lng = lng,
+                            diaKey = diaKey,
+                        )
+                    }
+                }
+                mostrarNotificacion(context)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error procesando geocerca", e)
+            } finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    private fun mostrarNotificacion(context: Context) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Llegadas a la cancha",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            nm.createNotificationChannel(channel)
+        }
+        val notif = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("¡Llegaste a la cancha!")
+            .setContentText("Registramos tu llegada. ¡A jugar!")
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+        nm.notify(NOTIF_ID, notif)
+    }
+
+    private companion object {
+        const val TAG = "GeofenceReceiver"
+        const val CHANNEL_ID = "geofence_channel"
+        const val NOTIF_ID = 2001
+    }
+}
