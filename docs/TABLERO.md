@@ -549,10 +549,10 @@ Como desarrollador, quiero obtener el token FCM y guardarlo en el perfil del usu
 
 **Checklist:**
 
-- [ ] Se obtiene el token FCM del dispositivo
-- [ ] El token se guarda en el perfil del usuario en Firestore
-- [ ] Se implementa un Service extendiendo FirebaseMessagingService
-- [ ] Se actualiza el token cuando cambia (refresh)
+- [x] Se obtiene el token FCM del dispositivo
+- [x] El token se guarda en el perfil del usuario en Firestore
+- [x] Se implementa un Service extendiendo FirebaseMessagingService
+- [x] Se actualiza el token cuando cambia (refresh)
 
 
 #### HU-42 — Trigger de Cloud Function
