@@ -5,9 +5,11 @@ import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.futbol_tnt.R
 import com.example.futbol_tnt.data.model.TipoEventoGeofence
 import com.example.futbol_tnt.data.repository.GeofenceEventRepository
@@ -82,6 +84,17 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun mostrarNotificacion(context: Context) {
+        // En Android 13+ notificar requiere el permiso runtime POST_NOTIFICATIONS.
+        // Si el usuario lo nego, el evento igual queda registrado en Firestore;
+        // solo se omite el aviso visual (nm.notify seria descartado en silencio).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.w(TAG, "Sin permiso POST_NOTIFICATIONS; se omite la notificacion de llegada")
+            return
+        }
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
