@@ -137,12 +137,15 @@ export default function CanchaModal({ cancha, onSave, onClose }) {
     setSaving(true)
     try {
       const radio = Math.min(RADIO_MAX, Math.max(RADIO_MIN, Number(form.radioGeofence) || RADIO_DEFAULT))
+      const lat = Number(form.lat)
+      const lng = Number(form.lng)
       await onSave({
         ...form,
         precioPorHora: Number(form.precioPorHora),
-        lat: Number(form.lat),
-        lng: Number(form.lng),
+        lat,
+        lng,
         radioGeofence: radio,
+        geofence: { lat, lng, radio },
       })
       onClose()
     } catch (err) {
