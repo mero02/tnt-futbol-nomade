@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -71,7 +72,16 @@ class GeofenceEventRepository(
             ).await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            // Race: dos taps casi simultaneos pasan el get() y el segundo set() cae
+            // como update sobre doc existente -> la regla lo niega (PERMISSION_DENIED).
+            // No es un error real: ya quedo registrada la llegada.
+            if (e is FirebaseFirestoreException &&
+                e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+            ) {
+                Result.failure(YaRegistradoException())
+            } else {
+                Result.failure(e)
+            }
         }
     }
 
