@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (40)
+## Hechas (44)
 
 
 ### Sprint 1
@@ -537,11 +537,9 @@ Como jugador, quiero poder marcar mi asistencia manualmente si el GPS falla, par
 - [x] Solo disponible cerca del horario del partido
 - [x] No permite doble check-in del mismo usuario
 
-## Sprint Backlog (0)
-
-## Backlog (4)
 
 ### Sprint 6
+
 
 #### HU-41 — Configurar FCM y token
 
@@ -561,10 +559,10 @@ Como Cloud Function, quiero ejecutarme al crearse un documento en `geofence_even
 
 **Checklist:**
 
-- [ ] Trigger en creación de documento (onCreate sobre geofence_events)
-- [ ] Se identifica el partido activo en esa cancha
-- [ ] Logs estructurados para debugging
-- [ ] Manejo de errores sin romper la ejecución
+- [x] Trigger en creación de documento (onCreate sobre geofence_events)
+- [x] Se identifica el partido activo en esa cancha
+- [x] Logs estructurados para debugging
+- [x] Manejo de errores sin romper la ejecución
 
 
 #### HU-43 — Notificar a organizador y jugadores
@@ -573,10 +571,10 @@ Como sistema, quiero enviar un push al organizador y a los jugadores del partido
 
 **Checklist:**
 
-- [ ] Se envía FCM al organizador ("El jugador [nombre] ingresó")
-- [ ] Se notifica a los demás jugadores del mismo partido
-- [ ] Se excluye al usuario que disparó el evento
-- [ ] Se filtran solo participantes del partido correcto
+- [x] Se envía FCM al organizador ("El jugador [nombre] ingresó")
+- [x] Se notifica a los demás jugadores del mismo partido
+- [x] Se excluye al usuario que disparó el evento
+- [x] Se filtran solo participantes del partido correcto
 
 
 #### HU-44 — Mostrar notificación en foreground y background
@@ -585,11 +583,14 @@ Como usuario, quiero recibir la notificación esté la app abierta o cerrada, pa
 
 **Checklist:**
 
-- [ ] Notificación visible con la app en primer plano
-- [ ] Data payload procesado en background (partidoId, tipoEvento)
-- [ ] Tap abre la pantalla correspondiente del partido
-- [ ] Sonido/vibración configurables
+- [x] Notificación visible con la app en primer plano
+- [x] Data payload procesado en background (partidoId, tipoEvento)
+- [x] Tap abre la pantalla correspondiente del partido
+- [x] Sonido/vibración configurables
 
+## Sprint Backlog (0)
+
+## Backlog (0)
 
 ## Sandbox (0)
 

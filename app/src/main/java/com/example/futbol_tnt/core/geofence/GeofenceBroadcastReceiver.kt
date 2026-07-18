@@ -24,6 +24,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import android.app.PendingIntent
+import com.example.futbol_tnt.MainActivity
+
 /**
  * Recibe las transiciones de geocerca del sistema (HU-38).
  *
@@ -84,9 +87,6 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun mostrarNotificacion(context: Context) {
-        // En Android 13+ notificar requiere el permiso runtime POST_NOTIFICATIONS.
-        // Si el usuario lo nego, el evento igual queda registrado en Firestore;
-        // solo se omite el aviso visual (nm.notify seria descartado en silencio).
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(
                 context, android.Manifest.permission.POST_NOTIFICATIONS
@@ -95,22 +95,43 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             Log.w(TAG, "Sin permiso POST_NOTIFICATIONS; se omite la notificacion de llegada")
             return
         }
+
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Llegadas a la cancha",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifica cuando entras al predio deportivo"
+                enableLights(true)
+                lightColor = android.graphics.Color.GREEN
+                enableVibration(true)
+            }
             nm.createNotificationChannel(channel)
         }
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("¡Llegaste a la cancha!")
-            .setContentText("Registramos tu llegada. ¡A jugar!")
+            .setContentTitle("⚽ ¡Ya estás en la cancha!")
+            .setContentText("Registramos tu llegada correctamente. El equipo ya sabe que estás aquí.")
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
+
         nm.notify(NOTIF_ID, notif)
     }
 

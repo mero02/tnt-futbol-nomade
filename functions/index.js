@@ -11,62 +11,80 @@ exports.onGeofenceEventCreated = onDocumentCreated("geofence_events/{eventId}", 
     const data = event.data.data();
     if (!data) return;
 
-    // Solo procesamos entradas (ENTER)
     if (data.tipo !== "ENTER") return;
 
-    const { userId, partidoId, canchaId, manual } = data;
+    const { userId, canchaId, manual } = data;
+    let { partidoId } = data;
 
     try {
-        // 1. Obtener datos del usuario que llegó
-        const userArrivalDoc = await admin.firestore().collection("users").document(userId).get();
+        // 1. Si no viene partidoId (evento automático), buscamos el partido activo en esa cancha
+        if (!partidoId) {
+            const ahora = admin.firestore.Timestamp.now();
+            const snap = await admin.firestore()
+                .collection("partidos")
+                .where("cancha.id", "==", canchaId)
+                .where("estado", "!=", "FINALIZADO")
+                .get();
+
+            // Tomamos el partido más próximo al momento actual
+            const candidatos = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(p => p.participantesIds?.includes(userId));
+
+            if (candidatos.length === 0) return;
+            candidatos.sort((a, b) => {
+                const ta = a.fecha?.toMillis?.() ?? 0;
+                const tb = b.fecha?.toMillis?.() ?? 0;
+                return Math.abs(ta - ahora.toMillis()) - Math.abs(tb - ahora.toMillis());
+            });
+            partidoId = candidatos[0].id;
+        }
+
+        // 2. Obtener datos del usuario que llegó
+        const userArrivalDoc = await admin.firestore().collection("users").doc(userId).get();
         const userArrival = userArrivalDoc.data();
         const userName = userArrival?.apodo || userArrival?.displayName || "Un jugador";
 
-        // 2. Obtener datos del partido
-        const partidoDoc = await admin.firestore().collection("partidos").document(partidoId).get();
+        // 3. Obtener datos del partido
+        const partidoDoc = await admin.firestore().collection("partidos").doc(partidoId).get();
         const partido = partidoDoc.data();
         if (!partido) return;
 
         const nombreCancha = partido.cancha?.nombre || "la cancha";
 
-        // 3. Identificar destinatarios (Participantes + Creador, excluyendo al que llegó)
-        const recipientsIds = [...new Set([...partido.participantesIds, partido.creatorId])]
+        // 4. Identificar destinatarios (participantes + creador, excluyendo al que llegó)
+        const recipientsIds = [...new Set([...(partido.participantesIds ?? []), partido.creatorId])]
             .filter(id => id !== userId);
 
         if (recipientsIds.length === 0) return;
 
-        // 4. Obtener tokens de los destinatarios
+        // 5. Obtener tokens FCM de los destinatarios
         const tokens = [];
-        const userDocs = await Promise.all(recipientsIds.map(id =>
-            admin.firestore().collection("users").document(id).get()
-        ));
-
+        const userDocs = await Promise.all(
+            recipientsIds.map(id => admin.firestore().collection("users").doc(id).get())
+        );
         userDocs.forEach(doc => {
-            const userData = doc.data();
-            if (userData?.fcmToken) {
-                tokens.push(userData.fcmToken);
-            }
+            const fcmToken = doc.data()?.fcmToken;
+            if (fcmToken) tokens.push(fcmToken);
         });
 
         if (tokens.length === 0) return;
 
-        // 5. Enviar notificación Push
-        const payload = {
-            notification: {
-                title: "¡Alguien llegó!",
-                body: `${userName} ya está en ${nombreCancha}.`
-            },
+        // 6. Enviar notificación push.
+        // Solo payload data (sin notification): FCM siempre llama a onMessageReceived
+        // sin importar el estado de la app (foreground/background/killed), lo que
+        // permite al servicio construir el Intent con deep link y navegar al partido.
+        const response = await admin.messaging().sendEachForMulticast({
+            tokens,
             data: {
+                titulo: "¡Alguien llegó!",
+                mensaje: `${userName} ya está en ${nombreCancha}.`,
                 partidoId: partidoId,
                 tipo: "LLEGADA_JUGADOR",
-                click_action: "FLUTTER_NOTIFICATION_CLICK" // Para compatibilidad
-            }
-        };
-
-        const response = await admin.messaging().sendEachForMulticast({
-            tokens: tokens,
-            notification: payload.notification,
-            data: payload.data
+            },
+            android: {
+                priority: "high",
+            },
         });
 
         console.log(`Notificaciones enviadas: ${response.successCount}. Errores: ${response.failureCount}`);
