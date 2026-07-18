@@ -3,7 +3,7 @@
 Tablero Trello. Miembros: Francisco Terron, Mauro G. San Pedro.
 
 
-## Hechas (33)
+## Hechas (44)
 
 
 ### Sprint 1
@@ -449,7 +449,6 @@ Como organizador, quiero confirmar la asistencia de los jugadores, para mejorar 
 - [x] Se registra la asistencia para estadísticas futuras
 - [x] El sistema actualiza la reputación automáticamente
 
-## Sprint Backlog (7)
 
 ### Sprint 5
 
@@ -460,11 +459,11 @@ Como organizador, quiero que al crear/editar una cancha se genere automáticamen
 
 **Checklist:**
 
-- [ ] La geocerca se crea automáticamente al guardar la cancha
-- [ ] Usa lat/long de la cancha como centro
-- [ ] Se almacena en Firestore la referencia (canchas/{id}/geofence)
-- [ ] Al editar la cancha, la geocerca se actualiza
-- [ ] Se maneja el caso de cancha sin coordenadas válidas
+- [x] La geocerca se crea automáticamente al guardar la cancha
+- [x] Usa lat/long de la cancha como centro
+- [x] Se almacena en Firestore la referencia (canchas/{id}/geofence)
+- [x] Al editar la cancha, la geocerca se actualiza
+- [x] Se maneja el caso de cancha sin coordenadas válidas
 
 
 #### HU-35 — Radio configurable de geocerca
@@ -473,10 +472,10 @@ Como organizador, quiero definir el radio de la geocerca por cancha (100–150 m
 
 **Checklist:**
 
-- [ ] Campo de radio editable por cancha
-- [ ] Valor por defecto dentro de 100–150 m
-- [ ] Se valida un mínimo/máximo razonable
-- [ ] El radio se persiste junto a la geocerca
+- [x] Campo de radio editable por cancha
+- [x] Valor por defecto dentro de 100–150 m
+- [x] Se valida un mínimo/máximo razonable
+- [x] El radio se persiste junto a la geocerca
 
 
 #### HU-36 — Registrar geocercas de partidos próximos
@@ -485,10 +484,10 @@ Como sistema, quiero registrar solo las geocercas de canchas con partidos próxi
 
 **Checklist:**
 
-- [ ] Solo se registran geocercas de canchas con partidos próximos
-- [ ] No se supera el límite de 100 geocercas activas
-- [ ] Se remueven geocercas de partidos ya finalizados
-- [ ] Transición configurada como ENTER (y EXIT si aplica)
+- [x] Solo se registran geocercas de canchas con partidos próximos
+- [x] No se supera el límite de 100 geocercas activas
+- [x] Se remueven geocercas de partidos ya finalizados
+- [x] Transición configurada como ENTER (y EXIT si aplica)
 
 
 #### HU-37 — Solicitar permisos de ubicación
@@ -497,10 +496,10 @@ Como usuario, quiero otorgar permiso de ubicación en foreground y background, p
 
 **Checklist:**
 
-- [ ] Se solicita ACCESS_FINE_LOCATION en foreground
-- [ ] Se solicita ACCESS_BACKGROUND_LOCATION por separado (Android 10+)
-- [ ] Se explica al usuario por qué se necesita "Permitir todo el tiempo"
-- [ ] Se maneja el caso de permiso denegado (fallback a manual)
+- [x] Se solicita ACCESS_FINE_LOCATION en foreground
+- [x] Se solicita ACCESS_BACKGROUND_LOCATION por separado (Android 10+)
+- [x] Se explica al usuario por qué se necesita "Permitir todo el tiempo"
+- [x] Se maneja el caso de permiso denegado (fallback a manual)
 
 
 #### HU-38 — Capturar entrada a la cancha (ENTER)
@@ -509,10 +508,10 @@ Como jugador, quiero que la app detecte automáticamente cuando entro a la canch
 
 **Checklist:**
 
-- [ ] Se dispara el BroadcastReceiver al entrar a la geocerca
-- [ ] Se identifica correctamente la cancha del evento
-- [ ] Se registra el evento en base local
-- [ ] Se contempla la latencia del geofence (hasta ~2-3 min en background)
+- [x] Se dispara el BroadcastReceiver al entrar a la geocerca
+- [x] Se identifica correctamente la cancha del evento
+- [x] Se registra el evento en base local
+- [x] Se contempla la latencia del geofence (hasta ~2-3 min en background)
 
 
 #### HU-39 — Registrar evento de geocerca
@@ -521,10 +520,10 @@ Como sistema móvil, quiero escribir el evento en `geofence_events` (userId, can
 
 **Checklist:**
 
-- [ ] Se escribe en geofence_events con userId, canchaId, tipo, timestamp
-- [ ] Incluye ubicación del evento
-- [ ] Manejo de errores con reintento/cola offline
-- [ ] Se sincroniza cuando vuelve la conexión
+- [x] Se escribe en geofence_events con userId, canchaId, tipo, timestamp
+- [x] Incluye ubicación del evento
+- [x] Manejo de errores con reintento/cola offline
+- [x] Se sincroniza cuando vuelve la conexión
 
 
 #### HU-40 — Check-in manual (fallback)
@@ -533,14 +532,14 @@ Como jugador, quiero poder marcar mi asistencia manualmente si el GPS falla, par
 
 **Checklist:**
 
-- [ ] Botón "Ya llegué" visible en el detalle del partido
-- [ ] Escribe el mismo tipo de evento que el geofence (marcado como manual)
-- [ ] Solo disponible cerca del horario del partido
-- [ ] No permite doble check-in del mismo usuario
+- [x] Botón "Ya llegué" visible en el detalle del partido
+- [x] Escribe el mismo tipo de evento que el geofence (marcado como manual)
+- [x] Solo disponible cerca del horario del partido
+- [x] No permite doble check-in del mismo usuario
 
-## Backlog (4)
 
 ### Sprint 6
+
 
 #### HU-41 — Configurar FCM y token
 
@@ -548,10 +547,10 @@ Como desarrollador, quiero obtener el token FCM y guardarlo en el perfil del usu
 
 **Checklist:**
 
-- [ ] Se obtiene el token FCM del dispositivo
-- [ ] El token se guarda en el perfil del usuario en Firestore
-- [ ] Se implementa un Service extendiendo FirebaseMessagingService
-- [ ] Se actualiza el token cuando cambia (refresh)
+- [x] Se obtiene el token FCM del dispositivo
+- [x] El token se guarda en el perfil del usuario en Firestore
+- [x] Se implementa un Service extendiendo FirebaseMessagingService
+- [x] Se actualiza el token cuando cambia (refresh)
 
 
 #### HU-42 — Trigger de Cloud Function
@@ -560,10 +559,10 @@ Como Cloud Function, quiero ejecutarme al crearse un documento en `geofence_even
 
 **Checklist:**
 
-- [ ] Trigger en creación de documento (onCreate sobre geofence_events)
-- [ ] Se identifica el partido activo en esa cancha
-- [ ] Logs estructurados para debugging
-- [ ] Manejo de errores sin romper la ejecución
+- [x] Trigger en creación de documento (onCreate sobre geofence_events)
+- [x] Se identifica el partido activo en esa cancha
+- [x] Logs estructurados para debugging
+- [x] Manejo de errores sin romper la ejecución
 
 
 #### HU-43 — Notificar a organizador y jugadores
@@ -572,10 +571,10 @@ Como sistema, quiero enviar un push al organizador y a los jugadores del partido
 
 **Checklist:**
 
-- [ ] Se envía FCM al organizador ("El jugador [nombre] ingresó")
-- [ ] Se notifica a los demás jugadores del mismo partido
-- [ ] Se excluye al usuario que disparó el evento
-- [ ] Se filtran solo participantes del partido correcto
+- [x] Se envía FCM al organizador ("El jugador [nombre] ingresó")
+- [x] Se notifica a los demás jugadores del mismo partido
+- [x] Se excluye al usuario que disparó el evento
+- [x] Se filtran solo participantes del partido correcto
 
 
 #### HU-44 — Mostrar notificación en foreground y background
@@ -584,11 +583,14 @@ Como usuario, quiero recibir la notificación esté la app abierta o cerrada, pa
 
 **Checklist:**
 
-- [ ] Notificación visible con la app en primer plano
-- [ ] Data payload procesado en background (partidoId, tipoEvento)
-- [ ] Tap abre la pantalla correspondiente del partido
-- [ ] Sonido/vibración configurables
+- [x] Notificación visible con la app en primer plano
+- [x] Data payload procesado en background (partidoId, tipoEvento)
+- [x] Tap abre la pantalla correspondiente del partido
+- [x] Sonido/vibración configurables
 
+## Sprint Backlog (0)
+
+## Backlog (0)
 
 ## Sandbox (0)
 

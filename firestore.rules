@@ -81,6 +81,24 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Reglas para Eventos de Geocerca (check-in por ubicacion, HU-39)
+    match /geofence_events/{eventId} {
+      // Cada jugador solo puede registrar su propia llegada, con campos validos.
+      // timestamp debe ser el server time (evita falsear la hora de llegada).
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.canchaId is string
+                    && request.resource.data.tipo in ['ENTER', 'EXIT']
+                    && request.resource.data.manual is bool
+                    && request.resource.data.timestamp == request.time;
+      // El dueno del evento o un ADMIN pueden leer
+      allow read: if (request.auth != null && resource.data.userId == request.auth.uid)
+                  || isAdmin();
+      // Los eventos son inmutables; solo el ADMIN puede limpiar
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
     // Reglas para Canchas
     match /canchas/{canchaId} {
       // Cualquier usuario logueado puede leer y escribir (crear/actualizar)

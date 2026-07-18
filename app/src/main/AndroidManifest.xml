@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Necesario para que las geocercas se disparen con la app cerrada (Android 10+, HU-37) -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -57,6 +59,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- Receiver de transiciones de geocerca (ENTER) — HU-38 -->
+        <receiver
+            android:name=".core.geofence.GeofenceBroadcastReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

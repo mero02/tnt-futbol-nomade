@@ -34,34 +34,37 @@ class FutbolTntMessagingService : FirebaseMessagingService() {
 
     private fun sendNotification(title: String, messageBody: String, partidoId: String? = null) {
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             if (partidoId != null) {
                 data = android.net.Uri.parse("https://futboltnt.app/partido/$partidoId")
             }
         }
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            this,
+            partidoId.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val channelId = "default_channel"
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Notificaciones de Partidos",
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(com.example.futbol_tnt.R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(messageBody)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        // En Android 8+ es obligatorio crear el canal
-        val channel = NotificationChannel(
-            channelId,
-            "Notificaciones de Partidos",
-            NotificationManager.IMPORTANCE_HIGH
-        )
-        notificationManager.createNotificationChannel(channel)
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }

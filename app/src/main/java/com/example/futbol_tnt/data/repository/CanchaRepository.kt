@@ -48,7 +48,13 @@ class CanchaRepository(
                     TipoCancha.FUTBOL_5
                 },
                 imagenUrl = getString("imagenUrl"),
-                disponibilidad = generarHorarios()
+                disponibilidad = generarHorarios(),
+                radioGeofence = run {
+                    val geofenceMap = get("geofence") as? Map<*, *>
+                    (geofenceMap?.get("radio") as? Number)?.toDouble()
+                        ?: (get("radioGeofence") as? Number)?.toDouble()
+                        ?: Cancha.RADIO_GEOFENCE_DEFAULT
+                }
             )
         } catch (e: Exception) {
             null
