@@ -64,8 +64,14 @@ service cloud.firestore {
     match /notificaciones/{notifId} {
       // Solo el destinatario puede leer y marcar como leída su propia notificación
       allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
-      // Cualquier usuario logueado puede crear una notificación (necesario para avisar cancelaciones a otros)
-      allow create: if request.auth != null;
+      // Cualquier usuario logueado puede crear una notificación (necesario para avisar
+      // a otros: solicitudes, aceptaciones, cancelaciones, partidos cercanos).
+      // Validamos la forma para evitar documentos falsos o pre-leídos.
+      allow create: if request.auth != null
+                    && request.resource.data.userId is string
+                    && request.resource.data.titulo is string
+                    && request.resource.data.mensaje is string
+                    && request.resource.data.leido == false;
       // El admin puede limpiar notificaciones
       allow delete: if isAdmin();
     }

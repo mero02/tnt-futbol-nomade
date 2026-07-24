@@ -93,3 +93,48 @@ exports.onGeofenceEventCreated = onDocumentCreated("geofence_events/{eventId}", 
         console.error("Error procesando evento de geocerca:", error);
     }
 });
+
+/**
+ * Entrega como push FCM cualquier notificación in-app que la app escribe en
+ * `notificaciones` (solicitud recibida/aprobada/rechazada, partido cercano, etc.).
+ * La app solo persiste el documento; esta función lo convierte en push real
+ * para que llegue con la app cerrada.
+ */
+exports.onNotificacionCreated = onDocumentCreated("notificaciones/{notifId}", async (event) => {
+    const notif = event.data.data();
+    if (!notif) return;
+
+    const { userId, titulo, mensaje, partidoId, tipo } = notif;
+    if (!userId) return;
+
+    try {
+        // 1. Obtener el token FCM del destinatario
+        const userDoc = await admin.firestore().collection("users").doc(userId).get();
+        const fcmToken = userDoc.data()?.fcmToken;
+        if (!fcmToken) {
+            console.log(`Sin fcmToken para el usuario ${userId}; se omite el push.`);
+            return;
+        }
+
+        // 2. Enviar push. Solo payload data (sin notification) para que el
+        // MessagingService construya el Intent con deep link al partido,
+        // igual que en el flujo de geocercas.
+        await admin.messaging().send({
+            token: fcmToken,
+            data: {
+                titulo: titulo || "Fútbol TNT",
+                mensaje: mensaje || "",
+                partidoId: partidoId || "",
+                tipo: tipo || "INFO",
+            },
+            android: {
+                priority: "high",
+            },
+        });
+
+        console.log(`Push de notificación (${tipo}) enviado a ${userId}.`);
+
+    } catch (error) {
+        console.error("Error enviando push de notificación:", error);
+    }
+});
